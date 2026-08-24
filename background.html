@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SynapseX — Background</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Anton+SC&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: #000;
+    color: #fff;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: "Space Mono", monospace;
+  }
+  /* neon dot field — same layout slot as the old .dot-grid overlay */
+  #dotField {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw; height: 100dvh;
+    pointer-events: none;
+    display: block;
+  }
+</style>
+</head>
+<body>
+  <canvas id="dotField"></canvas>
+<script>
+(function () {
+  var cv = document.getElementById("dotField");
+  var ctx = cv.getContext("2d");
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  var GAP = 34;                                  // grid pitch — wider than the old 24px
+  var W = 0, H = 0, dots = [], cols = 0, rows = 0;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // pointer-reactive field state
+  var mx = -9999, my = -9999;                    // eased cursor position
+  var tx = -9999, ty = -9999;                    // raw cursor target
+  var R_PUSH   = 110;                            // repel radius — dots slide away
+  var R_LIGHT  = 190;                            // glow radius — dots brighten near cursor
+  var PUSH     = 26;                             // max displacement in px
+
+  function build() {
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dots = [];
+    // perfectly regular grid — no jitter, exact column count, centered on screen
+    cols = Math.ceil(W / GAP) + 1;
+    rows = Math.ceil(H / GAP) + 1;
+    var offX = (W - (cols - 1) * GAP) / 2;
+    var offY = (H - (rows - 1) * GAP) / 2;
+    for (var j = 0; j < rows; j++) {
+      for (var i = 0; i < cols; i++) {
+        var accent = Math.random() < 0.06;       // sparse slightly brighter stars
+        dots.push({
+          hx: offX + i * GAP, hy: offY + j * GAP,
+          dx: 0, dy: 0,                          // current offset from home
+          r: accent ? 2.3 : 1.6 + Math.random() * 0.8,
+          minA: accent ? 0.14 : 0.05,            // brightness floor ("off" level)
+          maxA: accent ? 0.62 + Math.random() * .13 : 0.30 + Math.random() * .16,
+          ph: Math.random() * Math.PI * 2,
+          sp: (accent ? 1.0 : 1.6) + Math.random() * 2.0,   // rad/s — visible blink cadence
+          wob: 0,                                // slow random wander of brightness (noise phase)
+          gr: accent ? 2.3 : 1.6 + Math.random() * 0.8      // rendered (spring-eased) radius
+        });
+      }
+    }
+  }
+  function dot(i, j) { return dots[j * cols + i]; }
+
+  function paint(t) {
+    // ease the cursor toward its target for a silky trailing response
+    mx += (tx - mx) * 0.12; my += (ty - my) * 0.12;
+    ctx.clearRect(0, 0, W, H);
+    ctx.shadowColor = "rgba(44,224,109,.75)";
+    ctx.shadowBlur = 6;
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+      // spring the dot's offset back home, then push it away from the cursor
+      d.dx += (0 - d.dx) * 0.08; d.dy += (0 - d.dy) * 0.08;
+      if (tx > -9000) {
+        var vx = d.hx + d.dx - mx, vy = d.hy + d.dy - my;
+        var dist = Math.sqrt(vx * vx + vy * vy);
+        if (dist < R_PUSH && dist > 0.001) {
+          var f = (1 - dist / R_PUSH);           // 0..1 falloff
+          f *= f;
+          var inv = 1 / dist;
+          d.dx += (vx * inv) * f * PUSH * 0.16;
+          d.dy += (vy * inv) * f * PUSH * 0.16;
+        }
+        // brightness lift inside the light radius (soft, never harsh)
+        var glow = 0;
+        if (dist < R_LIGHT && dist > 0.001) {
+          var g = 1 - dist / R_LIGHT;
+          glow = g * g * 0.28;
+        }
+      } else glow = 0;
+      // blink: each dot breathes between its own floor and peak; a slow random wander
+      // (two incommensurate sines) skews the phase so cadence feels organic, not metronome
+      d.wob = Math.sin(t * 0.31 + d.ph * 1.7) * 0.6 + Math.sin(t * 0.13 + d.sp * 4.1) * 0.4;
+      var wave = Math.sin(d.ph + t * d.sp + d.wob);          // -1..1
+      var a = Math.max(0.10,                                 // dots never fully disappear
+             d.minA + (d.maxA - d.minA) * (0.5 + 0.5 * wave)) + glow;
+      if (a > 0.85) a = 0.85;                    // cap so the field stays dim overall
+      d.a = a;                                   // stash for the link pass
+      // size reacts to the cursor too: dots swell inside the light radius (spring-eased).
+      // swell up to ~2x base radius at the cursor's core, fading with the glow falloff.
+      var target = glow > 0 ? d.r * (1 + 2.2 * (glow / 0.28)) : d.r;
+      d.gr += (target - d.gr) * 0.14;
+      ctx.fillStyle = "rgba(44,224,109," + a.toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(d.hx + d.dx, d.hy + d.dy, d.gr, 0, 6.2832); ctx.fill();
+    }
+    // ---- grey lattice: connect each dot to its right + lower neighbours only ----
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 1;
+    for (var j = 0; j < rows; j++) {
+      for (var i2 = 0; i2 < cols; i2++) {
+        var p = dot(i2, j); if (!p) continue;
+        if (i2 < cols - 1) line(p, dot(i2 + 1, j));
+        if (j < rows - 1) line(p, dot(i2, j + 1));
+      }
+    }
+    function line(p, q) {
+      var ax = p.hx + p.dx, ay = p.hy + p.dy, bx = q.hx + q.dx, by = q.hy + q.dy;
+      var la = (p.a || 0) + (q.a || 0);
+      var g = Math.min(0.16, 0.05 + la * 0.09);   // grey level tracks the dots' light — dim overall
+      ctx.strokeStyle = "rgba(160,170,165," + g.toFixed(3) + ")";
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    }
+  }
+
+  function loop(ms) { paint(ms / 1000); requestAnimationFrame(loop); }
+
+  window.addEventListener("pointermove", function (e) { tx = e.clientX; ty = e.clientY; }, { passive: true });
+  window.addEventListener("pointerleave", function () { tx = -9999; ty = -9999; });
+  document.addEventListener("mouseleave", function () { tx = -9999; ty = -9999; });
+
+  window.addEventListener("resize", build);
+  build();
+  if (reduce) paint(1.7);                        // static mid-twinkle frame
+  else requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

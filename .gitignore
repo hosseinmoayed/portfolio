@@ -1,0 +1,16 @@
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / tooling
+.claude/
+*.log
+
+# Large raw video sources (keep only final encoded assets if desired —
+# uncomment the next lines to exclude originals)
+# lion_hero.mp4
+
+# Node/tooling artifacts (none expected, safety net)
+node_modules/
+__pycache__/
