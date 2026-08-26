@@ -43,10 +43,24 @@
   video { background: #000; }
 
   /* ===== Neon frame (from the section-2 .nbtn design, turned into a video showcase) ===== */
-  .nframe-wrap { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 96px 20px 40px; pointer-events: none; }
+  /* scroll stack — one section per designed website */
+  #siteScroll { position: relative; z-index: 10; }
+  .site { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 120px 24px 80px; }
+  .site-inner { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; max-width: 1180px; }
+  .site-copy { max-width: 520px; text-align: center; }
+  .site-kicker { font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .32em; text-transform: uppercase; color: #52ff96; }
+  .site-title { font-family: "Anton SC", sans-serif; font-size: clamp(40px, 6.4vw, 82px); line-height: .95; color: #eafff2; margin: 14px 0 14px; text-transform: uppercase; }
+  .site-desc { font-family: "Space Mono", monospace; font-size: clamp(13px, 1.5vw, 15px); line-height: 1.7; color: rgba(224,255,236,.66); }
+  .site-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #9dffc4; text-decoration: none; border-bottom: 1px solid rgba(71,192,126,.4); padding-bottom: 4px; transition: color .3s, border-color .3s; }
+  .site-link:hover { color: #eafff2; border-color: rgba(71,192,126,.9); }
+  /* reveal-on-scroll */
+  .site .nframe, .site .site-copy { opacity: 0; transform: translateY(48px); transition: opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1); }
+  .site.in .nframe, .site.in .site-copy { opacity: 1; transform: none; }
+  .site.in .site-copy { transition-delay: .14s; }
+  .site.in .nframe:hover { transform: scale(1.02); }
   .nframe {
     --nb: #2ce06d;
-    position: relative; width: min(760px, 90vw); aspect-ratio: 16 / 9; padding: 14px;
+    position: relative; width: min(560px, 82vw); aspect-ratio: 16 / 9; padding: 14px;
     border-radius: 26px; pointer-events: auto; cursor: pointer;
     background: radial-gradient(140% 130% at 50% -25%, rgba(44,224,109,.18) 0%, rgba(44,224,109,0) 45%), #000;
     transition: transform .35s cubic-bezier(0.34,1.4,0.64,1), box-shadow .35s ease;
@@ -99,6 +113,17 @@
   .nframe:hover { transform: scale(1.015); box-shadow:
       0 0 0 1px rgba(44,224,109,.4), -3px -4px 10px rgba(214,255,228,.12), 0 0 8px rgba(44,224,109,.5),
       0 18px 40px rgba(0,0,0,.65), inset 0 2px 2px rgba(200,255,222,.4), inset 0 0 14px rgba(44,224,109,.38), inset 0 -11px 18px rgba(0,0,0,.78); }
+  /* desktop: frame angled on the LEFT, copy on the RIGHT; each reveals with its own slide */
+  @media (min-width: 900px) {
+    .site-inner { flex-direction: row; align-items: center; justify-content: space-between; gap: clamp(40px, 6vw, 110px); perspective: 1700px; }
+    .site-copy { text-align: left; flex: 0 1 460px; }
+    .nframe { transform-origin: left center; }
+    .site .nframe { transform: translateX(-64px) rotateY(24deg) rotateX(3deg); }
+    .site .site-copy { transform: translateX(64px); }
+    .site.in .nframe { transform: rotateY(17deg) rotateX(3deg); }
+    .site.in .site-copy { transform: none; }
+    .site.in .nframe:hover { transform: rotateY(12deg) rotateX(2deg) translateX(8px) scale(1.02); }
+  }
   /* ===== hover electricity (same spark/flow/flash system as .nbtn) ===== */
   @property --flow { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
   .nbtn-flow { position: absolute; inset: 0; border-radius: inherit; padding: 3px; opacity: 0; pointer-events: none; z-index: 5;
@@ -164,27 +189,8 @@
 
   <canvas id="dotField"></canvas>
 
-  <!-- ================= NEON VIDEO FRAME (from the .nbtn design) ================= -->
-  <div class="nframe-wrap">
-    <div class="nframe" id="siteFrame">
-      <span class="nbtn-flash"></span>
-      <span class="nbtn-flow"></span>
-      <span class="nbtn-bolt t"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8"/></svg></span>
-      <span class="nbtn-bolt t2"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,4 L23,10 L41,3 L63,11 L82,4 L104,10 L126,3 L149,11 L170,4 L200,9"/></svg></span>
-      <span class="nbtn-bolt b"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,5 L21,11 L37,3 L58,10 L74,3 L97,11 L115,4 L138,10 L157,3 L179,10 L200,5"/></svg></span>
-      <span class="nbtn-bolt b2"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,10 L19,3 L35,11 L57,4 L79,10 L98,3 L121,11 L143,4 L165,10 L200,4"/></svg></span>
-      <span class="nbtn-bolt l"><svg viewBox="0 0 14 200" preserveAspectRatio="none"><path d="M9,0 L4,19 L12,35 L3,57 L11,75 L3,97 L13,117 L4,141 L11,159 L3,181 L8,200"/></svg></span>
-      <span class="nbtn-bolt r"><svg viewBox="0 0 14 200" preserveAspectRatio="none"><path d="M5,0 L11,21 L2,38 L10,59 L2,79 L12,99 L3,121 L10,143 L2,163 L11,183 L6,200"/></svg></span>
-      <div class="nframe-screen">
-        <video class="a" muted loop playsinline preload="auto"></video>
-        <video class="b" muted loop playsinline preload="auto"></video>
-      </div>
-      <span class="nframe-inner"></span>
-      <span class="nbtn-notch l"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M0,0 L10,8 L10,36 L0,44"/></svg></span>
-      <span class="nbtn-notch r"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M10,0 L0,8 L0,36 L10,44"/></svg></span>
-      <span class="nframe-tag" id="siteTag">SynapseX</span>
-    </div>
-  </div>
+  <!-- ================= SCROLL SHOWCASE: one neon frame + copy per website ================= -->
+  <main id="siteScroll"></main>
 <script>
 /* ---- interactive neon dot lattice ---- */
 (function () {
@@ -288,27 +294,60 @@
   });
   document.getElementById("dlBtn").addEventListener("click", function () { window.location.href = "synapsex.html"; });
 
-  /* ---- neon frame: cycle the designed-website clips with a soft crossfade ---- */
+  /* ---- build one scroll section (neon frame + copy) per designed website ---- */
   (function () {
     var CF = "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/";
     var SITES = [
-      { src: "web_expreience_scrub.mp4", name: "SynapseX" },
-      { src: CF + "hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", name: "Nova" },
-      { src: CF + "hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", name: "Axiom" },
-      { src: CF + "hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", name: "Flux" }
+      { tag: "Landing Page", name: "NOVA",  src: "web_expreience_scrub.mp4", desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
+      { tag: "Creative Studio", name: "AXIOM", src: CF + "hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
+      { tag: "Commerce", name: "FLUX", src: CF + "hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
+      { tag: "Portfolio", name: "HALO", src: CF + "hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
     ];
-    var vids = document.querySelectorAll(".nframe-screen video");
-    var tag = document.getElementById("siteTag");
-    var front = vids[0], back = vids[1], idx = 0;
-    function play(v) { try { v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
-    function show(i) {
-      back.src = SITES[i].src; back.load(); play(back);
-      back.classList.add("show"); front.classList.remove("show");
-      tag.textContent = SITES[i].name;
-      var tmp = front; front = back; back = tmp;   // swap roles
-    }
-    show(0);
-    setInterval(function () { idx = (idx + 1) % SITES.length; show(idx); }, 6500);
+    var B = function (v, d) { return '<span class="nbtn-bolt ' + v + '"><svg viewBox="' + (v[0] === "l" || v[0] === "r" ? "0 0 14 200" : "0 0 200 14") + '" preserveAspectRatio="none"><path d="' + d + '"/></svg></span>'; };
+    var ZAP = '<span class="nbtn-flash"></span><span class="nbtn-flow"></span>'
+      + B("t",  "M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8")
+      + B("t2", "M0,4 L23,10 L41,3 L63,11 L82,4 L104,10 L126,3 L149,11 L170,4 L200,9")
+      + B("b",  "M0,5 L21,11 L37,3 L58,10 L74,3 L97,11 L115,4 L138,10 L157,3 L179,10 L200,5")
+      + B("b2", "M0,10 L19,3 L35,11 L57,4 L79,10 L98,3 L121,11 L143,4 L165,10 L200,4")
+      + B("l",  "M9,0 L4,19 L12,35 L3,57 L11,75 L3,97 L13,117 L4,141 L11,159 L3,181 L8,200")
+      + B("r",  "M5,0 L11,21 L2,38 L10,59 L2,79 L12,99 L3,121 L10,143 L2,163 L11,183 L6,200");
+    var NOTCH = '<span class="nbtn-notch l"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M0,0 L10,8 L10,36 L0,44"/></svg></span>'
+      + '<span class="nbtn-notch r"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M10,0 L0,8 L0,36 L10,44"/></svg></span>';
+    var scroll = document.getElementById("siteScroll");
+    SITES.forEach(function (s, i) {
+      var n = ("0" + (i + 1)).slice(-2);
+      var sec = document.createElement("section");
+      sec.className = "site";
+      sec.innerHTML =
+        '<div class="site-inner">' +
+          '<div class="nframe">' + ZAP +
+            '<div class="nframe-screen"><video class="show" muted loop playsinline preload="none" src="' + s.src + '"></video></div>' +
+            '<span class="nframe-inner"></span>' + NOTCH +
+            '<span class="nframe-tag">' + s.name + '</span>' +
+          '</div>' +
+          '<div class="site-copy">' +
+            '<span class="site-kicker">' + n + ' &mdash; ' + s.tag + '</span>' +
+            '<h2 class="site-title">' + s.name + '</h2>' +
+            '<p class="site-desc">' + s.desc + '</p>' +
+            '<a class="site-link" href="synapsex.html">View project &#8594;</a>' +
+          '</div>' +
+        '</div>';
+      scroll.appendChild(sec);
+    });
+    // reveal each section as it scrolls into view
+    var revealIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) e.target.classList.add("in"); });
+    }, { threshold: 0.3 });
+    [].slice.call(scroll.querySelectorAll(".site")).forEach(function (s) { revealIO.observe(s); });
+    // only play a frame's clip while it is on screen
+    var playIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var v = e.target;
+        if (e.isIntersecting) { try { v.muted = true; v.play().catch(function () {}); } catch (x) {} }
+        else { try { v.pause(); } catch (x) {} }
+      });
+    }, { threshold: 0.25 });
+    [].slice.call(scroll.querySelectorAll(".nframe-screen video")).forEach(function (v) { playIO.observe(v); });
   })();
 </script>
 </body>
