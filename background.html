@@ -43,9 +43,11 @@
   video { background: #000; }
 
   /* ===== Neon frame (from the section-2 .nbtn design, turned into a video showcase) ===== */
-  /* scroll stack — one section per designed website */
+  /* pinned stage — the page scrolls but the stage stays put; cards swap in place */
   #siteScroll { position: relative; z-index: 10; }
-  .site { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 120px 24px 80px; }
+  .site-stage { position: sticky; top: 0; height: 100vh; height: 100dvh; display: grid; place-items: center; overflow: hidden; }
+  .site { position: absolute; inset: 0; display: grid; place-items: center; padding: 120px 24px 80px; pointer-events: none; }
+  .site.active { pointer-events: auto; }
   .site-inner { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; max-width: 1180px; }
   .site-copy { max-width: 520px; text-align: center; }
   .site-kicker { font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .32em; text-transform: uppercase; color: #52ff96; }
@@ -53,15 +55,16 @@
   .site-desc { font-family: "Space Mono", monospace; font-size: clamp(13px, 1.5vw, 15px); line-height: 1.7; color: rgba(224,255,236,.66); }
   .site-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #9dffc4; text-decoration: none; border-bottom: 1px solid rgba(71,192,126,.4); padding-bottom: 4px; transition: color .3s, border-color .3s; }
   .site-link:hover { color: #eafff2; border-color: rgba(71,192,126,.9); }
-  /* reveal-on-scroll */
-  .site .nframe, .site .site-copy { opacity: 0; transform: translateY(48px); transition: opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1); }
-  .site.in .nframe, .site.in .site-copy { opacity: 1; transform: none; }
-  .site.in .site-copy { transition-delay: .14s; }
-  .site.in .nframe:hover { transform: scale(1.02); }
+  /* reveal — the active card animates into place, the rest sit hidden underneath */
+  .site .nframe, .site .site-copy { opacity: 0; transform: translateY(48px); transition: opacity .8s ease, transform .8s cubic-bezier(.22,1,.36,1); }
+  .site.active .nframe, .site.active .site-copy { opacity: 1; transform: none; }
+  .site.active .site-copy { transition-delay: .12s; }
+  .site.active .nframe { pointer-events: auto; }   /* only the on-stage frame is hoverable */
+  .site.active .nframe:hover { transform: scale(1.02); }
   .nframe {
     --nb: #2ce06d;
     position: relative; width: min(560px, 82vw); aspect-ratio: 16 / 9; padding: 14px;
-    border-radius: 26px; pointer-events: auto; cursor: pointer;
+    border-radius: 26px; pointer-events: none; cursor: pointer;
     background: radial-gradient(140% 130% at 50% -25%, rgba(44,224,109,.18) 0%, rgba(44,224,109,0) 45%), #000;
     transition: transform .35s cubic-bezier(0.34,1.4,0.64,1), box-shadow .35s ease;
     box-shadow:
@@ -120,9 +123,9 @@
     .nframe { transform-origin: left center; }
     .site .nframe { transform: translateX(-64px) rotateY(24deg) rotateX(3deg); }
     .site .site-copy { transform: translateX(64px); }
-    .site.in .nframe { transform: rotateY(17deg) rotateX(3deg); }
-    .site.in .site-copy { transform: none; }
-    .site.in .nframe:hover { transform: rotateY(12deg) rotateX(2deg) translateX(8px) scale(1.02); }
+    .site.active .nframe { transform: rotateY(17deg) rotateX(3deg); }
+    .site.active .site-copy { transform: none; }
+    .site.active .nframe:hover { transform: rotateY(12deg) rotateX(2deg) translateX(8px) scale(1.02); }
   }
   /* ===== hover electricity (same spark/flow/flash system as .nbtn) ===== */
   @property --flow { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
@@ -314,6 +317,7 @@
     var NOTCH = '<span class="nbtn-notch l"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M0,0 L10,8 L10,36 L0,44"/></svg></span>'
       + '<span class="nbtn-notch r"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M10,0 L0,8 L0,36 L10,44"/></svg></span>';
     var scroll = document.getElementById("siteScroll");
+    var stage = document.createElement("div"); stage.className = "site-stage";
     SITES.forEach(function (s, i) {
       var n = ("0" + (i + 1)).slice(-2);
       var sec = document.createElement("section");
@@ -332,22 +336,36 @@
             '<a class="site-link" href="synapsex.html">View project &#8594;</a>' +
           '</div>' +
         '</div>';
-      scroll.appendChild(sec);
+      stage.appendChild(sec);
     });
-    // reveal each section as it scrolls into view
-    var revealIO = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) e.target.classList.add("in"); });
-    }, { threshold: 0.3 });
-    [].slice.call(scroll.querySelectorAll(".site")).forEach(function (s) { revealIO.observe(s); });
-    // only play a frame's clip while it is on screen
-    var playIO = new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        var v = e.target;
-        if (e.isIntersecting) { try { v.muted = true; v.play().catch(function () {}); } catch (x) {} }
+    scroll.appendChild(stage);
+    scroll.style.height = (SITES.length * 100) + "vh";   // scroll runway: one screen of scroll per card
+    var sections = [].slice.call(stage.querySelectorAll(".site"));
+    var current = -1;
+    function setActive(i) {
+      if (i === current) return;
+      current = i;
+      sections.forEach(function (s, k) {
+        var on = (k === i);
+        s.classList.toggle("active", on);
+        var v = s.querySelector(".nframe-screen video");
+        if (!v) return;
+        if (on) { try { v.muted = true; v.play().catch(function () {}); } catch (x) {} }
         else { try { v.pause(); } catch (x) {} }
       });
-    }, { threshold: 0.25 });
-    [].slice.call(scroll.querySelectorAll(".nframe-screen video")).forEach(function (v) { playIO.observe(v); });
+    }
+    // scroll progress drives which card is on the (pinned) stage
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var range = scroll.offsetHeight - window.innerHeight;
+      var p = range > 0 ? (window.scrollY - scroll.offsetTop) / range : 0;
+      p = Math.max(0, Math.min(0.9999, p));
+      setActive(Math.floor(p * sections.length));
+    }
+    window.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    window.addEventListener("resize", update);
+    update();
   })();
 </script>
 </body>
