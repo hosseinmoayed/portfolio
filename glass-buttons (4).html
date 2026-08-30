@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glass Buttons</title>
+<style>
+@property --angle-1 { syntax: "<angle>"; inherits: false; initial-value: -75deg; }
+@property --angle-2 { syntax: "<angle>"; inherits: false; initial-value: -45deg; }
+:root {
+  --global--size: clamp(2rem, 4vw, 5rem);
+  --anim--hover-time: 400ms;
+  --anim--hover-ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+body {
+  font-size: var(--global--size);
+  background-color: rgba(215,215,215,1);
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+body:after{
+  content:"";
+  pointer-events:none;
+  z-index:-1;
+  position:fixed;
+  inset:0;
+  background: rgba(215,215,215,1);
+}
+
+.button-wrap {
+  position: relative;
+  display:inline-flex;
+  margin:1rem;
+  z-index: 2;
+  border-radius: 999vw;
+  background: transparent;
+  pointer-events: none;
+  transition: all var(--anim--hover-time) var(--anim--hover-ease);
+}
+.button-shadow {
+  --shadow-cuttoff-fix: 2em;
+  position: absolute;
+  width: calc(100% + var(--shadow-cuttoff-fix));
+  height: calc(100% + var(--shadow-cuttoff-fix));
+  top: calc(0% - var(--shadow-cuttoff-fix) / 2);
+  left: calc(0% - var(--shadow-cuttoff-fix) / 2);
+  filter: blur(2px);
+  overflow: visible;
+  pointer-events: none;
+}
+.button-shadow::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: 999vw;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
+  width: calc(100% - var(--shadow-cuttoff-fix) - 0.25em);
+  height: calc(100% - var(--shadow-cuttoff-fix) - 0.25em);
+  top: calc(var(--shadow-cuttoff-fix) - 0.5em);
+  left: calc(var(--shadow-cuttoff-fix) - 0.875em);
+  padding: 0.125em;
+  box-sizing: border-box;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  transition: all var(--anim--hover-time) var(--anim--hover-ease);
+  overflow: visible;
+  opacity: 1;
+}
+button {
+  --border-width: clamp(1px, 0.0625em, 4px);
+  all: unset;
+  cursor: pointer;
+  position: relative;
+  pointer-events: auto;
+  z-index: 3;
+  background: linear-gradient(-75deg, rgba(255,255,255,0.05), rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+  border-radius: 999vw;
+  box-shadow: inset 0 0.125em 0.125em rgba(0,0,0,0.05),
+              inset 0 -0.125em 0.125em rgba(255,255,255,0.5),
+              0 0.25em 0.125em -0.125em rgba(0,0,0,0.2),
+              0 0 0.1em 0.25em inset rgba(255,255,255,0.2),
+              0 0 0 0 rgba(255,255,255,1);
+  backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+  -webkit-backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+  transition: all var(--anim--hover-time) var(--anim--hover-ease);
+}
+button:hover {
+  transform: scale(0.975);
+  backdrop-filter: blur(0.01em);
+  -webkit-backdrop-filter: blur(0.01em);
+  box-shadow: inset 0 0.125em 0.125em rgba(0,0,0,0.05),
+              inset 0 -0.125em 0.125em rgba(255,255,255,0.5),
+              0 0.15em 0.05em -0.1em rgba(0,0,0,0.25),
+              0 0 0.05em 0.1em inset rgba(255,255,255,0.5),
+              0 0 0 0 rgba(255,255,255,1);
+}
+button span {
+  position: relative;
+  display: block;
+  user-select: none;
+  font-family: "Inter", sans-serif;
+  letter-spacing: -0.05em;
+  font-weight: 500;
+  font-size: 1em;
+  color: rgba(50,50,50,1);
+  -webkit-font-smoothing: antialiased;
+  text-shadow: 0 0.25em 0.05em rgba(0,0,0,0.1);
+  transition: all var(--anim--hover-time) var(--anim--hover-ease);
+  padding-inline: 1.5em;
+  padding-block: 0.875em;
+}
+button:hover span { text-shadow: 0.025em 0.025em 0.025em rgba(0,0,0,0.12); }
+button span::after {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 1;
+  width: calc(100% - var(--border-width));
+  height: calc(100% - var(--border-width));
+  top: calc(0% + var(--border-width) / 2);
+  left: calc(0% + var(--border-width) / 2);
+  box-sizing: border-box;
+  border-radius: 999vw;
+  overflow: hidden;
+  background: linear-gradient(var(--angle-2), rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 40% 50%, rgba(255,255,255,0) 55%);
+  z-index: 3;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  background-repeat: no-repeat;
+  transition: background-position calc(var(--anim--hover-time)*1.25) var(--anim--hover-ease), --angle-2 calc(var(--anim--hover-time)*1.25) var(--anim--hover-ease);
+}
+button:hover span::after { background-position: 25% 50%; }
+button:active span::after {
+  background-position: 50% 15%;
+  --angle-2: -15deg;
+}
+@media (hover: none) and (pointer: coarse) {
+  button span::after,
+  button:active span::after { --angle-2: -45deg; }
+}
+button::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: 999vw;
+  width: calc(100% + var(--border-width));
+  height: calc(100% + var(--border-width));
+  top: calc(0% - var(--border-width) / 2);
+  left: calc(0% - var(--border-width) / 2);
+  padding: var(--border-width);
+  box-sizing: border-box;
+  background: conic-gradient(from var(--angle-1) at 50% 50%, rgba(0,0,0,0.5), rgba(0,0,0,0) 5% 40%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 60% 95%, rgba(0,0,0,0.5)),
+              linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.5));
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  transition: all var(--anim--hover-time) var(--anim--hover-ease), --angle-1 500ms ease;
+  box-shadow: inset 0 0 0 calc(var(--border-width)/2) rgba(255,255,255,0.5);
+}
+button:hover::after { --angle-1: -125deg; }
+button:active::after { --angle-1: -75deg; }
+@media (hover: none) and (pointer: coarse) {
+  button::after,
+  button:hover::after,
+  button:active::after { --angle-1: -75deg; }
+}
+
+/* ===== 3D enhancement layer (added on top — original rules above untouched) ===== */
+body {
+  perspective: 1200px;
+}
+.button-wrap {
+  transform-style: preserve-3d;
+  transition: transform 120ms ease-out;
+  will-change: transform;
+}
+.button-wrap button {
+  transform-style: preserve-3d;
+}
+/* extra depth shadow beneath the shadow layer already provided */
+.button-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999vw;
+  transform: translateZ(-24px) translateY(10px) scale(0.94);
+  background: radial-gradient(closest-side, rgba(0,0,0,0.28), rgba(0,0,0,0) 80%);
+  filter: blur(6px);
+  z-index: 1;
+  pointer-events: none;
+  transition: transform 300ms var(--anim--hover-ease), opacity 300ms var(--anim--hover-ease);
+}
+.button-wrap:hover::before {
+  transform: translateZ(-32px) translateY(16px) scale(0.9);
+}
+.button-wrap button {
+  transform: translateZ(0px);
+  transition: transform 120ms ease-out, all var(--anim--hover-time) var(--anim--hover-ease);
+}
+
+/* ===== Static angled "stage" so the buttons sit tilted in 3D space like a stack of pills ===== */
+.tilt-stage {
+  position: relative;
+  perspective: 2200px;
+  perspective-origin: 50% 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* a flat shadow cast on the actual page background — sits outside the rotated 3D context */
+.scene-shadow {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 16em;
+  height: 6em;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(0,0,0,0.32), rgba(0,0,0,0) 72%);
+  filter: blur(14px);
+  z-index: 0;
+  pointer-events: none;
+}
+.tilt-stack {
+  position: relative;
+  z-index: 1;
+  font-size: 0.8em;
+  width: 15em;
+  height: 15em;
+  transform-style: preserve-3d;
+  transform: rotateX(38deg) rotateZ(-22deg);
+}
+/* the square tray the buttons sit on — exact same glass recipe as the buttons themselves */
+.tray {
+  --border-width: clamp(1px, 0.0625em, 4px);
+  position: absolute;
+  inset: 0;
+  border-radius: 22%;
+  background: linear-gradient(-75deg, rgba(255,255,255,0.05), rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+  box-shadow: inset 0 0.125em 0.125em rgba(0,0,0,0.05),
+              inset 0 -0.125em 0.125em rgba(255,255,255,0.5),
+              0 0.25em 0.125em -0.125em rgba(0,0,0,0.2),
+              0 0 0.1em 0.25em inset rgba(255,255,255,0.2),
+              0 0 0 0 rgba(255,255,255,1);
+  backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+  -webkit-backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+  transform: translateZ(-10px);
+  z-index: 1;
+}
+/* conic-gradient glass border, same recipe as button::after */
+.tray::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--border-width);
+  box-sizing: border-box;
+  background: conic-gradient(from -75deg at 50% 50%, rgba(0,0,0,0.5), rgba(0,0,0,0) 5% 40%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 60% 95%, rgba(0,0,0,0.5)),
+              linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.5));
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  box-shadow: inset 0 0 0 calc(var(--border-width)/2) rgba(255,255,255,0.5);
+}
+/* soft blurred shadow underneath, same technique as .button-shadow (not a solid opaque face) */
+.tray-shadow {
+  --shadow-cuttoff-fix: 1.5em;
+  position: absolute;
+  width: calc(100% + var(--shadow-cuttoff-fix));
+  height: calc(100% + var(--shadow-cuttoff-fix));
+  top: calc(0% - var(--shadow-cuttoff-fix) / 2);
+  left: calc(0% - var(--shadow-cuttoff-fix) / 2);
+  filter: blur(2px);
+  pointer-events: none;
+  z-index: 0;
+}
+.tray-shadow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 22%;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
+  width: calc(100% - var(--shadow-cuttoff-fix) - 0.25em);
+  height: calc(100% - var(--shadow-cuttoff-fix) - 0.25em);
+  top: calc(var(--shadow-cuttoff-fix) - 0.5em);
+  left: calc(var(--shadow-cuttoff-fix) - 0.875em);
+  padding: 0.125em;
+  box-sizing: border-box;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+/* stacked vertically in local space — the rotateZ above turns this into the photo's diagonal cascade */
+.tilt-stack .button-wrap {
+  font-size: 0.625em; /* shrink buttons only — tray size/angle stay untouched */
+  --lift: 30px;
+  --hover-lift: 0px;
+  transform: translateZ(calc(var(--lift) + var(--hover-lift)));
+  transition: transform 280ms ease;
+}
+.tilt-stack .button-wrap:hover {
+  --hover-lift: 50px;
+}
+/* the original button:hover included a slight scale(0.975) "press" feel — that fights visually
+   with our upward lift (reads as a dip before it rises), so neutralize it here only */
+.tilt-stack .button-visual button:hover {
+  transform: none;
+}
+/* percussive press-down on click: quick slam toward the tray, then settle back */
+@keyframes wrap-press {
+  0%   { transform: translateZ(calc(var(--lift) + var(--hover-lift))); }
+  25%  { transform: translateZ(calc(var(--lift) + var(--hover-lift) - 45px)); }
+  100% { transform: translateZ(calc(var(--lift) + var(--hover-lift))); }
+}
+.tilt-stack .button-wrap.press {
+  animation: wrap-press 380ms cubic-bezier(0.36, 0, 0.66, -0.56);
+}
+.tilt-stack .button-wrap.pos-1 { position: absolute; top: 4%;  left: 4%; margin: 0; z-index: 3; }
+.tilt-stack .button-wrap.pos-2 { position: absolute; top: 36%; left: 4%; margin: 0; z-index: 4; }
+.tilt-stack .button-wrap.pos-3 { position: absolute; top: 68%; left: 4%; margin: 0; z-index: 5; }
+/* rotate the label text back upright-ish so it still reads, echoing the reference photo */
+.tilt-stack .button-wrap button span { transform: rotateZ(0deg); }
+
+/* icon + label content row, and the "..." indicator dots — mirrors the reference photo */
+button .btn-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+button .btn-icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}
+button .btn-label {
+  font-weight: 500;
+}
+button .btn-dots {
+  display: inline-block;
+  margin-inline-start: 0.75em;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+/* remove the text shadow on button labels */
+button span,
+button:hover span {
+  text-shadow: none;
+}
+
+/* the visual container that holds BOTH the button face and its extrusion layers */
+.button-visual {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* click-to-activate: rotateY spin + smooth glow-fill to neon blue, together (matches reference video) */
+@keyframes btn-spin {
+  from { transform: rotateX(0deg); }
+  to   { transform: rotateX(360deg); }
+}
+.tilt-stack .button-visual.spin {
+  animation: btn-spin 650ms ease;
+}
+.tilt-stack .button-visual button {
+  transition: background 480ms ease, box-shadow 480ms ease;
+}
+.tilt-stack .button-visual.is-active button {
+  background: linear-gradient(-75deg, rgba(70,150,255,0.18), rgba(70,170,255,0.55), rgba(70,150,255,0.18));
+  box-shadow: inset 0 0.125em 0.125em rgba(0,0,0,0.05),
+              inset 0 -0.125em 0.125em rgba(255,255,255,0.6),
+              0 0.25em 0.125em -0.125em rgba(0,0,0,0.2),
+              0 0 0.1em 0.25em inset rgba(255,255,255,0.2);
+}
+.tilt-stack .button-visual .depth-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(70,150,255,0);
+  transition: background 480ms ease;
+  pointer-events: none;
+}
+.tilt-stack .button-visual.is-active .depth-layer::after {
+  background: linear-gradient(rgba(255,255,255,0.5), rgba(120,190,255,0.45));
+}
+
+/* extruded "thickness" layers (injected by script below) that give the pill real volume */
+.depth-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 999vw;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<div class="tilt-stage">
+  <div class="scene-shadow"></div>
+  <div class="tilt-stack">
+
+    <div class="tray"></div>
+    <div class="tray-shadow"></div>
+
+    <div class="button-wrap pos-1">
+      <div class="button-visual">
+        <button>
+          <span>
+            <span class="btn-row">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+              <b class="btn-label">Sleep</b>
+            </span>
+            <b class="btn-dots">&middot;&middot;&middot;</b>
+          </span>
+        </button>
+      </div>
+      <div class="button-shadow"></div>
+    </div>
+
+    <div class="button-wrap pos-2">
+      <div class="button-visual">
+        <button>
+          <span>
+            <span class="btn-row">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3a6.364 6.364 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+              <b class="btn-label">Do not disturb</b>
+            </span>
+            <b class="btn-dots">&middot;&middot;&middot;</b>
+          </span>
+        </button>
+      </div>
+      <div class="button-shadow"></div>
+    </div>
+
+    <div class="button-wrap pos-3">
+      <div class="button-visual">
+        <button>
+          <span>
+            <span class="btn-row">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <b class="btn-label">Personal</b>
+            </span>
+            <b class="btn-dots">&middot;&middot;&middot;</b>
+          </span>
+        </button>
+      </div>
+      <div class="button-shadow"></div>
+    </div>
+
+  </div>
+</div>
+
+<!--
+forked from here:
+https://codepen.io/odibixie/pen/vEYEWQR
+
+Copyright (c) 2025 by odibixie (https://codepen.io/odibixie/pen/vEYEWQR)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<script>
+// ===== 3D tilt-on-hover layer (added on top — does not touch existing markup/CSS) =====
+// Skipped for buttons living inside the static tilted stage/tray scene, since those already
+// have fixed positioning transforms that this would fight with.
+document.querySelectorAll('.button-wrap').forEach((wrap) => {
+  if (wrap.closest('.tilt-stack')) return;
+  const maxTilt = 12; // degrees
+  const btn = wrap.querySelector('button');
+
+  wrap.addEventListener('mousemove', (e) => {
+    const rect = wrap.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;  // 0..1
+    const y = (e.clientY - rect.top) / rect.height;  // 0..1
+    const rotateY = (x - 0.5) * maxTilt * 2;
+    const rotateX = (0.5 - y) * maxTilt * 2;
+    wrap.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    if (btn) btn.style.transform = `translateZ(20px)`;
+  });
+
+  wrap.addEventListener('mouseleave', () => {
+    wrap.style.transform = '';
+    if (btn) btn.style.transform = '';
+  });
+});
+
+// ===== Extrusion layer: gives each tilted pill real volume instead of looking like a flat card =====
+document.querySelectorAll('.tilt-stack .button-visual').forEach((visual) => {
+  const thickness = 14;   // total depth in px
+  const layers = 10;      // how many slices build the solid side wall
+  const step = thickness / layers;
+
+  for (let i = 1; i <= layers; i++) {
+    const layer = document.createElement('div');
+    layer.className = 'depth-layer';
+    const t = i / layers; // 0 (near top) -> 1 (bottom of the extrusion)
+    // shade gets darker/cooler toward the bottom to read as the capsule's side wall in shadow
+    const shade = Math.round(235 - t * 90);
+    layer.style.background = `rgba(${shade}, ${shade}, ${shade}, 0.45)`;
+    layer.style.boxShadow = i === layers ? '0 2px 6px rgba(0,0,0,0.35)' : 'none';
+    layer.style.transform = `translateZ(${-i * step}px)`;
+    layer.style.zIndex = String(2 - i * 0.001);
+    visual.insertBefore(layer, visual.firstChild);
+  }
+});
+
+// ===== Click: rotateY spin + toggle the neon blue glow-fill together (matches reference video) =====
+document.querySelectorAll('.tilt-stack .button-visual').forEach((visual) => {
+  const wrap = visual.closest('.button-wrap');
+  visual.addEventListener('click', () => {
+    visual.classList.toggle('is-active');
+    visual.classList.remove('spin');
+    void visual.offsetWidth; // force reflow so the animation can restart every click
+    visual.classList.add('spin');
+
+    if (wrap) {
+      wrap.classList.remove('press');
+      void wrap.offsetWidth; // force reflow so the press animation can restart every click
+      wrap.classList.add('press');
+    }
+  });
+  visual.addEventListener('animationend', () => visual.classList.remove('spin'));
+  if (wrap) {
+    wrap.addEventListener('animationend', (e) => {
+      if (e.animationName === 'wrap-press') wrap.classList.remove('press');
+    });
+  }
+});
+</script>
+
+</body>
+</html>

@@ -7,7 +7,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Anton+SC&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Anton+SC&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -529,7 +529,6 @@
         </button>
         <div class="menu-links flex items-center gap-5 whitespace-nowrap pr-5">
           <a href="#" data-target="#sec2" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">About</a>
-          <a href="#" data-target="#metrics" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Metrics</a>
         </div>
       </div>
     </div>
@@ -645,7 +644,7 @@
            RIGHT button = WEB EXPERIENCES (arrow points right →). -->
       <div id="sec2buttons" class="sec2-text absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-12 opacity-0" style="will-change: opacity, transform;">
           <!-- LEFT button: CINEMATIC ADS -->
-          <a href="#metrics" class="nbtn left" aria-label="Cinematic ads">
+          <a href="cinematic_ads_page.html" class="nbtn left" aria-label="Cinematic ads">
           <span class="nbtn-flash"></span>
           <span class="nbtn-flow"></span>
           <span class="nbtn-bolt t"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8"/></svg></span>
@@ -666,7 +665,7 @@
         </a>
 
         <!-- RIGHT button: WEB EXPERIENCES -->
-        <a href="#metrics" class="nbtn" aria-label="Web experiences">
+        <a href="web_experiences_page.html" class="nbtn" aria-label="Web experiences">
           <span class="nbtn-flash"></span>
           <span class="nbtn-flow"></span>
           <span class="nbtn-bolt t"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8"/></svg></span>
@@ -690,79 +689,10 @@
    </div>
   </section>
 
-  <!-- ================= SECTION 3: METRICS ================= -->
-  <section id="metrics" class="relative min-h-screen w-full overflow-hidden">
-    <video class="absolute inset-0 h-full w-full object-cover" autoplay muted loop playsinline preload="auto"
-      src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4"></video>
-    <div class="relative z-10 mx-auto max-w-6xl px-6 pb-32 pt-32">
-      <p class="reveal mb-20 text-center text-[13px] uppercase tracking-[0.2em] text-white/40 sm:text-[14px]">Performance Metrics</p>
-      <div class="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-8">
-        <div class="reveal-sm text-center md:text-left">
-          <div class="font-light leading-none tracking-[-0.04em] text-white text-[clamp(48px,10vw,96px)]">2.4ms</div>
-          <div class="mt-4 text-[13px] tracking-wide text-white/40 sm:text-[15px]">Synaptic Latency</div>
-        </div>
-        <div class="reveal-sm text-center md:text-left" style="transition-delay:.15s;">
-          <div class="font-light leading-none tracking-[-0.04em] text-white text-[clamp(48px,10vw,96px)]">99.7%</div>
-          <div class="mt-4 text-[13px] tracking-wide text-white/40 sm:text-[15px]">Signal Accuracy</div>
-        </div>
-        <div class="reveal-sm text-center md:text-left" style="transition-delay:.3s;">
-          <div class="font-light leading-none tracking-[-0.04em] text-white text-[clamp(48px,10vw,96px)]">140B</div>
-          <div class="mt-4 text-[13px] tracking-wide text-white/40 sm:text-[15px]">Neural Parameters</div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <!-- ================= SECTION 4: TECHNOLOGY ================= -->
-  <section class="relative flex h-screen h-[100dvh] w-full flex-col overflow-hidden px-8 py-12 sm:px-12 sm:py-16 md:px-16">
-    <video class="absolute inset-0 h-full w-full object-cover" autoplay muted loop playsinline preload="auto"
-      src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4"></video>
-    <div class="relative z-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-      <h2 class="reveal font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(36px,8vw,72px)]">Adaptive<br>Intelligence</h2>
-      <p class="reveal-sm max-w-xs text-[13px] leading-relaxed text-white/50 sm:text-[15px] md:pt-2 md:text-right" style="transition-delay:.2s;">The system learns your neural baseline within 72 hours. From there, every cognitive state is mapped, predicted, and optimized in real time.</p>
-    </div>
-    <div class="flex-1"></div>
-    <div class="relative z-10 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-6">
-      <div class="reveal-sm">
-        <div class="mb-2 text-[14px] font-normal text-white sm:text-[16px]">Cortical Mapping</div>
-        <div class="text-[12px] leading-relaxed text-white/40 sm:text-[14px]">Real-time spatial reconstruction of active neural regions.</div>
-      </div>
-      <div class="reveal-sm" style="transition-delay:.1s;">
-        <div class="mb-2 text-[14px] font-normal text-white sm:text-[16px]">Signal Isolation</div>
-        <div class="text-[12px] leading-relaxed text-white/40 sm:text-[14px]">Separates cognitive intent from biological noise.</div>
-      </div>
-      <div class="reveal-sm" style="transition-delay:.2s;">
-        <div class="mb-2 text-[14px] font-normal text-white sm:text-[16px]">State Prediction</div>
-        <div class="text-[12px] leading-relaxed text-white/40 sm:text-[14px]">Anticipates cognitive transitions before they occur.</div>
-      </div>
-      <div class="reveal-sm" style="transition-delay:.3s;">
-        <div class="mb-2 text-[14px] font-normal text-white sm:text-[16px]">Loop Feedback</div>
-        <div class="text-[12px] leading-relaxed text-white/40 sm:text-[14px]">Closed-loop adjustment based on outcome correlation.</div>
-      </div>
-    </div>
-  </section>
 
-  <!-- ================= SECTION 5: ARCHITECTURE ================= -->
-  <section class="relative min-h-screen w-full bg-black">
-    <div class="mx-auto max-w-3xl px-6 py-32 text-center">
-      <p class="reveal mb-8 text-[13px] uppercase tracking-[0.2em] text-white/40 sm:text-[14px]">Architecture</p>
-      <h2 class="reveal mb-10 font-light leading-[1.15] tracking-[-0.02em] text-white text-[clamp(28px,6vw,56px)]">Three layers. Zero friction.</h2>
-      <p class="reveal mx-auto max-w-xl text-[15px] leading-relaxed text-white/45 sm:text-[17px]">Sensor layer captures raw bioelectric signals. Processing layer isolates intent. Interface layer delivers structured output to any connected system.</p>
-      <div class="mt-20 flex flex-col items-center gap-4">
-        <div class="reveal flex h-[72px] w-full max-w-md items-center justify-between rounded-lg border border-white/10 px-6" style="transition-delay:.1s;">
-          <span class="text-[12px] uppercase tracking-[0.15em] text-white/30">Layer 1</span>
-          <span class="text-[16px] font-light text-white sm:text-[18px]">Capture</span>
-        </div>
-        <div class="reveal flex h-[72px] w-full max-w-md items-center justify-between rounded-lg border border-white/10 px-6" style="transition-delay:.25s;">
-          <span class="text-[12px] uppercase tracking-[0.15em] text-white/30">Layer 2</span>
-          <span class="text-[16px] font-light text-white sm:text-[18px]">Process</span>
-        </div>
-        <div class="reveal flex h-[72px] w-full max-w-md items-center justify-between rounded-lg border border-white/10 px-6" style="transition-delay:.4s;">
-          <span class="text-[12px] uppercase tracking-[0.15em] text-white/30">Layer 3</span>
-          <span class="text-[16px] font-light text-white sm:text-[18px]">Interface</span>
-        </div>
-      </div>
-    </div>
-  </section>
+
+
+
   <!-- ================= FOOTER ================= -->
   <footer class="relative flex min-h-[400px] flex-col overflow-hidden bg-black md:flex-row">
     <div class="h-[300px] w-full md:h-auto md:w-1/2">
@@ -1270,10 +1200,10 @@
     webexpBack.style.pointerEvents = "none";
   }
 
-  document.querySelectorAll('a[aria-label="Web experiences"]').forEach(function (a) {
-    a.addEventListener("click", function (e) { e.preventDefault(); enterWebexp(); });
-  });
+  // The Web Experiences button now navigates to its own page (no in-page film).
+  // Its href points at web_experiences_page.html, so we let the link do its job.
   webexpBack.addEventListener("click", exitWebexp);
 </script>
+
 </body>
 </html>

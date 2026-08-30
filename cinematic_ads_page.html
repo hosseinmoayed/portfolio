@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SynapseX — Background</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Anton+SC&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { fontFamily: {
+    sans: ['"Space Mono"', 'monospace'], serif: ['"Space Mono"', 'monospace'], mono: ['"Space Mono"', 'monospace'],
+  } } };
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: #000; color: #fff; min-height: 100%;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    font-family: "Space Mono", monospace;
+  }
+  /* neon dot field — fixed full-viewport backdrop */
+  #dotField { position: fixed; inset: 0; width: 100vw; height: 100dvh; pointer-events: none; display: block; z-index: 0; }
+
+  /* ===== NAVBAR (identical to synapsex.html) ===== */
+  .entrance-nav { opacity: 0; transition: opacity .8s ease; }
+  .entrance-nav.on { opacity: 1; }
+  .ham { position: relative; }
+  .ham span { position: absolute; left: 50%; top: 50%; height: 1.5px; width: 18px; background: #fff; border-radius: 2px;
+    transition: transform .3s cubic-bezier(0.34,1.4,0.64,1), opacity .2s ease; transform-origin: center; }
+  .ham .b1 { transform: translate(-50%, -5px); }
+  .ham .b2 { transform: translate(-50%, 0); }
+  .ham .b3 { transform: translate(-50%, 5px); }
+  .ham.open .b1 { transform: translate(-50%, 0) rotate(45deg); }
+  .ham.open .b2 { transform: translate(-50%, 0) scaleX(0); opacity: 0; }
+  .ham.open .b3 { transform: translate(-50%, 0) rotate(-45deg); }
+  .menu-pill { width: 48px; transition: width .45s cubic-bezier(0.22,1,0.36,1); overflow: hidden; }
+  .menu-pill.open { width: 290px; }
+  .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
+  .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
+  video { background: #000; }
+
+  /* ===== Neon frame (from the section-2 .nbtn design, turned into a video showcase) ===== */
+  /* pinned stage — the page scrolls but the stage stays put; cards swap in place */
+  #siteScroll { position: relative; z-index: 10; }
+  .site-stage { position: sticky; top: 0; height: 100vh; height: 100dvh; display: grid; place-items: center; overflow: hidden; }
+  .site { position: absolute; inset: 0; display: grid; place-items: center; padding: 120px 24px 80px; pointer-events: none; }
+  .site.active { pointer-events: auto; }
+  .site-inner { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; max-width: 1180px; perspective: 1200px; }
+  .site-copy { max-width: 520px; text-align: center; }
+  .site-kicker { font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .32em; text-transform: uppercase; color: #52ff96; }
+  .site-title { font-family: "Anton SC", sans-serif; font-size: clamp(40px, 6.4vw, 82px); line-height: .95; color: #eafff2; margin: 14px 0 14px; text-transform: uppercase; }
+  .site-desc { font-family: "Space Mono", monospace; font-size: clamp(13px, 1.5vw, 15px); line-height: 1.7; color: rgba(224,255,236,.66); }
+  .site-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #9dffc4; text-decoration: none; border-bottom: 1px solid rgba(71,192,126,.4); padding-bottom: 4px; transition: color .3s, border-color .3s; }
+  .site-link:hover { color: #eafff2; border-color: rgba(71,192,126,.9); }
+  /* ===== enter choreography ============================================
+     Direction-independent: only the incoming (active) card animates in —
+     rising from below and behind, pulling into focus. The card being left
+     behind (whether scrolled past or returned-to) simply gives way behind
+     the incoming one, so scrolling up and scrolling down look identical.
+     The .nwrap wrapper owns the motion so it never fights .nframe over
+     `transform` (hover). */
+  .site { z-index: 1; }
+  .site.active { z-index: 3; }
+  .nwrap {
+    --inX: 90px; --inY: -70px; --inRY: -12deg;
+    opacity: 0; perspective: 1500px; will-change: transform, opacity, filter;
+  }
+  .site.active .nwrap { animation: frameIn 1s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes frameIn {
+    0%   { opacity: 0; transform: translate3d(var(--inX), var(--inY), -200px) rotateY(var(--inRY)) rotate(5deg) scale(.9); filter: blur(9px) brightness(.5); }
+    46%  { opacity: 1; }
+    100% { opacity: 1; transform: none; filter: none; }
+  }
+  /* the copy reads line by line — each element carries its own delay */
+  .site-copy { --cInX: 0px; }
+  .site-copy > * { opacity: 0; will-change: transform, opacity, filter; }
+  .site-kicker { display: inline-block; }
+  .site.active .site-copy > * { animation: copyIn .8s cubic-bezier(.16,1,.3,1) both; }
+  .site.active .site-kicker { animation-delay: .10s; }
+  .site.active .site-title  { animation-delay: .18s; }
+  .site.active .site-desc   { animation-delay: .28s; }
+  .site.active .site-link   { animation-delay: .38s; }
+  @keyframes copyIn {
+    0%   { opacity: 0; transform: translate3d(var(--cInX), 34px, -130px); filter: blur(7px); }
+    100% { opacity: 1; transform: none; filter: none; }
+  }
+  .site.active .nframe { pointer-events: auto; }   /* only the on-stage frame is hoverable */
+  .site.active .nframe:hover { transform: scale(1.02); }
+  .nframe {
+    --nb: #2ce06d;
+    position: relative; width: min(560px, 82vw); aspect-ratio: 16 / 9; padding: 14px;
+    border-radius: 26px; pointer-events: none; cursor: pointer;
+    background: radial-gradient(140% 130% at 50% -25%, rgba(44,224,109,.18) 0%, rgba(44,224,109,0) 45%), #000;
+    transition: transform .35s cubic-bezier(0.34,1.4,0.64,1), box-shadow .35s ease;
+    box-shadow:
+      0 0 0 1px rgba(44,224,109,.35),
+      -3px -4px 10px rgba(214,255,228,.10),
+      0 0 6px rgba(44,224,109,.4),
+      0 14px 30px rgba(0,0,0,.6),
+      inset 0 2px 2px rgba(200,255,222,.35),
+      inset 0 0 12px rgba(44,224,109,.30),
+      inset 0 -11px 18px rgba(0,0,0,.75);
+  }
+  /* gradient neon edge — white-hot at top-left & bottom-right corners (convex neon tube) */
+  .nframe::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px;
+    background:
+      radial-gradient(circle 180px at 0% 0%, #f6fff9 0%, #7dffb0 34%, rgba(44,224,109,0) 100%),
+      radial-gradient(circle 180px at 100% 100%, #f6fff9 0%, #7dffb0 34%, rgba(44,224,109,0) 100%),
+      #22c85f;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+  }
+  /* inner outline frame, a hair inset (top & bottom only, notches sit on the sides) */
+  .nframe-inner {
+    position: absolute; inset: 8px; border-radius: 20px; z-index: 3;
+    border: 1px solid rgba(44,224,109,.5); border-left: 0; border-right: 0;
+    box-shadow: inset 0 0 14px rgba(44,224,109,.14); pointer-events: none;
+  }
+  /* the screen — the website clip lives here, framed by the neon edge */
+  .nframe-screen {
+    position: absolute; inset: 14px; border-radius: 16px; overflow: hidden; background: #000;
+    box-shadow: inset 0 0 0 1px rgba(44,224,109,.25), inset 0 0 26px rgba(0,0,0,.7);
+  }
+  .nframe-screen video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .7s ease; }
+  .nframe-screen video.show { opacity: 1; }
+  .nframe-tag {
+    position: absolute; left: 22px; bottom: 20px; z-index: 4;
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #9dffc4;
+    padding: 5px 12px; border-radius: 999px; background: rgba(6,16,11,.5);
+    border: 1px solid rgba(71,192,126,.4); box-shadow: 0 0 14px rgba(47,143,87,.3);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  }
+  /* corner bracket notches (from .nbtn-notch) */
+  .nbtn-notch { position: absolute; top: 50%; transform: translateY(-50%); width: 6px; height: 40px; z-index: 4; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(44,224,109,.16) 0%, rgba(44,224,109,0) 75%); }
+  .nbtn-notch svg { display: block; width: 100%; height: 100%; }
+  .nbtn-notch path { fill: none; stroke: #52ff96; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .nbtn-notch.l { left: 6px; filter: drop-shadow(-2px 0 4px rgba(44,224,109,.95)) drop-shadow(-7px 0 12px rgba(44,224,109,.5)); }
+  .nbtn-notch.r { right: 6px; filter: drop-shadow(2px 0 4px rgba(44,224,109,.95)) drop-shadow(7px 0 12px rgba(44,224,109,.5)); }
+  /* second beat of the entrance: the screen wipes on, then the hardware
+     details (side notches, name chip) arrive once the frame has settled */
+  .nframe-screen { clip-path: inset(0 0 100% 0 round 16px); transition: clip-path .5s cubic-bezier(.5,0,.75,.2); }
+  .site.active .nframe-screen { clip-path: inset(0 0 0 0 round 16px); transition: clip-path .95s cubic-bezier(.16,1,.3,1) .24s; }
+  .nbtn-notch, .nframe-tag { opacity: 0; transition: opacity .3s ease, transform .3s ease; }
+  .nbtn-notch.l { transform: translateY(-50%) translateX(-12px); }
+  .nbtn-notch.r { transform: translateY(-50%) translateX(12px); }
+  .nframe-tag { transform: translateY(12px); }
+  .site.active .nbtn-notch { opacity: 1; transform: translateY(-50%); transition: opacity .5s ease .36s, transform .6s cubic-bezier(.16,1,.3,1) .36s; }
+  .site.active .nframe-tag { opacity: 1; transform: none; transition: opacity .5s ease .48s, transform .6s cubic-bezier(.16,1,.3,1) .48s; }
+  /* the neon edge flares as it lands, and a light sweeps across the screen */
+  .nframe::after {
+    content: ""; position: absolute; inset: -2px; border-radius: 28px; z-index: 5; opacity: 0; pointer-events: none;
+    box-shadow: 0 0 24px 5px rgba(82,255,150,.5), 0 0 64px 18px rgba(44,224,109,.2);
+  }
+  .site.active .nframe::after { animation: framePowerOn .95s ease-out .12s both; }
+  @keyframes framePowerOn { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+  .nframe:hover { transform: scale(1.015); box-shadow:
+      0 0 0 1px rgba(44,224,109,.4), -3px -4px 10px rgba(214,255,228,.12), 0 0 8px rgba(44,224,109,.5),
+      0 18px 40px rgba(0,0,0,.65), inset 0 2px 2px rgba(200,255,222,.4), inset 0 0 14px rgba(44,224,109,.38), inset 0 -11px 18px rgba(0,0,0,.78); }
+  /* desktop: frame angled on the LEFT, copy on the RIGHT; each travels its own arc */
+  @media (min-width: 900px) {
+    .site-inner { flex-direction: row; align-items: center; justify-content: space-between; gap: clamp(40px, 6vw, 110px); perspective: 1700px; }
+    .site-copy { text-align: left; flex: 0 1 460px; --cInX: 70px; }
+    .nwrap { --inX: 240px; --inY: -150px; --inRY: -22deg; }
+    .nframe { transform-origin: left center; transform: rotateY(17deg) rotateX(3deg); }
+    .site.active .nframe:hover { transform: rotateY(12deg) rotateX(2deg) translateX(8px) scale(1.02); }
+  }
+  /* ===== hover electricity (same spark/flow/flash system as .nbtn) ===== */
+  @property --flow { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  .nbtn-flow { position: absolute; inset: 0; border-radius: inherit; padding: 3px; opacity: 0; pointer-events: none; z-index: 5;
+    background: conic-gradient(from var(--flow), rgba(255,255,255,0) 0turn, rgba(186,255,216,.95) .04turn, rgba(82,255,150,.55) .09turn, rgba(255,255,255,0) .18turn, rgba(255,255,255,0) 1turn);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+    filter: drop-shadow(0 0 4px rgba(82,255,150,.8)); }
+  .nbtn-flash { position: absolute; inset: -1px; border-radius: 27px; opacity: 0; pointer-events: none; z-index: 5;
+    box-shadow: 0 0 16px 3px rgba(82,255,150,.55), 0 0 38px 9px rgba(44,224,109,.26); }
+  .nbtn-bolt { position: absolute; opacity: 0; pointer-events: none; z-index: 6;
+    filter: drop-shadow(0 0 3px rgba(82,255,150,.95)) drop-shadow(0 0 8px rgba(44,224,109,.55)); }
+  .nbtn-bolt svg { display: block; width: 100%; height: 100%; }
+  .nbtn-bolt path { fill: none; stroke: #e6fff0; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .nbtn-bolt.t  { top: -8px; left: 7%; width: 42%; height: 16px; }
+  .nbtn-bolt.t2 { top: -6px; right: 6%; width: 34%; height: 14px; }
+  .nbtn-bolt.b  { bottom: -8px; right: 7%; width: 38%; height: 16px; }
+  .nbtn-bolt.b2 { bottom: -6px; left: 10%; width: 30%; height: 14px; }
+  .nbtn-bolt.l  { left: -9px; top: 14%; width: 15px; height: 60%; }
+  .nbtn-bolt.r  { right: -9px; top: 24%; width: 14px; height: 50%; }
+  @keyframes zapA { 0%,100%{opacity:0} 4%{opacity:1} 7%{opacity:0} 9%{opacity:.85} 12%{opacity:0} 47%{opacity:0} 49%{opacity:1} 52%{opacity:0} }
+  @keyframes zapB { 0%,100%{opacity:0} 19%{opacity:0} 21%{opacity:1} 23%{opacity:0} 25%{opacity:.7} 28%{opacity:0} 73%{opacity:0} 75%{opacity:1} 77%{opacity:0} }
+  @keyframes zapC { 0%,100%{opacity:0} 34%{opacity:0} 36%{opacity:1} 38%{opacity:0} 62%{opacity:0} 64%{opacity:.9} 66%{opacity:0} }
+  @keyframes zapD { 0%,100%{opacity:0} 11%{opacity:0} 13%{opacity:.9} 15%{opacity:0} 56%{opacity:0} 58%{opacity:1} 60%{opacity:0} 89%{opacity:0} 91%{opacity:.75} 93%{opacity:0} }
+  @keyframes zapE { 0%,100%{opacity:0} 8%{opacity:0} 10%{opacity:1} 11%{opacity:0} 39%{opacity:0} 41%{opacity:.8} 43%{opacity:0} 81%{opacity:0} 83%{opacity:1} 84%{opacity:0} }
+  @keyframes zapF { 0%,100%{opacity:0} 27%{opacity:0} 29%{opacity:.95} 31%{opacity:0} 67%{opacity:0} 68%{opacity:1} 70%{opacity:0} }
+  @keyframes flowSpin { to { --flow: 360deg; } }
+  @keyframes flashPulse { 0%,100%{opacity:0} 5%{opacity:.9} 9%{opacity:0} 48%{opacity:.7} 51%{opacity:0} 79%{opacity:.85} 82%{opacity:0} }
+  .nframe:hover .nbtn-flow  { opacity: 1; animation: flowSpin 1.6s linear infinite; }
+  .nframe:hover .nbtn-flash { animation: flashPulse 1.9s steps(1,end) infinite; }
+  .nframe:hover .nbtn-bolt.t  { animation: zapA 1.7s steps(1,end) infinite; }
+  .nframe:hover .nbtn-bolt.r  { animation: zapB 2.1s steps(1,end) .18s infinite; }
+  .nframe:hover .nbtn-bolt.b  { animation: zapC 1.5s steps(1,end) .40s infinite; }
+  .nframe:hover .nbtn-bolt.l  { animation: zapD 2.4s steps(1,end) .70s infinite; }
+  .nframe:hover .nbtn-bolt.t2 { animation: zapE 1.9s steps(1,end) .28s infinite; }
+  .nframe:hover .nbtn-bolt.b2 { animation: zapF 2.3s steps(1,end) .55s infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .nframe:hover .nbtn-flow, .nframe:hover .nbtn-flash, .nframe:hover .nbtn-bolt { animation: none; }
+    .nwrap, .site-copy > *, .nframe::after { animation: none !important; }
+    .site.active .nwrap, .site.active .site-copy > * { opacity: 1; }
+    .nframe-screen, .site.active .nframe-screen { clip-path: none; }
+    .nbtn-notch, .nframe-tag { opacity: 1; transform: none; }
+    .nbtn-notch.l, .nbtn-notch.r { transform: translateY(-50%); }
+  }
+
+  /* running index — reinforces this is a multi-project showcase */
+  .page-count { position: fixed; right: 28px; bottom: 24px; z-index: 40; pointer-events: none;
+    font-family: "Space Mono", monospace; letter-spacing: .1em; line-height: 1;
+    opacity: 0; transition: opacity .8s ease .45s; }
+  .page-count.on { opacity: 1; }
+  .pc-cur { font-size: 24px; color: #eafff2; transition: color .4s ease; }
+  .pc-sep { margin: 0 5px; color: rgba(224,255,236,.35); }
+  .pc-total { font-size: 13px; color: rgba(224,255,236,.55); }
+  @media (max-width: 640px) {
+    .page-count { right: 18px; bottom: 18px; }
+  }
+
+  /* ===== "View project" → grow the frame to the centre of the screen =============
+     Two layers do the work so nothing has to be swapped at the end of the move:
+       .zoom-stage  — unrotated, owns the travel + scale, carries the same
+                      perspective the card had, so the tilt reads identically;
+       .nframe      — keeps owning its own resting tilt, which simply eases to flat.
+     At rest both are at their identity values, which means the closing animation
+     lands exactly on the card's real resting state — no final jump. */
+  /* reserve the scrollbar gutter so locking scroll during the zoom can't shift the layout */
+  html { scrollbar-gutter: stable; }
+  .zoom-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(2,8,5,.84);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity .6s ease; }
+  .zoom-backdrop.on { opacity: 1; pointer-events: auto; }
+  .zoom-stage { position: fixed; z-index: 70; perspective: 1500px; transform-origin: top left;
+    will-change: transform; }
+  .zoom-stage > .nframe { width: 100%; height: 100%; }
+  .nframe.zoomed { pointer-events: auto; cursor: default;
+    box-shadow:
+      0 0 0 1px rgba(44,224,109,.55),
+      0 0 38px rgba(44,224,109,.5),
+      0 46px 140px rgba(0,0,0,.85),
+      inset 0 2px 2px rgba(200,255,222,.4),
+      inset 0 0 24px rgba(44,224,109,.42),
+      inset 0 -11px 18px rgba(0,0,0,.78); }
+  /* The frame's internals are revealed by `.site.active …` rules, which stop
+     matching once the frame moves into the zoom stage — restate them here so the
+     clip opens and the hardware details stay put while it's enlarged. */
+  .nframe.zoomed .nframe-screen { clip-path: inset(0 0 0 0 round 16px); }
+  .nframe.zoomed .nbtn-notch { opacity: 1; }
+  .nframe.zoomed .nbtn-notch.l, .nframe.zoomed .nbtn-notch.r { transform: translateY(-50%); }
+  .nframe.zoomed .nframe-tag { opacity: 1; transform: none; }
+  /* an enlarged frame is a viewing surface, not a button — no hover lightning */
+  .nframe.zoomed:hover .nbtn-flow,
+  .nframe.zoomed:hover .nbtn-flash,
+  .nframe.zoomed:hover .nbtn-bolt { animation: none !important; opacity: 0 !important; }
+  /* the copy recedes while the frame is being read */
+  .site-copy { transition: opacity .5s ease, transform .6s cubic-bezier(.22,1,.28,1), filter .5s ease; }
+  body.zoom-open .site.active .site-copy { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(3px); }
+  /* close control — lives outside the stage so it never scales with the frame.
+     The nav and the counter step aside while a preview is open, so the button
+     can sit in the standard top-right corner without colliding with them. */
+  body.zoom-open .entrance-nav,
+  body.zoom-open .page-count { opacity: 0; pointer-events: none; transition: opacity .4s ease; }
+  .zoom-close { position: fixed; top: 22px; right: 26px; z-index: 75; display: grid; place-items: center;
+    width: 42px; height: 42px; padding: 0; border-radius: 999px; cursor: pointer; -webkit-appearance: none; appearance: none;
+    font-family: "Space Mono", monospace; font-size: 17px; line-height: 1; color: #cfffe0;
+    background: rgba(6,16,11,.6); border: 1px solid rgba(71,192,126,.45);
+    box-shadow: 0 0 16px rgba(47,143,87,.35); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+    opacity: 0; pointer-events: none; transform: scale(.85);
+    transition: opacity .35s ease, transform .45s cubic-bezier(.22,1,.28,1), color .25s ease, border-color .25s ease; }
+  .zoom-close.on { opacity: 1; pointer-events: auto; transform: none; transition-delay: .25s; }
+  .zoom-close:hover { color: #fff; border-color: rgba(71,192,126,.95); }
+  @media (max-width: 640px) { .zoom-close { top: 18px; right: 16px; width: 38px; height: 38px; } }
+  @media (prefers-reduced-motion: reduce) {
+    .zoom-stage, .site-copy, .zoom-close { transition-duration: .01s !important; }
+  }
+</style>
+</head>
+<body>
+  <!-- ================= NAVBAR (identical to the other pages) ================= -->
+  <nav class="entrance-nav fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between px-4 sm:px-6 md:px-8">
+    <div class="flex items-center gap-2">
+      <a href="synapsex.html" id="logoPill" class="flex h-9 items-center gap-2 rounded-[10px] bg-white/15 px-3 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-12 sm:rounded-[14px] sm:px-5">
+        <span data-logo class="inline-block h-[16px] w-[16px] text-white sm:h-[18px] sm:w-[18px]"></span>
+        <span class="text-[13px] font-medium tracking-tight text-white sm:text-[16px]">Cinematic Ads</span>
+      </a>
+      <div id="menuPill" class="menu-pill flex h-9 items-center rounded-[10px] bg-white/15 backdrop-blur-md sm:h-12 sm:rounded-[14px]">
+        <button id="hamBtn" aria-label="Menu" class="ham grid h-9 w-9 shrink-0 place-items-center rounded-[10px] transition-colors hover:bg-white/10 sm:h-12 sm:w-12 sm:rounded-[14px]">
+          <span class="b1"></span><span class="b2"></span><span class="b3"></span>
+        </button>
+        <div class="menu-links flex items-center gap-5 whitespace-nowrap pr-5">
+          <a href="synapsex.html#sec2" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">About</a>
+          <a href="synapsex.html#metrics" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Metrics</a>
+        </div>
+      </div>
+    </div>
+    <button id="dlBtn" class="flex h-9 items-center gap-2 rounded-full bg-white px-3.5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-12 sm:px-6">
+      <i class="bi bi-apple text-[14px] sm:text-[16px]"></i>
+      <span class="text-[13px] font-medium sm:text-[15px]">Download</span>
+    </button>
+  </nav>
+
+  <canvas id="dotField"></canvas>
+
+  <!-- running project index -->
+  <div id="siteCount" class="page-count">
+    <span class="pc-cur">01</span><span class="pc-sep">/</span><span class="pc-total">04</span>
+  </div>
+
+  <!-- ================= SCROLL SHOWCASE: one neon frame + copy per website ================= -->
+  <main id="siteScroll"></main>
+<script>
+/* ---- interactive neon dot lattice ---- */
+(function () {
+  var cv = document.getElementById("dotField");
+  var ctx = cv.getContext("2d");
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  var GAP = 56;                                  // grid pitch — wider pitch = fewer dots
+  var W = 0, H = 0, dots = [], cols = 0, rows = 0;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var mx = -9999, my = -9999, tx = -9999, ty = -9999;
+  var R_PUSH = 110, R_LIGHT = 190, PUSH = 26;
+  function build() {
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dots = [];
+    cols = Math.ceil(W / GAP) + 1; rows = Math.ceil(H / GAP) + 1;
+    var offX = (W - (cols - 1) * GAP) / 2, offY = (H - (rows - 1) * GAP) / 2;
+    for (var j = 0; j < rows; j++) {
+      for (var i = 0; i < cols; i++) {
+        var accent = Math.random() < 0.06;
+        dots.push({ hx: offX + i * GAP, hy: offY + j * GAP, dx: 0, dy: 0,
+          r: accent ? 2.3 : 1.6 + Math.random() * 0.8,
+          minA: accent ? 0.14 : 0.05,
+          maxA: accent ? 0.62 + Math.random() * .13 : 0.30 + Math.random() * .16,
+          ph: Math.random() * Math.PI * 2,
+          sp: (accent ? 1.0 : 1.6) + Math.random() * 2.0,
+          wob: 0, gr: accent ? 2.3 : 1.6 + Math.random() * 0.8 });
+      }
+    }
+  }
+  function dot(i, j) { return dots[j * cols + i]; }
+  function paint(t) {
+    mx += (tx - mx) * 0.12; my += (ty - my) * 0.12;
+    ctx.clearRect(0, 0, W, H);
+    ctx.shadowColor = "rgba(44,224,109,.75)"; ctx.shadowBlur = 6;
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+      d.dx += (0 - d.dx) * 0.08; d.dy += (0 - d.dy) * 0.08;
+      var glow = 0;
+      if (tx > -9000) {
+        var vx = d.hx + d.dx - mx, vy = d.hy + d.dy - my, dist = Math.sqrt(vx * vx + vy * vy);
+        if (dist < R_PUSH && dist > 0.001) { var f = (1 - dist / R_PUSH); f *= f; var inv = 1 / dist; d.dx += (vx * inv) * f * PUSH * 0.16; d.dy += (vy * inv) * f * PUSH * 0.16; }
+        if (dist < R_LIGHT && dist > 0.001) { var g = 1 - dist / R_LIGHT; glow = g * g * 0.28; }
+      }
+      d.wob = Math.sin(t * 0.31 + d.ph * 1.7) * 0.6 + Math.sin(t * 0.13 + d.sp * 4.1) * 0.4;
+      var wave = Math.sin(d.ph + t * d.sp + d.wob);
+      var a = Math.max(0.10, d.minA + (d.maxA - d.minA) * (0.5 + 0.5 * wave)) + glow;
+      if (a > 0.85) a = 0.85;
+      d.a = a;
+      var target = glow > 0 ? d.r * (1 + 2.2 * (glow / 0.28)) : d.r;
+      d.gr += (target - d.gr) * 0.14;
+      ctx.fillStyle = "rgba(44,224,109," + a.toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(d.hx + d.dx, d.hy + d.dy, d.gr, 0, 6.2832); ctx.fill();
+    }
+    ctx.shadowBlur = 0; ctx.lineWidth = 1;
+    for (var j = 0; j < rows; j++) {
+      for (var i2 = 0; i2 < cols; i2++) {
+        var p = dot(i2, j); if (!p) continue;
+        if (i2 < cols - 1) line(p, dot(i2 + 1, j));
+        if (j < rows - 1) line(p, dot(i2, j + 1));
+      }
+    }
+    function line(p, q) {
+      var ax = p.hx + p.dx, ay = p.hy + p.dy, bx = q.hx + q.dx, by = q.hy + q.dy;
+      var la = (p.a || 0) + (q.a || 0), gg = Math.min(0.16, 0.05 + la * 0.09);
+      ctx.strokeStyle = "rgba(160,170,165," + gg.toFixed(3) + ")";
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    }
+  }
+  function loop(ms) { paint(ms / 1000); requestAnimationFrame(loop); }
+  window.addEventListener("pointermove", function (e) { tx = e.clientX; ty = e.clientY; }, { passive: true });
+  window.addEventListener("pointerleave", function () { tx = -9999; ty = -9999; });
+  document.addEventListener("mouseleave", function () { tx = -9999; ty = -9999; });
+  window.addEventListener("resize", build);
+  build();
+  if (reduce) paint(1.7); else requestAnimationFrame(loop);
+})();
+</script>
+<script>
+  /* ---- SynapseX logo (same 4-fold mark as the other pages) ---- */
+  (function () {
+    var P = "M 1.5,23 L 1.5,33 C 1.5,38.5 6,43 11.5,43 L 16.5,43 C 22,43 26.5,38.5 26.5,33 Q 28,28 33,26.5 C 38.5,26.5 43,22 43,16.5 L 43,11.5 C 43,6 38.5,1.5 33,1.5 L 23,1.5 Q 12,12 1.5,23 Z";
+    var svg = '<svg viewBox="-50 -50 100 100" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg">'
+      + [0,90,180,270].map(function(a){ return '<path d="'+P+'" transform="rotate('+a+')"/>'; }).join('') + '</svg>';
+    document.querySelectorAll('[data-logo]').forEach(function (el) { el.innerHTML = svg; });
+  })();
+
+  /* ---- navbar: reveal + hamburger menu (same behaviour as the other pages) ---- */
+  document.querySelector(".entrance-nav").classList.add("on");
+  document.getElementById("siteCount").classList.add("on");
+  var menuPill = document.getElementById("menuPill");
+  var hamBtn = document.getElementById("hamBtn");
+  var logoPill = document.getElementById("logoPill");
+  var menuOpen = false;
+  hamBtn.addEventListener("click", function () {
+    menuOpen = !menuOpen;
+    hamBtn.classList.toggle("open", menuOpen);
+    menuPill.classList.toggle("open", menuOpen);
+    if (window.innerWidth < 768) logoPill.style.display = menuOpen ? "none" : "";
+    else logoPill.style.display = "";
+  });
+  document.getElementById("dlBtn").addEventListener("click", function () { window.location.href = "synapsex.html"; });
+
+  /* ---- build one scroll section (neon frame + copy) per designed website ---- */
+  (function () {
+    var CF = "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/";
+    var SITES = [
+      { tag: "Landing Page", name: "NOVA",  src: "web_expreience_scrub.mp4", desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
+      { tag: "Creative Studio", name: "AXIOM", src: CF + "hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
+      { tag: "Commerce", name: "FLUX", src: CF + "hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
+      { tag: "Portfolio", name: "HALO", src: CF + "hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
+    ];
+    var B = function (v, d) { return '<span class="nbtn-bolt ' + v + '"><svg viewBox="' + (v[0] === "l" || v[0] === "r" ? "0 0 14 200" : "0 0 200 14") + '" preserveAspectRatio="none"><path d="' + d + '"/></svg></span>'; };
+    var ZAP = '<span class="nbtn-flash"></span><span class="nbtn-flow"></span>'
+      + B("t",  "M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8")
+      + B("t2", "M0,4 L23,10 L41,3 L63,11 L82,4 L104,10 L126,3 L149,11 L170,4 L200,9")
+      + B("b",  "M0,5 L21,11 L37,3 L58,10 L74,3 L97,11 L115,4 L138,10 L157,3 L179,10 L200,5")
+      + B("b2", "M0,10 L19,3 L35,11 L57,4 L79,10 L98,3 L121,11 L143,4 L165,10 L200,4")
+      + B("l",  "M9,0 L4,19 L12,35 L3,57 L11,75 L3,97 L13,117 L4,141 L11,159 L3,181 L8,200")
+      + B("r",  "M5,0 L11,21 L2,38 L10,59 L2,79 L12,99 L3,121 L10,143 L2,163 L11,183 L6,200");
+    var NOTCH = '<span class="nbtn-notch l"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M0,0 L10,8 L10,36 L0,44"/></svg></span>'
+      + '<span class="nbtn-notch r"><svg viewBox="0 0 11 44" preserveAspectRatio="none"><path d="M10,0 L0,8 L0,36 L10,44"/></svg></span>';
+    var scroll = document.getElementById("siteScroll");
+    var countEl = document.getElementById("siteCount");
+    var countCurEl = countEl ? countEl.querySelector(".pc-cur") : null;
+    var countTotalEl = countEl ? countEl.querySelector(".pc-total") : null;
+    if (countTotalEl) countTotalEl.textContent = ("0" + SITES.length).slice(-2);
+    var stage = document.createElement("div"); stage.className = "site-stage";
+    SITES.forEach(function (s, i) {
+      var n = ("0" + (i + 1)).slice(-2);
+      var sec = document.createElement("section");
+      sec.className = "site";
+      sec.innerHTML =
+        '<div class="site-inner">' +
+          '<div class="nwrap"><div class="nframe">' + ZAP +
+            '<div class="nframe-screen"><video class="show" muted loop playsinline preload="none" src="' + s.src + '"></video></div>' +
+            '<span class="nframe-inner"></span>' + NOTCH +
+            '<span class="nframe-tag">' + s.name + '</span>' +
+          '</div></div>' +
+          '<div class="site-copy">' +
+            '<span class="site-kicker">' + n + ' &mdash; ' + s.tag + '</span>' +
+            '<h2 class="site-title">' + s.name + '</h2>' +
+            '<p class="site-desc">' + s.desc + '</p>' +
+            '<a class="site-link" href="synapsex.html">View project &#8594;</a>' +
+          '</div>' +
+        '</div>';
+      stage.appendChild(sec);
+    });
+    scroll.appendChild(stage);
+    scroll.style.height = (SITES.length * 100) + "vh";   // scroll runway: one screen of scroll per card
+    var sections = [].slice.call(stage.querySelectorAll(".site"));
+    var current = -1;
+    function setActive(i) {
+      if (i === current) return;
+      current = i;
+      if (countCurEl) countCurEl.textContent = ("0" + (i + 1)).slice(-2);
+      sections.forEach(function (s, k) {
+        var on = (k === i);
+        s.classList.toggle("active", on);
+        s.classList.toggle("past", k < i);   // already scrolled past — exits upward
+        s.classList.toggle("next", k > i);   // still waiting below the stage
+        var v = s.querySelector(".nframe-screen video");
+        if (!v) return;
+        if (on) { try { v.muted = true; v.play().catch(function () {}); } catch (x) {} }
+        else { try { v.pause(); } catch (x) {} }
+      });
+    }
+    // scroll progress drives which card is on the (pinned) stage
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var range = scroll.offsetHeight - window.innerHeight;
+      var p = range > 0 ? (window.scrollY - scroll.offsetTop) / range : 0;
+      p = Math.max(0, Math.min(0.9999, p));
+      setActive(Math.floor(p * sections.length));
+    }
+    document.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+
+    /* ---- "View project" → the frame grows to the centre of the screen ----
+       A fixed .zoom-stage (unrotated, carrying the same perspective the card had)
+       owns the travel and the scale; the frame keeps owning its own tilt, easing
+       between its resting angle and flat. Both layers finish on their identity
+       values, so the closing move lands exactly on the card's real resting state
+       and nothing has to be snapped into position at the end. */
+    var backdrop = document.createElement("div");
+    backdrop.className = "zoom-backdrop";
+    var zStage = document.createElement("div");
+    zStage.className = "zoom-stage";
+    var closeBtn = document.createElement("button");
+    closeBtn.className = "zoom-close"; closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Close preview");
+    closeBtn.innerHTML = "&#215;";
+    document.body.appendChild(backdrop);
+    document.body.appendChild(zStage);
+    document.body.appendChild(closeBtn);
+
+    var OPEN_EASE = "cubic-bezier(.22,1,.28,1)";     // long decelerating settle
+    var CLOSE_EASE = "cubic-bezier(.5,.02,.3,1)";    // leaves briskly, still lands soft
+    var OPEN_MS = 780, CLOSE_MS = 640;
+    var zFrame = null, zSlot = null, zRest = "none", zBusy = false;
+
+    function moveFrame(frame, parent) {              // reparent without dropping playback
+      var v = frame.querySelector(".nframe-screen video");
+      var at = v ? v.currentTime : 0;
+      parent.appendChild(frame);
+      if (!v) return;
+      try {
+        v.muted = true;
+        if (isFinite(at) && Math.abs(v.currentTime - at) > 0.05) v.currentTime = at;
+        var p = v.play(); if (p && p.catch) p.catch(function () {});
+      } catch (x) {}
+    }
+
+    function stageTarget(slotRect) {                 // where the stage has to land, centred
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var k = Math.min(Math.min(1100, vw * 0.92) / slotRect.width, (vh * 0.86) / slotRect.height);
+      if (k < 1) k = 1;
+      return "translate(" + ((vw - slotRect.width * k) / 2 - slotRect.left) + "px,"
+                          + ((vh - slotRect.height * k) / 2 - slotRect.top) + "px) scale(" + k + ")";
+    }
+    function seatStage(slotRect) {                   // park the stage exactly over the card slot
+      zStage.style.left = slotRect.left + "px";
+      zStage.style.top = slotRect.top + "px";
+      zStage.style.width = slotRect.width + "px";
+      zStage.style.height = slotRect.height + "px";
+    }
+
+    function openZoom(frame) {
+      if (zFrame || zBusy || !frame) return;
+      zFrame = frame; zSlot = frame.parentNode;
+      zRest = getComputedStyle(frame).transform;     // the tilt the card rests at
+      var slotRect = zSlot.getBoundingClientRect();
+      zSlot.style.width = zSlot.offsetWidth + "px";  // hold the footprint so nothing reflows
+      zSlot.style.height = zSlot.offsetHeight + "px";
+      zStage.style.transition = "none"; zStage.style.transform = "none";
+      seatStage(slotRect);
+      moveFrame(frame, zStage);
+      frame.classList.add("zoomed");
+      frame.style.transition = "none";
+      frame.style.transform = zRest;                 // pixel-identical to how it sat in the card
+      zStage.getBoundingClientRect();                // flush both start values
+      zStage.style.transition = "transform " + OPEN_MS + "ms " + OPEN_EASE;
+      zStage.style.transform = stageTarget(slotRect);
+      frame.style.transition = "transform " + (OPEN_MS - 130) + "ms " + OPEN_EASE
+                             + ", box-shadow " + OPEN_MS + "ms ease";
+      frame.style.transform = "none";                // tilt flattens a touch ahead of the travel
+      backdrop.classList.add("on");
+      closeBtn.classList.add("on");
+      document.body.classList.add("zoom-open");
+      document.documentElement.style.overflow = "hidden";
+    }
+
+    function closeZoom() {
+      if (!zFrame || zBusy) return;
+      zBusy = true;
+      var frame = zFrame, slot = zSlot;
+      zFrame = null; zSlot = null;
+      backdrop.classList.remove("on");
+      closeBtn.classList.remove("on");
+      document.body.classList.remove("zoom-open");
+      document.documentElement.style.overflow = "";
+      frame.style.transition = "transform " + CLOSE_MS + "ms " + CLOSE_EASE
+                             + ", box-shadow " + CLOSE_MS + "ms ease";
+      frame.style.transform = zRest;                 // the tilt eases back in
+      zStage.style.transition = "transform " + CLOSE_MS + "ms " + CLOSE_EASE;
+      zStage.style.transform = "none";               // and the stage shrinks onto the slot
+      var done = false, timer;
+      function finish(e) {
+        if (e && e.target !== zStage) return;        // only the stage's own transform counts
+        if (done) return; done = true;
+        clearTimeout(timer);
+        zStage.removeEventListener("transitionend", finish);
+        frame.classList.remove("zoomed");
+        frame.removeAttribute("style");              // resting state — identical to what's on screen
+        moveFrame(frame, slot);
+        slot.style.width = ""; slot.style.height = "";
+        zStage.removeAttribute("style");
+        zBusy = false;
+      }
+      zStage.addEventListener("transitionend", finish);
+      timer = setTimeout(finish, CLOSE_MS + 80);     // fallback if transitionend never lands
+    }
+
+    stage.addEventListener("click", function (e) {
+      var link = e.target.closest(".site-link");
+      if (!link) return;
+      e.preventDefault();
+      openZoom(link.closest(".site").querySelector(".nframe"));
+    });
+    closeBtn.addEventListener("click", closeZoom);
+    backdrop.addEventListener("click", closeZoom);
+    window.addEventListener("keydown", function (e) { if (e.key === "Escape") closeZoom(); });
+    window.addEventListener("resize", function () {  // keep the open preview anchored on resize
+      if (!zFrame) return;
+      var slotRect = zSlot.getBoundingClientRect();
+      zStage.style.transition = "none";
+      seatStage(slotRect);
+      zStage.style.transform = stageTarget(slotRect);
+    });
+  })();
+</script>
+</body>
+</html>
