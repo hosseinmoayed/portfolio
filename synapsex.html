@@ -511,68 +511,89 @@
     .we-card.s-wire .we-wire rect { transition: none; }
   }
 
-  /* ===== CONTACT: icon rows — tune layout with the vars below ===== */
-  .contact-row {
-    --icon-size: 270px;   /* width & height of each icon */
-    --icon-gap: 150px;    /* horizontal space between icons */
-    --icon-y: 60vh;      /* distance of the row from the section's TOP edge */
+  /* ===== CONTACT: three PAIRED columns =====
+     Each channel is one column holding its small icon above its large artwork,
+     so the pair is a single unit: scale the column and both scale together,
+     move the column and both move together.
+
+     Geometry is calibrated to reproduce the pre-pairing layout EXACTLY, at any
+     viewport height: the artworks' centres sit on --grid-y (was the main row's
+     60vh) and the icons' centres land --pair-span above them (was 60vh - 35vh
+     = 25vh). Because both anchors are the box CENTRES, the numbers here mean the
+     same thing they did before the columns existed. */
+  #contact .contact-grid {
+    --col-gap: 160px;     /* horizontal space between the three columns */
+    --grid-y: 58vh;       /* centre line of the ARTWORKS (old main row --icon-y) */
+    --pair-span: 25vh;    /* centre-to-centre distance, icon → its artwork
+                             (old: 60vh main row − 35vh icon row) */
+    --art-size: 270px;    /* box of the large artwork (old main --icon-size) */
+    --icon-size: 86px;    /* box of the small floating icon (old icons --icon-size) */
+
+    /* flex `gap` cannot go negative, so the spacing lives on the icon's margin
+       instead — that way --pair-span can be pushed all the way down (and past
+       zero, overlapping the two) with no dead zone */
+    --pair-gap: calc(var(--pair-span) - var(--art-size) / 2 - var(--icon-size) / 2);
 
     position: absolute;
-    left: 50%; top: var(--icon-y);
-    transform: translate(-50%, -50%);
+    left: 50%; top: var(--grid-y);
+    /* lift the grid so the ARTWORK's centre — not the column's edge — lands on --grid-y */
+    transform: translate(-50%, calc(-1 * (var(--icon-size) + var(--pair-gap) + var(--art-size) / 2)));
     display: flex;
-    align-items: center;
-    gap: var(--icon-gap);
+    align-items: flex-end;   /* bottom-aligned → the artworks share one floor */
+    gap: var(--col-gap);
+    z-index: 10;
   }
+  /* ===== the PAIR LOCK — both vars move/size the icon AND artwork together =====
+       --col-scale : size of the WHOLE pair (1 = default, 1.1 = 10% bigger)
+       --col-y     : vertical offset of the WHOLE pair (negative = up)
+     Per-pair values are set further down, one line per channel. The sizes and
+     gap live on the grid above so all three columns share one layout box —
+     that is what lets the grid compute the artwork-centre offset exactly. */
+  #contact .contact-col {
+    --col-scale: 1;
+    --col-y: 0px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* spacing comes from .contact-icon's margin-bottom, not gap — see --pair-gap */
+    gap: 0;
+    /* `scale` and `translate` are separate properties from `transform`, so the
+       pair lock never fights the icons' float or the items' hover/entrance */
+    scale: var(--col-scale);
+    translate: 0 var(--col-y);
+    transform-origin: 50% 100%;   /* grow from the floor, not the centre */
+  }
+  #contact .contact-col .contact-icon { width: var(--icon-size); height: var(--icon-size); margin-bottom: var(--pair-gap); }
+  #contact .contact-col .contact-art  { width: var(--art-size);  height: var(--art-size);  }
+  /* the icon sits visually above its artwork, so it must paint above it too */
+  #contact .contact-icon { z-index: 2; }
+  #contact .contact-art  { z-index: 1; }
   .contact-item {
-    width: var(--icon-size); height: var(--icon-size);
     display: block;
     position: relative;
     transition: transform .3s cubic-bezier(.34,1.4,.64,1);   /* transform only — see the hover note below */
   }
-  /* ===== resting ground shadow — an ellipse pooled under each icon =====
-     On a black backdrop a dark shadow would be invisible, so this ellipse
-     works by occluding the dot-grid beneath it: the dots vanish under the
-     icon and it reads as standing on a surface. Tunable per row/icon:
-       --shadow-w / --shadow-h : ellipse size, % of the icon box
-       --shadow-y              : how far above the box's bottom edge it sits
-       --shadow-blur           : softness */
-  .contact-item::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: var(--shadow-y, 3%);
-    width: var(--shadow-w, 66%);
-    height: var(--shadow-h, 13%);
-    transform: translateX(-50%);
-    background: radial-gradient(closest-side, rgba(0,0,0,.92), rgba(0,0,0,.55) 48%, rgba(0,0,0,0) 78%);
-    filter: blur(var(--shadow-blur, 7px));
-    z-index: 0;
-    pointer-events: none;
-    transition: transform .3s cubic-bezier(.34,1.4,.64,1), opacity .3s ease;
-  }
+  /* (the old ground-ellipse shadow was removed at the user's request) */
   /* the icon itself paints above its own shadow */
   .contact-item img { position: relative; z-index: 1; }
-  /* when the icon lifts on hover the shadow stays on the floor and softens */
-  .contact-item:hover::after { transform: translateX(-50%) translateY(6px) scale(.92); opacity: .75; }
   .contact-item img {
     width: 100%; height: 100%;
     object-fit: contain;
     display: block;
     pointer-events: none;
     user-select: none;
-    /* soft grounding shadow under each icon */
-    filter: drop-shadow(0 18px 26px rgba(0,0,0,.55)) drop-shadow(0 4px 10px rgba(0,0,0,.4));
+    filter: none;   /* the standing shadow was removed — the addresses below read cleaner without it */
   }
-  /* the same "standing on a surface" read for the main-row artwork
-     (telegram.png / email.png): a mirrored reflection below the image.
-     Scoped to the main row so the small floating icons stay in mid-air.
+  /* the "standing on a surface" read for the large artwork: a mirrored
+     reflection below the image. Scoped to the artwork so the small floating
+     icons stay in mid-air.
        --img-reflect-gap   : distance between the artwork and its reflection
        --img-reflect-alpha : brightness of the reflection at its strongest
        the gradient stop   : how high the fade starts (bigger % = shorter) */
-  .contact-row:not(.contact-row-icons) .contact-item img {
+  #contact .contact-art img {
     -webkit-box-reflect: below var(--img-reflect-gap, 0px)
-      linear-gradient(transparent 62%, rgba(255,255,255,var(--img-reflect-alpha, .28)));
+      linear-gradient(transparent 62%, rgba(255,255,255,var(--img-reflect-alpha, .1)));
   }
   /* ===== soft entrance — icons fade + rise in when the section scrolls in =====
      Uses the `transform` property only, so it never fights the icons' own
@@ -583,16 +604,40 @@
     transition: opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1);
   }
   #contact.in .contact-item { opacity: 1; transform: none; }
-  /* gentle left-to-right stagger across the six icons */
-  #contact.in .contact-row-icons .contact-item:nth-child(1) { transition-delay: .05s; }
-  #contact.in .contact-row-icons .contact-item:nth-child(2) { transition-delay: .13s; }
-  #contact.in .contact-row-icons .contact-item:nth-child(3) { transition-delay: .21s; }
-  #contact.in .contact-row:not(.contact-row-icons) .contact-item:nth-child(1) { transition-delay: .18s; }
-  #contact.in .contact-row:not(.contact-row-icons) .contact-item:nth-child(2) { transition-delay: .26s; }
-  #contact.in .contact-row:not(.contact-row-icons) .contact-item:nth-child(3) { transition-delay: .34s; }
+  /* gentle left-to-right stagger: each column's icon leads its own artwork */
+  #contact.in .contact-col:nth-child(1) .contact-icon { transition-delay: .05s; }
+  #contact.in .contact-col:nth-child(2) .contact-icon { transition-delay: .13s; }
+  #contact.in .contact-col:nth-child(3) .contact-icon { transition-delay: .21s; }
+  #contact.in .contact-col:nth-child(1) .contact-art  { transition-delay: .18s; }
+  #contact.in .contact-col:nth-child(2) .contact-art  { transition-delay: .26s; }
+  #contact.in .contact-col:nth-child(3) .contact-art  { transition-delay: .34s; }
   @media (prefers-reduced-motion: reduce) {
     #contact .contact-item { opacity: 1; transform: none; transition: none; }
   }
+  /* ===== the address under each column =====
+     Always visible, plain white — no shadow. The hover rules only lift it to
+     full white so it reads as a live link.
+       --handle-size  : font size
+       --handle-gap   : space between the artwork's bottom edge and the text */
+  #contact .contact-handle {
+    --handle-size: 15px;
+    --handle-gap: 34px;
+
+    display: block;
+    margin-top: var(--handle-gap);
+    font-family: "Space Mono", monospace;
+    font-size: var(--handle-size);
+    letter-spacing: 0.02em;
+    text-align: center;
+    white-space: nowrap;
+    text-decoration: none;
+    color: rgba(255,255,255,.55);
+    transition: color .35s ease;
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+  }
+  #contact .contact-handle:hover { color: rgba(255,255,255,1); }
   /* ===== hover: lift only — NO container scale/filter =====
      Scaling or filtering the container makes the browser rasterize its contents
      once and then transform that snapshot, which is what caused the icons to go
@@ -602,50 +647,53 @@
   .contact-item:hover { transform: translateY(-6px); }
   .contact-item img { transition: filter .3s ease; }
   .contact-item:hover img {
-    filter: drop-shadow(0 18px 26px rgba(0,0,0,.55))
-            drop-shadow(0 4px 10px rgba(0,0,0,.4))
-            drop-shadow(0 0 14px rgba(255,255,255,.25));   /* the added hover glow */
+    filter: drop-shadow(0 0 14px rgba(255,255,255,.25));   /* the hover glow only */
   }
-  /* the small label icons — sits above the main row, same tuning pattern */
-  .contact-row.contact-row-icons {
-    --icon-size: 86px;    /* width & height of each small icon */
-    --icon-gap: 335px;     /* horizontal space between small icons */
-    --icon-y: 35vh;       /* distance of the small row from the section's TOP edge
-                             (the main row below sits at its own --icon-y) */
-  }
-  /* per-icon size override — ONLY for the small upper row (icon_*.png).
-     The main row below is untouched: its items never get a --i, so the
-     var(--i, 1) default of 1 keeps them at their row's --icon-size.
-     1 = row default; 1.2 = 20% bigger; 0.8 = 20% smaller. */
-  .contact-row-icons .contact-item { scale: var(--i, 1); }
-  .contact-row-icons .contact-item:nth-child(1) { --i: 1; }  /* icon_telegram — edit here */
-  .contact-row-icons .contact-item:nth-child(2) { --i: 1; }  /* icon_email    — edit here */
-  .contact-row-icons .contact-item:nth-child(3) { --i: 1.15; }  /* icon_git      — edit here */
+  /* ===== PER-PAIR TUNING — one line per channel =====
+     --col-scale and --col-y are the LOCKED values: they move/size the icon and
+     its artwork together, in proportion. Use them for anything positional.
+     --icon-fine / --art-fine are the escape hatch: an extra multiplier on just
+     one half of a pair, for when a single asset was drawn at a different size.
+     They use `scale`, so they never affect layout — the pair stays locked. */
+  #contact .contact-col:nth-child(1) { --col-scale: 1; --col-y: 0px; }   /* TELEGRAM pair */
+  #contact .contact-col:nth-child(2) { --col-scale: 1; --col-y: 0px; }   /* EMAIL pair    */
+  #contact .contact-col:nth-child(3) { --col-scale: 1; --col-y: 0px; }   /* GITHUB pair   */
+
+  #contact .contact-col .contact-icon { scale: var(--icon-fine, 1); }
+  #contact .contact-col .contact-art  { scale: var(--art-fine, 1); }
+  #contact .contact-col:nth-child(1) { --icon-fine: 1;    --art-fine: 1;   }  /* telegram */
+  #contact .contact-col:nth-child(2) { --icon-fine: 1;    --art-fine: 1;   }  /* email    */
+  #contact .contact-col:nth-child(3) { --icon-fine: 1.15; --art-fine: .98; }  /* github   */
+
   /* gentle idle float — each small icon bobs up & down on its own phase.
-     Tune: --float-amp = travel in px, --float-time = seconds per bob,
-     --float-delay = stagger so they don't move in lockstep. */
-  .contact-row-icons .contact-item {
+     Tune: --float-amp = travel in px, --float-time = seconds per bob.
+     It animates `translate`, which the pair lock also uses — but on a DIFFERENT
+     element (the column), so the two never overwrite each other. */
+  #contact .contact-icon {
     --float-amp: 12px;
     --float-time: 3.2s;
     animation: icon-float var(--float-time) ease-in-out infinite;
   }
-  .contact-row-icons .contact-item:nth-child(1) { animation-delay: 0s; }
-  .contact-row-icons .contact-item:nth-child(2) { animation-delay: -1.1s; }
-  .contact-row-icons .contact-item:nth-child(3) { animation-delay: -2.2s; }
+  #contact .contact-col:nth-child(1) .contact-icon { animation-delay: 0s; }
+  #contact .contact-col:nth-child(2) .contact-icon { animation-delay: -1.1s; }
+  #contact .contact-col:nth-child(3) .contact-icon { animation-delay: -2.2s; }
   @keyframes icon-float {
     0%, 100% { translate: 0 calc(var(--float-amp) / -2); }
     50%      { translate: 0 calc(var(--float-amp) / 2); }
   }
-  /* per-icon size override for the MAIN row (telegram/git/email.png) —
-     same multiplier idea, scoped so the upper row is never affected.
-     The upper row's own overrides above stay in force. */
-  .contact-row:not(.contact-row-icons) .contact-item { scale: var(--m, 1); }
-  .contact-row:not(.contact-row-icons) .contact-item:nth-child(1) { --m: 1; }  /* telegram.png — edit here */
-  .contact-row:not(.contact-row-icons) .contact-item:nth-child(2) { --m: 1; }  /* email.png    — edit here */
-  .contact-row:not(.contact-row-icons) .contact-item:nth-child(3) { --m: .98; }  /* git.png      — edit here */
-  /* stacking: the icon rows sit ABOVE the hero video + dot-grid (dot-grid is z-5) */
-  #contact .contact-row          { z-index: 10; }
-  #contact .contact-row-icons    { z-index: 11; }
+
+  /* ===== the ENERGY STREAM — fine particles drifting between the columns =====
+     One canvas of particles, positioned by JS along the GitHub → Email →
+     Telegram line. Tune here: */
+  #contact .conduit-particles {
+    position: absolute;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 9;             /* under the columns (10), above dot-grid (5) */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #contact .conduit-particles { display: none; }
+  }
 
   /* ===== SEAMLESS HAND-OFF between the last three sections =====
      The split screen happened because #contact scrolled up from below while
@@ -679,8 +727,39 @@
   /* invisible cue removed — the icons' entrance is driven by a direct geometry
      test in the script instead (see the note there). */
 
+  /* ===== section title — same recipe as SECTION 2's headings (Space Mono,
+     font-light, tight tracking, plain white), just smaller and centred.
+       --title-y     : coarse vertical position, from the section's top edge
+       --title-nudge : fine vertical offset in px (negative = up)
+     It reuses the icons' entrance timing, so it fades in with them. */
+  #contact .contact-title {
+    --title-y: 7vh;          /* coarse: distance from the section's TOP edge */
+    --title-nudge: 0px;       /* fine: extra px — negative = up, positive = down */
+    position: absolute;
+    left: 50%;
+    top: calc(var(--title-y) + var(--title-nudge));
+    transform: translateX(-50%);
+    z-index: 12;              /* above both icon rows */
+    margin: 0;
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-size: clamp(24px, 4.5vw, 48px);
+    color: #fff;
+    opacity: 0;
+    transition: opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1);
+  }
+  /* pre-entrance it sits a little low, then settles — matching the icons' rise */
+  #contact .contact-title { transform: translateX(-50%) translateY(24px); }
+  #contact.in .contact-title { opacity: 1; transform: translateX(-50%); }
   @media (prefers-reduced-motion: reduce) {
-    .contact-row-icons .contact-item { animation: none; }
+    #contact .contact-title { opacity: 1; transform: translateX(-50%); transition: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #contact .contact-icon { animation: none; }
   }
 </style>
 </head>
@@ -862,12 +941,14 @@
   </section>
 
   <!-- ================= SECTION 3: CONTACT ================= -->
-  <!-- Two icon rows, each horizontally centred. Tune each row purely by
-       editing the numbers in its CSS vars in the <style> block:
-         --icon-size : width/height of each icon (px)
-         --icon-gap  : horizontal gap between icons (px)
-         --icon-y    : distance of the row from the section's top edge (vh, %, px — any unit)
-       Rows: .contact-row-icons (small icons, upper) · .contact-row (main, lower) -->
+  <!-- Three paired columns, horizontally centred. Tune everything by editing
+       the numbers in the CSS vars in the <style> block:
+         --col-gap    : horizontal gap between the columns
+         --grid-y     : the floor line the artworks stand on
+         --col-scale  : size of a whole pair (icon + artwork, locked together)
+         --col-y      : vertical offset of a whole pair (locked together)
+         --pair-gap   : vertical space between an icon and its artwork
+         --icon-fine / --art-fine : fine multiplier on just one half of a pair -->
   <section id="contact" class="relative w-full bg-black">
     <!-- the sticky panel: this is what stays locked to the viewport -->
     <div class="contact-pin">
@@ -877,30 +958,46 @@
     <div class="pointer-events-none absolute inset-0 z-[6] flex items-center justify-center">
       <span class="watermark">CONTACT</span>
     </div>
-    <!-- upper row: the small icon_*.png labels -->
-    <div class="contact-row contact-row-icons">
-      <a class="contact-item" href="https://t.me/your_handle" target="_blank" rel="noopener" aria-label="Telegram">
-        <img src="contact/icon_telegram.png" alt="Telegram" draggable="false">
-      </a>
-      <a class="contact-item" href="mailto:hello@example.com" aria-label="Email">
-        <img src="contact/icon_email.png" alt="Email" draggable="false">
-      </a>
-      <a class="contact-item" href="https://github.com/your_user" target="_blank" rel="noopener" aria-label="GitHub">
-        <img src="contact/icon_git.png" alt="GitHub" draggable="false">
-      </a>
+    <!-- section title — position it with --title-y in the <style> block -->
+    <h2 class="contact-title">CONTACT ME</h2>
+    <!-- three PAIRED columns: each channel's small icon sits above its artwork
+         inside one .contact-col, so the pair moves and scales as a single unit.
+         Per-pair numbers live in the <style> block (--col-scale / --col-y). -->
+    <div class="contact-grid">
+      <div class="contact-col">
+        <a class="contact-item contact-icon" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
+          <img src="contact/icon_telegram.png" alt="" draggable="false">
+        </a>
+        <a class="contact-item contact-art" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
+          <img src="contact/telegram.png" alt="Telegram" draggable="false">
+        </a>
+        <a class="contact-handle" href="https://t.me/hosseinammyd" target="_blank" rel="noopener">t.me/hosseinammyd</a>
+      </div>
+      <div class="contact-col">
+        <a class="contact-item contact-icon" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
+          <img src="contact/icon_email.png" alt="" draggable="false">
+        </a>
+        <a class="contact-item contact-art" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
+          <img src="contact/email.png" alt="Email" draggable="false">
+        </a>
+        <a class="contact-handle" href="mailto:Hossein.moayedfard@gmail.com">Hossein.moayedfard@gmail.com</a>
+      </div>
+      <div class="contact-col">
+        <a class="contact-item contact-icon" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
+          <img src="contact/icon_git.png" alt="" draggable="false">
+        </a>
+        <a class="contact-item contact-art" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
+          <img src="contact/git.png" alt="GitHub" draggable="false">
+        </a>
+        <a class="contact-handle" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener">hosseinmoayed</a>
+      </div>
     </div>
-    <!-- main row: the large artwork icons -->
-    <div class="contact-row">
-      <a class="contact-item" href="https://t.me/your_handle" target="_blank" rel="noopener" aria-label="Telegram">
-        <img src="contact/telegram.png" alt="Telegram" draggable="false">
-      </a>
-      <a class="contact-item" href="mailto:hello@example.com" aria-label="Email">
-        <img src="contact/email.png" alt="Email" draggable="false">
-      </a>
-      <a class="contact-item" href="https://github.com/your_user" target="_blank" rel="noopener" aria-label="GitHub">
-        <img src="contact/git.png" alt="GitHub" draggable="false">
-      </a>
-    </div>
+
+    <!-- ===== the ENERGY STREAM — fine particles drifting from GitHub →
+         Email → Telegram. A canvas layered over the grid; the JS below
+         re-measures it on resize and streams specks between the artwork
+         centres. -->
+    <canvas class="conduit-particles" aria-hidden="true"></canvas>
     </div><!-- /.contact-pin -->
   </section>
 
@@ -1114,6 +1211,118 @@
       requestAnimationFrame(contactWatch);
     }
   }
+
+  // ---------- Contact: the energy stream between the columns ----------
+  // A canvas of fine particles drifting along the GitHub -> Email -> Telegram
+  // line (no beam, no haze — just the specks). Re-measured on resize and for a
+  // short settle window, so the stream stays glued to the columns wherever the
+  // tuning vars move them.
+  (function () {
+    if (!contactSec) return;
+    var canvas = contactSec.querySelector(".conduit-particles");
+    var grid = contactSec.querySelector(".contact-grid");
+    if (!canvas || !grid) return;
+    var ctx = canvas.getContext("2d");
+
+    // ===== TUNE — PARTICLES =====
+    var P_COUNT      = 90;          // number of specks alive at once
+    var P_SIZE       = [0.6, 1.8];  // speck radius range, px
+    var P_SPEED      = [30, 85];    // drift speed along the stream, px/s
+    var P_SPREAD     = 20;          // how far the stream spreads off its axis, px
+    var P_COLOR      = "44,224,109";// speck colour, R,G,B
+    var P_CORE_ALPHA = 0.9;         // opacity on the stream axis
+    var P_EDGE_ALPHA = 0.12;        // opacity at the stream edge
+    // ============================
+
+    var pts = [];          // stream endpoints, in canvas space
+    var parts = [];        // live particles
+    var dpr = Math.max(1, window.devicePixelRatio || 1);
+    var lastT = 0, raf = 0;
+
+    function measure() {
+      var pin = contactSec.querySelector(".contact-pin");
+      if (!pin) return;
+      var pinBox = pin.getBoundingClientRect();
+      var gridBox = grid.getBoundingClientRect();
+      var w = Math.ceil(gridBox.width), h = Math.ceil(gridBox.height);
+      canvas.style.left = (gridBox.left - pinBox.left) + "px";
+      canvas.style.top = (gridBox.top - pinBox.top) + "px";
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+        canvas.style.width = w + "px"; canvas.style.height = h + "px";
+      }
+      var arts = grid.querySelectorAll(".contact-art");
+      var a = [];
+      for (var i = 0; i < arts.length; i++) {
+        var r = arts[i].getBoundingClientRect();
+        a.push({ x: r.left + r.width / 2 - gridBox.left, y: r.top + r.height / 2 - gridBox.top });
+      }
+      if (a.length < 2) return;
+      // GitHub (3rd) -> Telegram (1st): the stream runs right to left
+      pts = [a[2], a[0]];
+      while (parts.length < P_COUNT) parts.push(spawn(true));
+    }
+
+    function spawn(anywhere) {
+      return {
+        t: anywhere ? Math.random() : 0,        // position along the line, 0=GitHub .. 1=Telegram
+        off: Math.random() * 2 - 1,             // -1..1 across the stream width
+        speed: P_SPEED[0] + Math.random() * (P_SPEED[1] - P_SPEED[0]),
+        size: P_SIZE[0] + Math.random() * (P_SIZE[1] - P_SIZE[0]),
+        tw: Math.random() * Math.PI * 2,        // twinkle phase
+        tws: 2 + Math.random() * 4              // twinkle speed
+      };
+    }
+
+    function step(now) {
+      var dt = Math.min(0.05, (now - lastT) / 1000 || 0.016);
+      lastT = now;
+      if (!pts.length) { raf = requestAnimationFrame(step); return; }
+      var w = canvas.width / dpr, h = canvas.height / dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      var dx = pts[1].x - pts[0].x, dy = pts[1].y - pts[0].y;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var ux = dx / len, uy = dy / len;         // unit vector along the stream
+
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        p.t += (p.speed * dt) / len;            // GitHub -> Telegram
+        if (p.t > 1.02) { parts[i] = spawn(); continue; }
+        p.tw += p.tws * dt;
+        // slow sideways sway, bounded by the stream width
+        p.off += Math.sin(now / 900 + p.tw) * 0.02;
+        p.off = Math.max(-1, Math.min(1, p.off));
+        var x = pts[0].x + dx * p.t + (-uy) * (p.off * P_SPREAD);
+        var y = pts[0].y + dy * p.t + (ux) * (p.off * P_SPREAD);
+        // brightness: axis of the stream is hot, edges faint; twinkle on top
+        var across = 1 - Math.abs(p.off);
+        var along = Math.min(1, Math.min(p.t, 1 - p.t) * 12);  // fade at both ends
+        var a = (P_EDGE_ALPHA + (P_CORE_ALPHA - P_EDGE_ALPHA) * across) * along;
+        a *= 0.65 + 0.35 * Math.sin(p.tw);
+        if (a <= 0.01) continue;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, 6.2832);
+        ctx.fillStyle = "rgba(" + P_COLOR + "," + a.toFixed(3) + ")";
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(step);
+    }
+
+    function start() {
+      measure();
+      if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(step); }
+    }
+
+    start();
+    window.addEventListener("resize", start);
+    window.addEventListener("load", start);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(start);
+    var settle = 0, settleTimer = setInterval(function () {
+      start();
+      if (++settle >= 20) clearInterval(settleTimer);   // ~10 s of settle checks
+    }, 500);
+  })();
 
   // ---------- Section 2: PINNED scroll-scrubbed video + 3D text ----------
   // The section is a tall (300vh) scroll track with a sticky inner panel, so the
