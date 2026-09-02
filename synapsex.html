@@ -563,12 +563,21 @@
     scale: var(--col-scale);
     translate: 0 var(--col-y);
     transform-origin: 50% 100%;   /* grow from the floor, not the centre */
+    perspective: 900px;           /* the artwork + orbit share ONE 3D stage, so
+                                     letters really recede behind the image and
+                                     swell in front of it (like texttest.html's
+                                     .stage3d wrapping BOTH img and ring) */
   }
   #contact .contact-col .contact-icon { width: var(--icon-size); height: var(--icon-size); margin-bottom: var(--pair-gap); }
   #contact .contact-col .contact-art  { width: var(--art-size);  height: var(--art-size);  }
   /* the icon sits visually above its artwork, so it must paint above it too */
   #contact .contact-icon { z-index: 2; }
   #contact .contact-art  { z-index: 1; }
+  /* the artwork's <a> is position:relative + z-index:1 → it IS a stacking
+     context, so orbit letters with z-index:0 genuinely paint BEHIND the image,
+     and letters with z-index:4 paint in front. The column itself keeps
+     transform-style flat on purpose: a 3D-preserving ancestor would flatten
+     the artwork's own stacking context and break the occlusion. */
   .contact-item {
     display: block;
     position: relative;
@@ -614,30 +623,50 @@
   @media (prefers-reduced-motion: reduce) {
     #contact .contact-item { opacity: 1; transform: none; transition: none; }
   }
-  /* ===== the address under each column =====
-     Always visible, plain white — no shadow. The hover rules only lift it to
-     full white so it reads as a live link.
-       --handle-size  : font size
-       --handle-gap   : space between the artwork's bottom edge and the text */
-  #contact .contact-handle {
-    --handle-size: 15px;
-    --handle-gap: 34px;
+  /* ===== the ORBITING ADDRESS — text ring spinning around each artwork =====
+     Inspired by texttest.html: each character sits on a cylinder around the
+     artwork's centre; the ring rotates on the Y axis, so letters glide across
+     the FRONT of the image, then pass BEHIND it and re-emerge.
+     TWO stacked rings share one phase: the FRONT ring paints above the image
+     (z 4), the BACK ring below it (z 0) — the JS moves each letter between
+     them as its angle crosses the sides, which is what makes the image
+     genuinely occlude the letters behind it.
+       --orbit-radius : ring radius, px
+       --orbit-speed  : seconds per revolution
+       --orbit-size   : character font size
+     The JS below builds both rings and drives the phase per column. */
+  #contact .contact-orbit {
+    --orbit-radius: 148px;
+    --orbit-speed: 12s;
+    --orbit-size: 15px;
+    --orbit-color: rgba(255,255,255,.85);
 
-    display: block;
-    margin-top: var(--handle-gap);
-    font-family: "Space Mono", monospace;
-    font-size: var(--handle-size);
-    letter-spacing: 0.02em;
-    text-align: center;
-    white-space: nowrap;
-    text-decoration: none;
-    color: rgba(255,255,255,.55);
-    transition: color .35s ease;
-    pointer-events: auto;
-    position: relative;
-    z-index: 3;
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 0; height: 0;
+    pointer-events: none;
   }
-  #contact .contact-handle:hover { color: rgba(255,255,255,1); }
+  #contact .contact-orbit .o-ring {
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 0;
+    perspective: 900px;      /* on the RING (the spans' direct parent) — this is
+                                what makes front letters swell and back letters
+                                shrink; perspective skips grandchildren */
+  }
+  /* the front ring paints above the artwork (art is z 1); the back ring below */
+  #contact .contact-orbit .o-ring.o-front { z-index: 4; }
+  #contact .contact-orbit .o-ring.o-back  { z-index: 0; }
+  #contact .contact-orbit .o-letter {
+    position: absolute;
+    top: 0; left: 0;
+    font-family: "Space Mono", monospace;
+    font-size: var(--orbit-size);
+    font-weight: 700;
+    color: var(--orbit-color);
+    white-space: pre;
+    will-change: transform, opacity;
+  }
   /* ===== hover: lift only — NO container scale/filter =====
      Scaling or filtering the container makes the browser rasterize its contents
      once and then transform that snapshot, which is what caused the icons to go
@@ -971,7 +1000,7 @@
         <a class="contact-item contact-art" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
           <img src="contact/telegram.png" alt="Telegram" draggable="false">
         </a>
-        <a class="contact-handle" href="https://t.me/hosseinammyd" target="_blank" rel="noopener">t.me/hosseinammyd</a>
+        <div class="contact-orbit" data-text="t.me/hosseinammyd" aria-hidden="true"></div>
       </div>
       <div class="contact-col">
         <a class="contact-item contact-icon" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
@@ -980,7 +1009,7 @@
         <a class="contact-item contact-art" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
           <img src="contact/email.png" alt="Email" draggable="false">
         </a>
-        <a class="contact-handle" href="mailto:Hossein.moayedfard@gmail.com">Hossein.moayedfard@gmail.com</a>
+        <div class="contact-orbit" data-text="Hossein.moayedfard@gmail.com" aria-hidden="true"></div>
       </div>
       <div class="contact-col">
         <a class="contact-item contact-icon" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
@@ -989,7 +1018,7 @@
         <a class="contact-item contact-art" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
           <img src="contact/git.png" alt="GitHub" draggable="false">
         </a>
-        <a class="contact-handle" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener">hosseinmoayed</a>
+        <div class="contact-orbit" data-text="github.com/hosseinmoayed" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -1225,7 +1254,7 @@
     var ctx = canvas.getContext("2d");
 
     // ===== TUNE — PARTICLES =====
-    var P_COUNT      = 90;          // number of specks alive at once
+    var P_COUNT      = 150;         // number of specks alive at once
     var P_SIZE       = [0.6, 1.8];  // speck radius range, px
     var P_SPEED      = [30, 85];    // drift speed along the stream, px/s
     var P_SPREAD     = 20;          // how far the stream spreads off its axis, px
@@ -1322,6 +1351,78 @@
       start();
       if (++settle >= 20) clearInterval(settleTimer);   // ~10 s of settle checks
     }, 500);
+  })();
+
+  // ---------- Contact: the orbiting address around each artwork ----------
+  // Like texttest.html's letter ring: every character of the address sits on a
+  // cylinder of radius --orbit-radius around the artwork centre; a rAF loop
+  // advances the phase, applying translateX + translateZ per character so
+  // letters sweep across the front, shrink toward the sides, pass BEHIND the
+  // image and re-emerge. Occlusion is real: each letter lives in one of TWO
+  // stacked rings — front (z 4, above the art's z 1) or back (z 0, below it) —
+  // and is MOVED between them as its angle crosses the sides, so the artwork
+  // genuinely covers the letters on the far side.
+  (function () {
+    if (!contactSec) return;
+    var orbits = contactSec.querySelectorAll(".contact-orbit");
+    if (!orbits.length) return;
+    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var rings = [];
+    for (var i = 0; i < orbits.length; i++) {
+      var o = orbits[i];
+      var text = o.getAttribute("data-text") || "";
+      // repeat the address so the ring is always full
+      var sep = "  •  ";
+      var unit = text + sep;
+      var chars = "";
+      while (chars.length < 28) chars += unit;
+      var back = document.createElement("div");
+      var front = document.createElement("div");
+      back.className = "o-ring o-back";
+      front.className = "o-ring o-front";
+      o.appendChild(back);
+      o.appendChild(front);
+      var letters = [];
+      for (var c = 0; c < chars.length; c++) {
+        var s = document.createElement("span");
+        s.className = "o-letter";
+        s.textContent = chars[c] === " " ? " " : chars[c];
+        back.appendChild(s);                       // start every letter in the
+        letters.push(s);                           // back ring; tick() promotes
+      }                                            // the ones on the near side
+      rings.push({ front: front, back: back, letters: letters, phase: -i * 0.9 });
+    }
+
+    var SPEED = 2 * Math.PI / (parseFloat(getComputedStyle(orbits[0]).getPropertyValue("--orbit-speed")) || 12); // rad/s
+
+    var lastT = 0;
+    function tick(now) {
+      var dt = Math.min(0.05, (now - lastT) / 1000 || 0.016);
+      lastT = now;
+      for (var r = 0; r < rings.length; r++) {
+        var ring = rings[r];
+        var radius = parseFloat(getComputedStyle(ring.front.parentElement).getPropertyValue("--orbit-radius")) || 148;
+        ring.phase += SPEED * dt;
+        var n = ring.letters.length;
+        for (var c = 0; c < n; c++) {
+          var a = ring.phase + (2 * Math.PI / n) * c;
+          // x = sin(a) sweeps the letter across the face of the ring;
+          // z = cos(a) > 0 = the near half of the cylinder (in front of the
+          // artwork) and z < 0 = the far half (behind it)
+          var x = Math.sin(a) * radius;
+          var z = Math.cos(a) * radius;
+          var s = ring.letters[c];
+          var target = z >= 0 ? ring.front : ring.back;
+          if (s.parentElement !== target) target.appendChild(s);   // real occlusion:
+          s.style.opacity = z >= 0 ? 0.95 : 0.3;                   // behind -> covered
+          s.style.transform =
+            "translate(-50%, -50%) translateX(" + x.toFixed(1) + "px) translateZ(" + z.toFixed(1) + "px)";
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    if (!reduced) requestAnimationFrame(function (t) { lastT = t; requestAnimationFrame(tick); });
   })();
 
   // ---------- Section 2: PINNED scroll-scrubbed video + 3D text ----------
