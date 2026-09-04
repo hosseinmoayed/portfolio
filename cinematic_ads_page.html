@@ -316,82 +316,186 @@
   <!-- ================= SCROLL SHOWCASE: one neon frame + copy per website ================= -->
   <main id="siteScroll"></main>
 <script>
-/* ---- interactive neon dot lattice ---- */
+/* ---- kinetic grid background (ported from the KineticGrid component) ----
+   A warped grid: lines + nodes that bend toward the cursor and ripple on
+   click. Hover lights the grid in the project's neon green (#2ce06d); at rest
+   it stays faint white on near-black. All tuning lives in the constants. */
 (function () {
   var cv = document.getElementById("dotField");
   var ctx = cv.getContext("2d");
-  var dpr = Math.min(2, window.devicePixelRatio || 1);
-  var GAP = 56;                                  // grid pitch — wider pitch = fewer dots
-  var W = 0, H = 0, dots = [], cols = 0, rows = 0;
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var mx = -9999, my = -9999, tx = -9999, ty = -9999;
-  var R_PUSH = 110, R_LIGHT = 190, PUSH = 26;
-  function build() {
+
+  // ===== TUNE =====
+  var CELL_SIZE = 55;          // grid pitch
+  var INFLUENCE_RADIUS = 260;  // cursor's reach
+  var MAX_WARP = 24;           // how far the grid bends toward the cursor
+  var DOT_SPACING = 28;        // static background dot texture
+  var LERP_SPEED = 0.08;       // cursor follow smoothness
+  var BG = "#000000";
+  var LINE_BASE = { r: 255, g: 255, b: 255, a: 0.13 };
+  var LINE_ACTIVE = { r: 44, g: 224, b: 109, a: 0.9 };   // #2ce06d on hover
+  var NODE_ACTIVE = { r: 44, g: 224, b: 109, a: 1.0 };
+  var GLOW = "44,224,109";
+  var RIPPLE = "44,224,109";
+  // ================
+
+  var W = 0, H = 0;
+  var mouse = { x: -9999, y: -9999 };
+  var target = { x: -9999, y: -9999 };
+  var ripples = [];
+
+  function lerpN(a, b, t) { return a + (b - a) * t; }
+  function lerpColor(base, active, t) {
+    return "rgba(" + Math.round(lerpN(base.r, active.r, t)) + "," +
+           Math.round(lerpN(base.g, active.g, t)) + "," +
+           Math.round(lerpN(base.b, active.b, t)) + "," +
+           lerpN(base.a, active.a, t).toFixed(3) + ")";
+  }
+  function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+  function setSize() {
     W = window.innerWidth; H = window.innerHeight;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dots = [];
-    cols = Math.ceil(W / GAP) + 1; rows = Math.ceil(H / GAP) + 1;
-    var offX = (W - (cols - 1) * GAP) / 2, offY = (H - (rows - 1) * GAP) / 2;
-    for (var j = 0; j < rows; j++) {
-      for (var i = 0; i < cols; i++) {
-        var accent = Math.random() < 0.06;
-        dots.push({ hx: offX + i * GAP, hy: offY + j * GAP, dx: 0, dy: 0,
-          r: accent ? 2.3 : 1.6 + Math.random() * 0.8,
-          minA: accent ? 0.14 : 0.05,
-          maxA: accent ? 0.62 + Math.random() * .13 : 0.30 + Math.random() * .16,
-          ph: Math.random() * Math.PI * 2,
-          sp: (accent ? 1.0 : 1.6) + Math.random() * 2.0,
-          wob: 0, gr: accent ? 2.3 : 1.6 + Math.random() * 0.8 });
+  }
+
+  function warpedPoint(gx, gy, col, row, cols, rows) {
+    // edge pin — boundary rows/cols stay fixed
+    var edge = 1.5;
+    var pin = Math.min(col / edge, (cols - 1 - col) / edge, 1) *
+              Math.min(row / edge, (rows - 1 - row) / edge, 1);
+    pin *= pin;
+
+    var dx = gx - mouse.x, dy = gy - mouse.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var proximity = Math.max(0, 1 - dist / INFLUENCE_RADIUS) * pin;
+
+    // ripple displacement
+    var rx = 0, ry = 0;
+    for (var i = 0; i < ripples.length; i++) {
+      var r = ripples[i];
+      var rdx = gx - r.x, rdy = gy - r.y;
+      var rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+      var waveWidth = 55;
+      var diff = rdist - r.radius;
+      if (Math.abs(diff) < waveWidth) {
+        var strength = (1 - Math.abs(diff) / waveWidth) * r.opacity * 18 * pin;
+        var angle = Math.atan2(rdy, rdx);
+        var sign = diff < 0 ? -1 : 1;
+        rx += Math.cos(angle) * strength * sign * -1;
+        ry += Math.sin(angle) * strength * sign * -1;
       }
     }
+
+    // cursor warp with bell falloff
+    if (dist < INFLUENCE_RADIUS && dist > 0 && pin > 0) {
+      var t = dist / INFLUENCE_RADIUS;
+      var eased = t < 0.01 ? 0 : (1 - t) * (1 - t) * Math.min(1, dist / 60);
+      var warp = eased * MAX_WARP * pin;
+      var ang = Math.atan2(dy, dx);
+      return { x: gx - Math.cos(ang) * warp + rx, y: gy - Math.sin(ang) * warp + ry, prox: proximity };
+    }
+    return { x: gx + rx, y: gy + ry, prox: proximity };
   }
-  function dot(i, j) { return dots[j * cols + i]; }
-  function paint(t) {
-    mx += (tx - mx) * 0.12; my += (ty - my) * 0.12;
+
+  function draw(now) {
     ctx.clearRect(0, 0, W, H);
-    ctx.shadowColor = "rgba(44,224,109,.75)"; ctx.shadowBlur = 6;
-    for (var i = 0; i < dots.length; i++) {
-      var d = dots[i];
-      d.dx += (0 - d.dx) * 0.08; d.dy += (0 - d.dy) * 0.08;
-      var glow = 0;
-      if (tx > -9000) {
-        var vx = d.hx + d.dx - mx, vy = d.hy + d.dy - my, dist = Math.sqrt(vx * vx + vy * vy);
-        if (dist < R_PUSH && dist > 0.001) { var f = (1 - dist / R_PUSH); f *= f; var inv = 1 / dist; d.dx += (vx * inv) * f * PUSH * 0.16; d.dy += (vy * inv) * f * PUSH * 0.16; }
-        if (dist < R_LIGHT && dist > 0.001) { var g = 1 - dist / R_LIGHT; glow = g * g * 0.28; }
-      }
-      d.wob = Math.sin(t * 0.31 + d.ph * 1.7) * 0.6 + Math.sin(t * 0.13 + d.sp * 4.1) * 0.4;
-      var wave = Math.sin(d.ph + t * d.sp + d.wob);
-      var a = Math.max(0.10, d.minA + (d.maxA - d.minA) * (0.5 + 0.5 * wave)) + glow;
-      if (a > 0.85) a = 0.85;
-      d.a = a;
-      var target = glow > 0 ? d.r * (1 + 2.2 * (glow / 0.28)) : d.r;
-      d.gr += (target - d.gr) * 0.14;
-      ctx.fillStyle = "rgba(44,224,109," + a.toFixed(3) + ")";
-      ctx.beginPath(); ctx.arc(d.hx + d.dx, d.hy + d.dy, d.gr, 0, 6.2832); ctx.fill();
-    }
-    ctx.shadowBlur = 0; ctx.lineWidth = 1;
-    for (var j = 0; j < rows; j++) {
-      for (var i2 = 0; i2 < cols; i2++) {
-        var p = dot(i2, j); if (!p) continue;
-        if (i2 < cols - 1) line(p, dot(i2 + 1, j));
-        if (j < rows - 1) line(p, dot(i2, j + 1));
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, W, H);
+
+    // static dot texture
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    for (var sx = DOT_SPACING / 2; sx < W; sx += DOT_SPACING) {
+      for (var sy = DOT_SPACING / 2; sy < H; sy += DOT_SPACING) {
+        ctx.beginPath(); ctx.arc(sx, sy, 0.7, 0, 6.2832); ctx.fill();
       }
     }
-    function line(p, q) {
-      var ax = p.hx + p.dx, ay = p.hy + p.dy, bx = q.hx + q.dx, by = q.hy + q.dy;
-      var la = (p.a || 0) + (q.a || 0), gg = Math.min(0.16, 0.05 + la * 0.09);
-      ctx.strokeStyle = "rgba(160,170,165," + gg.toFixed(3) + ")";
-      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+
+    // advance ripples
+    for (var i = ripples.length - 1; i >= 0; i--) {
+      var rp = ripples[i];
+      var age = (now - rp.born) / 1000;
+      rp.radius = Math.max(0, age * 400);
+      rp.opacity = Math.max(0, 1 - age * 1.2);
+      if (rp.opacity <= 0) ripples.splice(i, 1);
+    }
+
+    // warped grid
+    var cols = Math.max(2, Math.ceil(W / CELL_SIZE)) + 1;
+    var rows = Math.max(2, Math.ceil(H / CELL_SIZE)) + 1;
+    var cellW = W / (cols - 1), cellH = H / (rows - 1);
+    var pts = [], prox = [];
+    for (var row = 0; row < rows; row++) {
+      pts[row] = []; prox[row] = [];
+      for (var col = 0; col < cols; col++) {
+        var w = warpedPoint(col * cellW, row * cellH, col, row, cols, rows);
+        pts[row][col] = w; prox[row][col] = w.prox;
+      }
+    }
+
+    function drawSeg(p1, p2, pr1, pr2) {
+      var t = smoothstep((pr1 + pr2) / 2);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+      ctx.strokeStyle = lerpColor(LINE_BASE, LINE_ACTIVE, t);
+      ctx.lineWidth = lerpN(0.8, 1.5, t);
+      ctx.stroke();
+    }
+    ctx.lineCap = "butt";
+    for (var r2 = 0; r2 < rows; r2++)
+      for (var c2 = 0; c2 < cols - 1; c2++)
+        drawSeg(pts[r2][c2], pts[r2][c2 + 1], prox[r2][c2], prox[r2][c2 + 1]);
+    for (var c3 = 0; c3 < cols; c3++)
+      for (var r3 = 0; r3 < rows - 1; r3++)
+        drawSeg(pts[r3][c3], pts[r3 + 1][c3], prox[r3][c3], prox[r3 + 1][c3]);
+
+    // intersection nodes
+    for (var rr = 0; rr < rows; rr++) {
+      for (var cc = 0; cc < cols; cc++) {
+        var p = pts[rr][cc], pr = prox[rr][cc];
+        var t2 = smoothstep(pr);
+        var rad = lerpN(1.8, 3.2, t2);
+        if (t2 > 0.3) {
+          var glowR = rad + lerpN(0, 6, (t2 - 0.3) / 0.7);
+          var grd = ctx.createRadialGradient(p.x, p.y, rad * 0.5, p.x, p.y, glowR);
+          grd.addColorStop(0, "rgba(" + GLOW + "," + (t2 * 0.3).toFixed(3) + ")");
+          grd.addColorStop(1, "rgba(" + GLOW + ",0)");
+          ctx.beginPath(); ctx.arc(p.x, p.y, glowR, 0, 6.2832); ctx.fillStyle = grd; ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, 6.2832);
+        ctx.fillStyle = lerpColor({ r: 255, g: 255, b: 255, a: 0.2 }, NODE_ACTIVE, t2);
+        ctx.fill();
+      }
+    }
+
+    // ripple rings
+    for (var ri = 0; ri < ripples.length; ri++) {
+      var q = ripples[ri];
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, Math.max(0, q.radius), 0, 6.2832);
+      ctx.strokeStyle = "rgba(" + RIPPLE + "," + (q.opacity * 0.28).toFixed(3) + ")";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
   }
-  function loop(ms) { paint(ms / 1000); requestAnimationFrame(loop); }
-  window.addEventListener("pointermove", function (e) { tx = e.clientX; ty = e.clientY; }, { passive: true });
-  window.addEventListener("pointerleave", function () { tx = -9999; ty = -9999; });
-  document.addEventListener("mouseleave", function () { tx = -9999; ty = -9999; });
-  window.addEventListener("resize", build);
-  build();
-  if (reduce) paint(1.7); else requestAnimationFrame(loop);
+
+  var lastT = 0;
+  function animate(now) {
+    mouse.x += (target.x - mouse.x) * LERP_SPEED;
+    mouse.y += (target.y - mouse.y) * LERP_SPEED;
+    draw(now);
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener("resize", setSize);
+  window.addEventListener("mousemove", function (e) { target.x = e.clientX; target.y = e.clientY; });
+  window.addEventListener("click", function (e) {
+    ripples.push({ x: e.clientX, y: e.clientY, radius: 0, opacity: 1, born: performance.now() });
+  });
+  setSize();
+  if (reduce) { draw(0); }
+  else requestAnimationFrame(animate);
 })();
 </script>
 <script>

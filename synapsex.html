@@ -7,7 +7,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Anton+SC&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Anton+SC&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -623,49 +623,276 @@
   @media (prefers-reduced-motion: reduce) {
     #contact .contact-item { opacity: 1; transform: none; transition: none; }
   }
-  /* ===== the ORBITING ADDRESS — text ring spinning around each artwork =====
-     Inspired by texttest.html: each character sits on a cylinder around the
-     artwork's centre; the ring rotates on the Y axis, so letters glide across
-     the FRONT of the image, then pass BEHIND it and re-emerge.
-     TWO stacked rings share one phase: the FRONT ring paints above the image
-     (z 4), the BACK ring below it (z 0) — the JS moves each letter between
-     them as its angle crosses the sides, which is what makes the image
-     genuinely occlude the letters behind it.
-       --orbit-radius : ring radius, px
-       --orbit-speed  : seconds per revolution
-       --orbit-size   : character font size
-     The JS below builds both rings and drives the phase per column. */
-  #contact .contact-orbit {
-    --orbit-radius: 148px;
-    --orbit-speed: 12s;
-    --orbit-size: 15px;
-    --orbit-color: rgba(255,255,255,.85);
+  /* ===== caption under each column — REMOVED (user request).
+     The .contact-cap / .handle-sub rules were deleted; --grid-y and
+     --pair-span still anchor the grid on the boxes' CENTRES, so nothing
+     else moved. The 3D CTA buttons now live beside each column instead. */
+  /* ===== 3D BUTTON (21st.dev "3d button" by theutkarshmail) — ported 1:1 =====
+     One button per contact column, positioned to its RIGHT.
+     All colors were rose/purple in the original; the hue vars were remapped to
+     the project's neon green while keeping every lightness/alpha value, so the
+     3D shading reads exactly the same. The two text states were also remapped:
+       state-1 = "Get in Touch" (resting)   state-2 = "Let's Talk" (on focus)
+       --b-x / --b-y  : manual position (right = +x, down = +y)
+       --b-tilt       : the button's base tilt (deg; negative = lean left)
+       --b-skew       : horizontal shear (deg)
+     ================= */
+  #contact .cta3d {
+    /* — hue remap: rose/purple → neon green (same S/L family) — */
+    --white: #eaffe7;          /* was #ffe7ff (the text/highlight white) */
+    --purple-100: #b1fda9;     /* was #f4b1fd */
+    --purple-200: #90ffb1;     /* was #d190ff */
+    --purple-300: #89f2c3;     /* was #c389f2 */
+    --purple-400: #26e26d;     /* was #8e26e2  ← project neon green */
+    --purple-500: #2b8352;     /* was #5e2b83 */
 
+    /* — manual placement / tilt, per the user's request — */
+    --b-x: 0px;                /* extra right (+) / left (-) */
+    --b-y: 130px;                /* extra down (+) / up (-) */
+    --b-tilt: -28deg;           /* original: rotate(353deg) = -7deg */
+    --b-skew: 4deg;            /* original: skew(4deg) */
+
+    /* — SIZE: one number controls the whole button. 1 = original size
+       (220×80, font 23px). Everything inside scales with it. — */
+    --b-scale: .5;
+    --radius: calc(18px * var(--b-scale));
+    border-radius: var(--radius);
+    cursor: pointer;
+    letter-spacing: -1px;
+    background: none;
+    border: 0;
+    outline: none;
+    width: calc(220px * var(--b-scale));
+    height: calc(80px * var(--b-scale));
+    font-family: Arial, sans-serif;
+    font-size: calc(23px * var(--b-scale));
     position: absolute;
-    left: 50%; top: 50%;
-    width: 0; height: 0;
+    top: calc(50% + var(--b-y));
+    right: calc(-40px + var(--b-x));
+    transform: rotate(var(--b-tilt)) skew(var(--b-skew));
+    z-index: 14;               /* above the columns (10) */
+    display: block;
+  }
+  #contact .cta3d .bg3 {
+    border-radius: inherit;
+    filter: blur(1px);
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+  }
+  #contact .cta3d .bg3:before,
+  #contact .cta3d .bg3:after {
+    content: "";
+    border-radius: calc(var(--radius) * 1.1);
+    background: var(--purple-500);
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+  }
+  #contact .cta3d .bg3:before {
+    filter: blur(5px);
+    transition: all .3s;
+    /* the stacked "3D depth" shadow — hues flipped to green, values verbatim */
+    box-shadow: -7px 6px #4b9b5f66, -14px 12px #4b9b5f4d, -21px 18px 4px #4b9b5f40,
+      -28px 24px 8px #4b9b5f26, -35px 30px 12px #4b9b5f1f, -42px 36px 16px #4b9b5f14,
+      -56px 42px 20px #4b9b5f0d;
+  }
+  #contact .cta3d .wrap3 {
+    border-radius: inherit;
+    background: linear-gradient(to bottom, var(--purple-100) 0%, var(--purple-400) 100%);
+    height: 100%;
+    padding: 3px;
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+    transform: translate(6px, -6px);
+  }
+  #contact .cta3d .outline3 {
+    opacity: 0;
+    border-radius: inherit;
+    outline: none;
+    transition: all .4s;
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    overflow: hidden;
+  }
+  #contact .cta3d .outline3:before {
+    content: "";
+    background: linear-gradient(90deg, #0000, #fff, #0000);
+    width: 120px;
+    height: 300px;
+    margin: auto;
+    animation: 3s linear infinite paused cta-spin;
+    position: absolute;
+    top: 2px; right: 2px; bottom: 2px; left: 2px;
+  }
+  #contact .cta3d .content3 {
     pointer-events: none;
+    z-index: 1;
+    border-radius: calc(var(--radius) * .85);
+    background: linear-gradient(to bottom, var(--purple-300) 0%, var(--purple-400) 100%);
+    height: 100%;
+    box-shadow: inset -2px 12px 11px -5px var(--purple-200), inset 1px -3px 11px #00000059;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    font-weight: 600;
+    transition: all .3s;
+    display: flex;
+    position: relative;
   }
-  #contact .contact-orbit .o-ring {
+  #contact .cta3d .content3:before {
+    content: "";
+    z-index: 10;
+    opacity: .7;
+    background: linear-gradient(to bottom, transparent, var(--purple-400));
+    filter: brightness(1.3) blur(5px);
+    width: 80%;
+    margin: auto;
+    position: absolute;
+    top: 45%; right: 0; bottom: 35%; left: 0;
+  }
+  #contact .cta3d .char {
+    justify-content: center;
+    align-items: center;
+    transition: all .3s;
+    display: flex;
+  }
+  #contact .cta3d .char span {
+    color: #0000;
+    display: block;
+    position: relative;
+  }
+  #contact .cta3d .char span:nth-child(5) { margin-left: 5px; }
+  #contact .cta3d .char.state-1 span:nth-child(5) { margin-right: -3px; }
+  #contact .cta3d .char.state-1 span { animation: charAppear 1.2s ease backwards calc(var(--i) * 30ms); }
+  #contact .cta3d .char.state-1 span:before,
+  #contact .cta3d .char span:after {
+    content: attr(data-label);
+    color: var(--white);
+    text-shadow: -1px 1px 2px var(--purple-500);
+    position: absolute;
+    left: 0;
+  }
+  #contact .cta3d .char span:before { opacity: 0; transform: translateY(-100%); }
+  /* the second text state ("Let's Talk") is REMOVED per user request —
+     the button keeps a single resting label ("Get in Touch"). These rules
+     neutralise the component's state-2 so it can never show: it stays
+     invisible and takes no space; the icon therefore sits centred. */
+  #contact .cta3d .char.state-2 { display: none; }
+  #contact .cta3d .char.state-2 span:after { opacity: 0; }
+  #contact .cta3d .icon3 {
+    z-index: 10;
+    animation: .8s cubic-bezier(.7, -.5, .3, 1.2) forwards resetArrow;
+  }
+  #contact .cta3d .icon3 div,
+  #contact .cta3d .icon3 div:before,
+  #contact .cta3d .icon3 div:after {
+    background-color: var(--white);
+    border-radius: 1px;
+    height: 3px;
+  }
+  #contact .cta3d .icon3 div:before,
+  #contact .cta3d .icon3 div:after {
+    content: "";
+    transform-origin: 100%;
+    border-radius: 15px;
+    width: 14px;
+    transition: all .3s;
+    position: absolute;
+    right: 0;
+  }
+  #contact .cta3d .icon3 div {
+    width: 24px;
+    box-shadow: -2px 2px 5px var(--purple-400);
+    background: linear-gradient(to bottom, var(--white), var(--purple-100));
+    animation: 1s ease-in-out infinite paused swingArrow;
+    position: relative;
+    transform: scale(.9);
+  }
+  #contact .cta3d .icon3 div:before {
+    box-shadow: 1px -2px 3px -1px var(--purple-400);
+    animation: 1s linear infinite paused rotateArrowLine;
+    top: 1px;
+    transform: rotate(44deg);
+  }
+  #contact .cta3d .icon3 div:after {
+    box-shadow: -2px 2px 3px 0 var(--purple-400);
+    background: linear-gradient(200deg, var(--white), var(--purple-100));
+    animation: 1s linear infinite paused rotateArrowLine2;
+    bottom: 1px;
+    transform: rotate(316deg);
+  }
+  #contact .cta3d .path3 {
+    z-index: 12;
+    stroke-dasharray: 150 480;
+    stroke-dashoffset: 150px;
+    pointer-events: none;
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+  }
+  #contact .cta3d .splash3 {
+    pointer-events: none;
+    stroke-dasharray: 60 60;
+    stroke-dashoffset: 60px;
+    stroke: var(--purple-300);
     position: absolute;
     top: 0; left: 0;
-    width: 0; height: 0;
-    perspective: 900px;      /* on the RING (the spans' direct parent) — this is
-                                what makes front letters swell and back letters
-                                shrink; perspective skips grandchildren */
+    transform: translate(-17%, -31%);
   }
-  /* the front ring paints above the artwork (art is z 1); the back ring below */
-  #contact .contact-orbit .o-ring.o-front { z-index: 4; }
-  #contact .contact-orbit .o-ring.o-back  { z-index: 0; }
-  #contact .contact-orbit .o-letter {
-    position: absolute;
-    top: 0; left: 0;
-    font-family: "Space Mono", monospace;
-    font-size: var(--orbit-size);
-    font-weight: 700;
-    color: var(--orbit-color);
-    white-space: pre;
-    will-change: transform, opacity;
+  /* — hover / active / focus states, verbatim — */
+  #contact .cta3d:hover .char.state-1 span:before { animation: charAppear .7s ease calc(var(--i) * 30ms); }
+  #contact .cta3d:hover .char.state-1 span:after  { opacity: 1; animation: charDisappear .7s ease calc(var(--i) * 30ms); }
+  #contact .cta3d:hover .wrap3   { transform: translate(8px, -8px); }
+  #contact .cta3d:hover .outline3 { opacity: 1; }
+  #contact .cta3d:hover .outline3:before,
+  #contact .cta3d:hover .icon3 div:before,
+  #contact .cta3d:hover .icon3 div:after,
+  #contact .cta3d:hover .icon3 div { animation-play-state: running; }
+  #contact .cta3d:active .bg3:before {
+    filter: blur(5px);
+    opacity: .7;
+    box-shadow: -7px 6px #4b9b5f66, -14px 12px #4b9b5f40, -21px 18px 4px #4b9b5f26;
+  }
+  #contact .cta3d:active .content3 {
+    box-shadow: inset -1px 12px 8px -5px #00894b66, inset 0 -3px 8px 0 var(--purple-200);
+  }
+  #contact .cta3d:active .outline3 { opacity: 0; }
+  #contact .cta3d:active .wrap3 { transform: translate(3px, -3px); }
+  #contact .cta3d:active .splash3 { animation: .8s cubic-bezier(.3, 0, 0, 1) 50ms forwards splash3; }
+  #contact .cta3d:focus .path3  { animation: 1.6s .2s forwards cta-path; }
+  #contact .cta3d:focus .icon3  { animation: 1s cubic-bezier(.7, -.5, .3, 1.5) forwards arrow; }
+  #contact .cta3d:focus .char.state-1 span { animation: charDisappear .5s ease forwards calc(var(--i) * 30ms); }
+  /* focus kept the path/arrow draws; the state-2 text itself stays hidden */
+  /* — keyframes (renamed ones that could collide with the page's existing
+     names; all curves/values verbatim) — */
+  @keyframes charAppear {
+    0%   { transform: translateY(50%);  opacity: 0; filter: blur(20px); }
+    20%  { transform: translateY(70%);  opacity: 1; }
+    50%  { transform: translateY(-15%); opacity: 1; filter: blur(0); }
+    100% { transform: translateY(0);    opacity: 1; }
+  }
+  @keyframes charDisappear {
+    0%   { transform: translateY(0);   opacity: 1; }
+    100% { transform: translateY(-70%); opacity: 0; filter: blur(3px); }
+  }
+  @keyframes arrow {
+    0%   { opacity: 1; }
+    50%  { transform: translateX(60px);  opacity: 0; }
+    51%  { transform: translateX(-200px); opacity: 0; }
+    100% { transform: translateX(-128px); opacity: 1; }
+  }
+  @keyframes swingArrow { 50% { transform: translateX(5px) scale(0.9); } }
+  @keyframes rotateArrowLine  { 50% { transform: rotate(30deg); }  80% { transform: rotate(55deg); } }
+  @keyframes rotateArrowLine2 { 50% { transform: rotate(330deg); } 80% { transform: rotate(300deg); } }
+  @keyframes resetArrow { 0% { transform: translateX(-128px); } 100% { transform: translateX(0); } }
+  @keyframes cta-path {
+    from { stroke: #fff; }
+    to   { stroke-dashoffset: -480px; stroke: #b9ffd9; }   /* was #f9c6fe → green */
+  }
+  @keyframes splash3 { to { stroke-dasharray: 2 60; stroke-dashoffset: -60px; } }
+  @keyframes cta-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    #contact .cta3d *,
+    #contact .cta3d { animation: none !important; transition: none !important; }
   }
   /* ===== hover: lift only — NO container scale/filter =====
      Scaling or filtering the container makes the browser rasterize its contents
@@ -756,35 +983,35 @@
   /* invisible cue removed — the icons' entrance is driven by a direct geometry
      test in the script instead (see the note there). */
 
-  /* ===== section title — same recipe as SECTION 2's headings (Space Mono,
-     font-light, tight tracking, plain white), just smaller and centred.
+  /* ===== section title — plain and simple (the layerize experiment was
+     removed at the user's request). White, same face as the rest of the
+     section, fades in on section entry.
        --title-y     : coarse vertical position, from the section's top edge
-       --title-nudge : fine vertical offset in px (negative = up)
-     It reuses the icons' entrance timing, so it fades in with them. */
+       --title-nudge : fine vertical offset in px (negative = up) */
   #contact .contact-title {
     --title-y: 7vh;          /* coarse: distance from the section's TOP edge */
     --title-nudge: 0px;       /* fine: extra px — negative = up, positive = down */
+
     position: absolute;
     left: 50%;
     top: calc(var(--title-y) + var(--title-nudge));
-    transform: translateX(-50%);
     z-index: 12;              /* above both icon rows */
     margin: 0;
-    text-align: center;
     white-space: nowrap;
-    font-weight: 300;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    font-size: clamp(24px, 4.5vw, 48px);
-    color: #fff;
+    cursor: default;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    color: #ffffff;
+    font-weight: 500;         /* medium — a touch heavier than the other titles */
+    letter-spacing: 0.05em;
+    font-size: clamp(28px, 4vw, 44px);
     opacity: 0;
-    transition: opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1);
+    transform: translate(-50%, 18px);
+    transition: opacity .9s ease .15s, transform .9s ease .15s;
   }
-  /* pre-entrance it sits a little low, then settles — matching the icons' rise */
-  #contact .contact-title { transform: translateX(-50%) translateY(24px); }
-  #contact.in .contact-title { opacity: 1; transform: translateX(-50%); }
+  #contact.in .contact-title { opacity: 1; transform: translate(-50%, 0); }
   @media (prefers-reduced-motion: reduce) {
-    #contact .contact-title { opacity: 1; transform: translateX(-50%); transition: none; }
+    #contact .contact-title { transition: none; opacity: 1; transform: translate(-50%, 0); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1000,7 +1227,58 @@
         <a class="contact-item contact-art" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
           <img src="contact/telegram.png" alt="Telegram" draggable="false">
         </a>
-        <div class="contact-orbit" data-text="t.me/hosseinammyd" aria-hidden="true"></div>
+        <button class="cta3d" type="button" aria-label="Get in touch on Telegram">
+          <div class="bg3"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 342 208" height="208" width="342" class="splash3">
+            <path stroke-linecap="round" stroke-width="3" d="M54.1054 99.7837C54.1054 99.7837 40.0984 90.7874 26.6893 97.6362C13.2802 104.485 1.5 97.6362 1.5 97.6362" />
+            <path stroke-linecap="round" stroke-width="3" d="M285.273 99.7841C285.273 99.7841 299.28 90.7879 312.689 97.6367C326.098 104.486 340.105 95.4893 340.105 95.4893" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M281.133 64.9917C281.133 64.9917 287.96 49.8089 302.934 48.2295C317.908 46.6501 319.712 36.5272 319.712 36.5272" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M281.133 138.984C281.133 138.984 287.96 154.167 302.934 155.746C317.908 157.326 319.712 167.449 319.712 167.449" />
+            <path stroke-linecap="round" stroke-width="3" d="M230.578 57.4476C230.578 57.4476 225.785 41.5051 236.061 30.4998C246.337 19.4945 244.686 12.9998 244.686 12.9998" />
+            <path stroke-linecap="round" stroke-width="3" d="M230.578 150.528C230.578 150.528 225.785 166.471 236.061 177.476C246.337 188.481 244.686 194.976 244.686 194.976" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M170.392 57.0278C170.392 57.0278 173.89 42.1322 169.571 29.54C165.252 16.9478 168.751 2.05227 168.751 2.05227" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M170.392 150.948C170.392 150.948 173.89 165.844 169.571 178.436C165.252 191.028 168.751 205.924 168.751 205.924" />
+            <path stroke-linecap="round" stroke-width="3" d="M112.609 57.4476C112.609 57.4476 117.401 41.5051 107.125 30.4998C96.8492 19.4945 98.5 12.9998 98.5 12.9998" />
+            <path stroke-linecap="round" stroke-width="3" d="M112.609 150.528C112.609 150.528 117.401 166.471 107.125 177.476C96.8492 188.481 98.5 194.976 98.5 194.976" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M62.2941 64.9917C62.2941 64.9917 55.4671 49.8089 40.4932 48.2295C25.5194 46.6501 23.7159 36.5272 23.7159 36.5272" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M62.2941 145.984C62.2941 145.984 55.4671 161.167 40.4932 162.746C25.5194 164.326 23.7159 174.449 23.7159 174.449" />
+          </svg>
+          <div class="wrap3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 221 42" height="42" width="221" class="path3">
+              <path stroke-linecap="round" stroke-width="3" d="M182.674 2H203C211.837 2 219 9.16344 219 18V24C219 32.8366 211.837 40 203 40H18C9.16345 40 2 32.8366 2 24V18C2 9.16344 9.16344 2 18 2H47.8855" />
+            </svg>
+            <div class="outline3"></div>
+            <div class="content3">
+              <span class="char state-1">
+                <span data-label="G" style="--i: 1;">G</span>
+                <span data-label="e" style="--i: 2;">e</span>
+                <span data-label="t" style="--i: 3;">t</span>
+                <span data-label=" " style="--i: 4;">&nbsp;</span>
+                <span data-label="i" style="--i: 5;">i</span>
+                <span data-label="n" style="--i: 6;">n</span>
+                <span data-label=" " style="--i: 7;">&nbsp;</span>
+                <span data-label="T" style="--i: 8;">T</span>
+                <span data-label="o" style="--i: 9;">o</span>
+                <span data-label="u" style="--i: 10;">u</span>
+                <span data-label="c" style="--i: 11;">c</span>
+                <span data-label="h" style="--i: 12;">h</span>
+              </span>
+              <div class="icon3"><div></div></div>
+              <span class="char state-2">
+                <span data-label="L" style="--i: 1;">L</span>
+                <span data-label="e" style="--i: 2;">e</span>
+                <span data-label="t" style="--i: 3;">t</span>
+                <span data-label=" " style="--i: 4;">&nbsp;</span>
+                <span data-label="s" style="--i: 5;">s</span>
+                <span data-label=" " style="--i: 6;">&nbsp;</span>
+                <span data-label="T" style="--i: 7;">T</span>
+                <span data-label="a" style="--i: 8;">a</span>
+                <span data-label="l" style="--i: 9;">l</span>
+                <span data-label="k" style="--i: 10;">k</span>
+              </span>
+            </div>
+          </div>
+        </button>
       </div>
       <div class="contact-col">
         <a class="contact-item contact-icon" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
@@ -1009,7 +1287,58 @@
         <a class="contact-item contact-art" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
           <img src="contact/email.png" alt="Email" draggable="false">
         </a>
-        <div class="contact-orbit" data-text="Hossein.moayedfard@gmail.com" aria-hidden="true"></div>
+        <button class="cta3d" type="button" aria-label="Get in touch by email">
+          <div class="bg3"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 342 208" height="208" width="342" class="splash3">
+            <path stroke-linecap="round" stroke-width="3" d="M54.1054 99.7837C54.1054 99.7837 40.0984 90.7874 26.6893 97.6362C13.2802 104.485 1.5 97.6362 1.5 97.6362" />
+            <path stroke-linecap="round" stroke-width="3" d="M285.273 99.7841C285.273 99.7841 299.28 90.7879 312.689 97.6367C326.098 104.486 340.105 95.4893 340.105 95.4893" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M281.133 64.9917C281.133 64.9917 287.96 49.8089 302.934 48.2295C317.908 46.6501 319.712 36.5272 319.712 36.5272" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M281.133 138.984C281.133 138.984 287.96 154.167 302.934 155.746C317.908 157.326 319.712 167.449 319.712 167.449" />
+            <path stroke-linecap="round" stroke-width="3" d="M230.578 57.4476C230.578 57.4476 225.785 41.5051 236.061 30.4998C246.337 19.4945 244.686 12.9998 244.686 12.9998" />
+            <path stroke-linecap="round" stroke-width="3" d="M230.578 150.528C230.578 150.528 225.785 166.471 236.061 177.476C246.337 188.481 244.686 194.976 244.686 194.976" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M170.392 57.0278C170.392 57.0278 173.89 42.1322 169.571 29.54C165.252 16.9478 168.751 2.05227 168.751 2.05227" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M170.392 150.948C170.392 150.948 173.89 165.844 169.571 178.436C165.252 191.028 168.751 205.924 168.751 205.924" />
+            <path stroke-linecap="round" stroke-width="3" d="M112.609 57.4476C112.609 57.4476 117.401 41.5051 107.125 30.4998C96.8492 19.4945 98.5 12.9998 98.5 12.9998" />
+            <path stroke-linecap="round" stroke-width="3" d="M112.609 150.528C112.609 150.528 117.401 166.471 107.125 177.476C96.8492 188.481 98.5 194.976 98.5 194.976" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M62.2941 64.9917C62.2941 64.9917 55.4671 49.8089 40.4932 48.2295C25.5194 46.6501 23.7159 36.5272 23.7159 36.5272" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M62.2941 145.984C62.2941 145.984 55.4671 161.167 40.4932 162.746C25.5194 164.326 23.7159 174.449 23.7159 174.449" />
+          </svg>
+          <div class="wrap3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 221 42" height="42" width="221" class="path3">
+              <path stroke-linecap="round" stroke-width="3" d="M182.674 2H203C211.837 2 219 9.16344 219 18V24C219 32.8366 211.837 40 203 40H18C9.16345 40 2 32.8366 2 24V18C2 9.16344 9.16344 2 18 2H47.8855" />
+            </svg>
+            <div class="outline3"></div>
+            <div class="content3">
+              <span class="char state-1">
+                <span data-label="G" style="--i: 1;">G</span>
+                <span data-label="e" style="--i: 2;">e</span>
+                <span data-label="t" style="--i: 3;">t</span>
+                <span data-label=" " style="--i: 4;">&nbsp;</span>
+                <span data-label="i" style="--i: 5;">i</span>
+                <span data-label="n" style="--i: 6;">n</span>
+                <span data-label=" " style="--i: 7;">&nbsp;</span>
+                <span data-label="T" style="--i: 8;">T</span>
+                <span data-label="o" style="--i: 9;">o</span>
+                <span data-label="u" style="--i: 10;">u</span>
+                <span data-label="c" style="--i: 11;">c</span>
+                <span data-label="h" style="--i: 12;">h</span>
+              </span>
+              <div class="icon3"><div></div></div>
+              <span class="char state-2">
+                <span data-label="L" style="--i: 1;">L</span>
+                <span data-label="e" style="--i: 2;">e</span>
+                <span data-label="t" style="--i: 3;">t</span>
+                <span data-label=" " style="--i: 4;">&nbsp;</span>
+                <span data-label="s" style="--i: 5;">s</span>
+                <span data-label=" " style="--i: 6;">&nbsp;</span>
+                <span data-label="T" style="--i: 7;">T</span>
+                <span data-label="a" style="--i: 8;">a</span>
+                <span data-label="l" style="--i: 9;">l</span>
+                <span data-label="k" style="--i: 10;">k</span>
+              </span>
+            </div>
+          </div>
+        </button>
       </div>
       <div class="contact-col">
         <a class="contact-item contact-icon" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
@@ -1018,7 +1347,50 @@
         <a class="contact-item contact-art" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
           <img src="contact/git.png" alt="GitHub" draggable="false">
         </a>
-        <div class="contact-orbit" data-text="github.com/hosseinmoayed" aria-hidden="true"></div>
+        <button class="cta3d" type="button" aria-label="Explore on GitHub">
+          <div class="bg3"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 342 208" height="208" width="342" class="splash3">
+            <path stroke-linecap="round" stroke-width="3" d="M54.1054 99.7837C54.1054 99.7837 40.0984 90.7874 26.6893 97.6362C13.2802 104.485 1.5 97.6362 1.5 97.6362" />
+            <path stroke-linecap="round" stroke-width="3" d="M285.273 99.7841C285.273 99.7841 299.28 90.7879 312.689 97.6367C326.098 104.486 340.105 95.4893 340.105 95.4893" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M281.133 64.9917C281.133 64.9917 287.96 49.8089 302.934 48.2295C317.908 46.6501 319.712 36.5272 319.712 36.5272" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M281.133 138.984C281.133 138.984 287.96 154.167 302.934 155.746C317.908 157.326 319.712 167.449 319.712 167.449" />
+            <path stroke-linecap="round" stroke-width="3" d="M230.578 57.4476C230.578 57.4476 225.785 41.5051 236.061 30.4998C246.337 19.4945 244.686 12.9998 244.686 12.9998" />
+            <path stroke-linecap="round" stroke-width="3" d="M230.578 150.528C230.578 150.528 225.785 166.471 236.061 177.476C246.337 188.481 244.686 194.976 244.686 194.976" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M170.392 57.0278C170.392 57.0278 173.89 42.1322 169.571 29.54C165.252 16.9478 168.751 2.05227 168.751 2.05227" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M170.392 150.948C170.392 150.948 173.89 165.844 169.571 178.436C165.252 191.028 168.751 205.924 168.751 205.924" />
+            <path stroke-linecap="round" stroke-width="3" d="M112.609 57.4476C112.609 57.4476 117.401 41.5051 107.125 30.4998C96.8492 19.4945 98.5 12.9998 98.5 12.9998" />
+            <path stroke-linecap="round" stroke-width="3" d="M112.609 150.528C112.609 150.528 117.401 166.471 107.125 177.476C96.8492 188.481 98.5 194.976 98.5 194.976" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M62.2941 64.9917C62.2941 64.9917 55.4671 49.8089 40.4932 48.2295C25.5194 46.6501 23.7159 36.5272 23.7159 36.5272" />
+            <path stroke-linecap="round" stroke-width="3" stroke-opacity="0.3" d="M62.2941 145.984C62.2941 145.984 55.4671 161.167 40.4932 162.746C25.5194 164.326 23.7159 174.449 23.7159 174.449" />
+          </svg>
+          <div class="wrap3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 221 42" height="42" width="221" class="path3">
+              <path stroke-linecap="round" stroke-width="3" d="M182.674 2H203C211.837 2 219 9.16344 219 18V24C219 32.8366 211.837 40 203 40H18C9.16345 40 2 32.8366 2 24V18C2 9.16344 9.16344 2 18 2H47.8855" />
+            </svg>
+            <div class="outline3"></div>
+            <div class="content3">
+              <span class="char state-1">
+                <span data-label="E" style="--i: 1;">E</span>
+                <span data-label="x" style="--i: 2;">x</span>
+                <span data-label="p" style="--i: 3;">p</span>
+                <span data-label="l" style="--i: 4;">l</span>
+                <span data-label="o" style="--i: 5;">o</span>
+                <span data-label="r" style="--i: 6;">r</span>
+                <span data-label="e" style="--i: 7;">e</span>
+              </span>
+              <div class="icon3"><div></div></div>
+              <span class="char state-2">
+                <span data-label="M" style="--i: 1;">M</span>
+                <span data-label="y" style="--i: 2;">y</span>
+                <span data-label=" " style="--i: 3;">&nbsp;</span>
+                <span data-label="W" style="--i: 4;">W</span>
+                <span data-label="o" style="--i: 5;">o</span>
+                <span data-label="r" style="--i: 6;">r</span>
+                <span data-label="k" style="--i: 7;">k</span>
+              </span>
+            </div>
+          </div>
+        </button>
       </div>
     </div>
 
@@ -1029,6 +1401,377 @@
     <canvas class="conduit-particles" aria-hidden="true"></canvas>
     </div><!-- /.contact-pin -->
   </section>
+
+  <!-- ================= TEST SECTION — CONTACT PAGE v2 =================
+     A complete standalone contact screen built around the Glass Shine
+     Cards (kept 1:1: glass blur, sweep shine, gradient icons, sans stack).
+     Layout: eyebrow + headline + sub → three LINKED glass cards → footer
+     strip (availability, live local time, copyright). A green particle
+     FIELD drifts scattered behind the cards. Entrance animations, idle
+     float and hover lift/glow are new. The orbs and the old wordmark were
+     removed at the user's request. Everything lives under #gsc-test. -->
+  <section id="gsc-test" class="relative w-full bg-black">
+    <style>
+      #gsc-test {
+        position: relative;
+        min-height: 100vh;
+        /* the component lives in a shadcn/Tailwind 4 project, whose base font is
+           Tailwind's default SANS stack — the page around it uses Space Mono,
+           so the test section overrides it back to the stack the real component
+           renders in */
+        font-family: ui-sans-serif, system-ui, sans-serif,
+          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        background-color: #000;        /* contact section's plain black (no dot grid, no watermark) */
+        z-index: 0;
+        /* ===== TUNE — SECTION ===== */
+        --nb-green: #2ce06d;           /* the project neon */
+        --nb-deep: #123d24;            /* gradient tail of the orbs */
+        --title-gap: 56px;             /* space under the title block */
+        --cards-y: 0px;                /* nudge the card row up/down */
+        /* ========================== */
+      }
+      /* ===== TITLE — "GET IN TOUCH", green glow headline ===== */
+      #gsc-test .gsc-heading {
+        position: relative;
+        z-index: 5;
+        text-align: center;
+        margin-bottom: var(--title-gap);
+        transform: translateY(var(--cards-y, 0px));
+      }
+      #gsc-test .gsc-heading .eyebrow {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.45em;
+        text-indent: 0.45em;           /* balances the tracking on the last letter */
+        text-transform: uppercase;
+        color: var(--nb-green);
+        opacity: 0;
+        filter: blur(8px);
+        transition: opacity .8s ease .1s, filter .8s ease .1s;
+      }
+      #gsc-test.in .gsc-heading .eyebrow { opacity: .85; filter: blur(0); }
+      #gsc-test .gsc-heading h2 {
+        margin: 14px 0 0;
+        font-weight: 800;
+        font-size: clamp(44px, 7vw, 92px);
+        letter-spacing: -0.03em;
+        line-height: .95;
+        color: #fff;
+      }
+      /* the word "TOUCH" carries the orbs' gradient, like a lit neon sign */
+      #gsc-test .gsc-heading h2 .lit {
+        background-image: linear-gradient(to bottom, var(--nb-green) 0%, var(--nb-deep) 130%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: #0000;
+        filter: drop-shadow(0 0 18px rgba(44,224,109,.45));
+      }
+      /* headline rises word by word once the section enters */
+      #gsc-test .gsc-heading h2 .w {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(26px);
+        filter: blur(10px);
+        transition: opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1), filter .7s ease;
+      }
+      #gsc-test.in .gsc-heading h2 .w { opacity: 1; transform: none; filter: blur(0); }
+      #gsc-test.in .gsc-heading h2 .w:nth-child(1) { transition-delay: .25s; }
+      #gsc-test.in .gsc-heading h2 .w:nth-child(2) { transition-delay: .40s; }
+      #gsc-test.in .gsc-heading h2 .w:nth-child(3) { transition-delay: .55s; }
+      #gsc-test .gsc-heading .sub {
+        margin: 18px 0 0;
+        font-size: 14px;
+        letter-spacing: .06em;
+        color: rgba(255,255,255,.55);
+        opacity: 0;
+        transform: translateY(14px);
+        transition: opacity .8s ease .7s, transform .8s ease .7s;
+      }
+      #gsc-test.in .gsc-heading .sub { opacity: 1; transform: none; }
+
+      /* ===== CARD ROW ===== */
+      #gsc-test .gsc-cards {
+        --slot-gap: 90px;      /* space between the cards */
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: stretch;
+        gap: var(--slot-gap);
+        transform: translateY(var(--cards-y, 0px));
+      }
+      /* each card sits in a SLOT; staggered entrance, left to right */
+      #gsc-test .gsc-slot {
+        position: relative;         /* the hover halo's positioning anchor */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateY(44px) scale(.94);
+        transition: opacity .8s ease, transform .9s cubic-bezier(.22,1,.36,1);
+      }
+      #gsc-test.in .gsc-slot:nth-child(1) { transition-delay: .15s; }
+      #gsc-test.in .gsc-slot:nth-child(2) { transition-delay: .32s; }
+      #gsc-test.in .gsc-slot:nth-child(3) { transition-delay: .49s; }
+      #gsc-test.in .gsc-slot { opacity: 1; transform: none; }
+      /* slow idle float — each card breathes on its own phase */
+      #gsc-test.in .gsc-card {
+        animation: gsc-float 6.5s ease-in-out infinite;
+      }
+      #gsc-test.in .gsc-slot:nth-child(1) .gsc-card { animation-delay: 0s; }
+      #gsc-test.in .gsc-slot:nth-child(2) .gsc-card { animation-delay: -2.1s; }
+      #gsc-test.in .gsc-slot:nth-child(3) .gsc-card { animation-delay: -4.2s; }
+      @keyframes gsc-float {
+        0%, 100% { translate: 0 -5px; }
+        50%      { translate: 0 5px; }
+      }
+      /* hover: the card lifts and the glass brightens. `translate`/`rotate`/
+         `scale` are separate from `transform`, so the idle float (which
+         animates `translate`) would fight them — the hover lift is applied
+         to the SLOT instead, keeping both free to move. */
+      #gsc-test .gsc-slot:hover { transform: translateY(-10px) scale(1.03); }
+      #gsc-test.in .gsc-slot { transition: opacity .8s ease, transform .45s cubic-bezier(.34,1.4,.64,1); }
+      #gsc-test .gsc-card { transition: box-shadow .45s ease, border-color .45s ease; }
+      #gsc-test .gsc-slot:hover .gsc-card {
+        border-color: rgba(44,224,109,.55);
+        box-shadow:
+          inset 2px 1px 6px #ffffff45,
+          0 0 22px rgba(44,224,109,.18),
+          0 18px 38px rgba(0,0,0,.55);
+      }
+      /* hover glow halo behind the card */
+      #gsc-test .gsc-slot .gsc-halo {
+        content: "";
+        position: absolute; inset: -14px;
+        border-radius: 24px;
+        background: radial-gradient(closest-side, rgba(44,224,109,.16), rgba(44,224,109,0));
+        opacity: 0;
+        transition: opacity .5s ease;
+        pointer-events: none;
+        z-index: -2;
+      }
+      #gsc-test .gsc-slot:hover .gsc-halo { opacity: 1; }
+      /* ===== CARDS — the component's glass card, kept 1:1 ===== */
+      #gsc-test .gsc-card {
+        -webkit-backdrop-filter: blur(10.5px);
+        backdrop-filter: blur(10.5px);
+        z-index: 0;
+        border: 1px solid #ffffff56;
+        border-radius: 10px;
+        width: 190px;
+        height: 254px;
+        padding: 10px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 2px 1px 6px #ffffff45;
+      }
+      /* the animated shine — a blurred white streak sweeping diagonally (10s) */
+      #gsc-test .gsc-card::after {
+        z-index: -1;
+        content: " ";
+        filter: blur(30px);
+        background: #fff;
+        width: 150%;
+        height: 10px;
+        animation: 10s infinite shine;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: rotate(50deg);
+      }
+      /* the headline — transparent colour painted by a background-clip gradient */
+      #gsc-test .gsc-innerText {
+        color: #0000;
+        background-image: linear-gradient(90deg, #000, #746f6f);
+        -webkit-background-clip: text;
+        margin: 10px 0;
+        font-size: 36px;
+        font-weight: 800;
+        line-height: 1em;
+      }
+      /* the body copy */
+      #gsc-test .gsc-desc {
+        color: #3a3939;
+        padding: 4px;
+      }
+      /* — card layout (the keeper): 2× icon on top, label under it — */
+      #gsc-test .gsc-card.icon-top {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+      }
+      /* the icon+label+desc are wrapped in the card's link target */
+      #gsc-test .gsc-card.icon-top a { display: block; text-decoration: none; }
+      /* the 2× icons: bootstrap-icons is a font, so just scale the glyphs.
+         One shared rule for all three cards keeps them identical. */
+      #gsc-test .gsc-card.icon-top > i.bi {
+        font-size: 72px;           /* base glyph renders ~36px → 72px = 2× */
+        line-height: 1;
+        color: #0000;
+        background-image: linear-gradient(90deg, #000, #746f6f);
+        -webkit-background-clip: text;
+        background-clip: text;
+        display: block;
+        margin-bottom: 6px;
+        transition: background-image 0s, filter .45s ease;
+      }
+      /* hover: the icon lights up in neon green */
+      #gsc-test .gsc-slot:hover .gsc-card.icon-top > i.bi {
+        background-image: linear-gradient(90deg, #123d24, #2ce06d);
+        filter: drop-shadow(0 0 14px rgba(44,224,109,.5));
+      }
+      /* the address line on the card, revealed on hover */
+      #gsc-test .gsc-addr {
+        display: block;
+        margin-top: 4px;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: .04em;
+        color: #123d24;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity .4s ease .05s, transform .4s ease .05s;
+      }
+      #gsc-test .gsc-slot:hover .gsc-addr { opacity: 1; transform: none; }
+      /* ===== FOOTER STRIP — availability + local time + copyright ===== */
+      #gsc-test .gsc-foot {
+        position: relative;
+        z-index: 5;
+        margin-top: clamp(48px, 8vh, 90px);
+        padding: 18px 8px 34px;
+        width: min(860px, 92vw);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 36px;
+        align-items: center;
+        justify-content: center;
+        border-top: 1px solid rgba(255,255,255,.10);
+        font-size: 12px;
+        letter-spacing: .05em;
+        color: rgba(255,255,255,.45);
+        opacity: 0;
+        transform: translateY(16px);
+        transition: opacity .9s ease 1s, transform .9s ease 1s;
+      }
+      #gsc-test.in .gsc-foot { opacity: 1; transform: none; }
+      #gsc-test .gsc-foot .dot {
+        display: inline-block;
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--nb-green);
+        margin-right: 8px;
+        box-shadow: 0 0 8px rgba(44,224,109,.9);
+        animation: gsc-pulse 2.2s ease-in-out infinite;
+      }
+      @keyframes gsc-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: .45; transform: scale(.8); }
+      }
+      #gsc-test .gsc-foot .sep { color: rgba(255,255,255,.18); }
+      #gsc-test .gsc-foot .tz { color: rgba(255,255,255,.65); }
+      /* ===== the particle FIELD behind the cards =====
+         A canvas covering the card row; green specks drift and scatter
+         across the whole area (not a line) — like fireflies behind glass.
+         They pass BEHIND the cards: the canvas z-index sits under the slots. */
+      #gsc-test .gsc-link {
+        position: absolute;
+        pointer-events: none;
+        z-index: 0;          /* slots paint above (they create their own layers) */
+      }
+      #gsc-test .gsc-container {
+        z-index: 0;
+        background-color: #000;   /* contact's black — keep both rules in sync */
+        /* the page stack: heading → cards → footer strip, all centred */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        position: relative;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #gsc-test .gsc-card::after { animation: none; }
+        #gsc-test .gsc-card { animation: none !important; }
+        #gsc-test .gsc-slot,
+        #gsc-test .gsc-heading .eyebrow,
+        #gsc-test .gsc-heading h2 .w,
+        #gsc-test .gsc-heading .sub,
+        #gsc-test .gsc-foot { transition: none; opacity: 1; transform: none; filter: none; }
+      }
+      @keyframes shine {
+        0%       { top: 100%; left: -100%; }
+        50%,100% { top: 0%;   left: 70%; }
+      }
+      /* — the orb keyframes were removed together with the orbs — */
+    </style>
+    <div class="gsc-container">
+      <!-- ===== TITLE ===== -->
+      <div class="gsc-heading">
+        <span class="eyebrow">Contact</span>
+        <h2>
+          <span class="w">GET&nbsp;IN</span>
+          <span class="w lit">TOUCH</span>
+        </h2>
+        <p class="sub">Have an idea in mind? Pick a channel — I reply fast.</p>
+      </div>
+
+      <!-- ===== CARD ROW + particle field ===== -->
+      <div class="gsc-cards" id="gscCards">
+        <!-- GITHUB card — 2× icon on top, label under it (the keeper) -->
+        <div class="gsc-slot">
+          <div class="gsc-halo"></div>
+          <a class="gsc-card icon-top" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
+            <i class="bi bi-github"></i>
+            <p class="gsc-innerText" style="margin:0;">Github</p>
+            <p class="gsc-desc">Explore my work</p>
+            <span class="gsc-addr">github.com/hosseinmoayed</span>
+          </a>
+        </div>
+        <!-- TELEGRAM card — same recipe, telegram glyph -->
+        <div class="gsc-slot">
+          <div class="gsc-halo"></div>
+          <a class="gsc-card icon-top" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
+            <i class="bi bi-telegram"></i>
+            <p class="gsc-innerText" style="margin:0;">Telegram</p>
+            <p class="gsc-desc">Fastest way to reach me</p>
+            <span class="gsc-addr">t.me/hosseinammyd</span>
+          </a>
+        </div>
+        <!-- EMAIL card — same recipe, envelope glyph -->
+        <div class="gsc-slot">
+          <div class="gsc-halo"></div>
+          <a class="gsc-card icon-top" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
+            <i class="bi bi-envelope"></i>
+            <p class="gsc-innerText" style="margin:0;">Email</p>
+            <p class="gsc-desc">For business &amp; collabs</p>
+            <span class="gsc-addr">Hossein.moayedfard@gmail.com</span>
+          </a>
+        </div>
+        <!-- the particle field drifting behind the cards -->
+        <canvas class="gsc-link" aria-hidden="true"></canvas>
+      </div>
+
+      <!-- ===== FOOTER STRIP ===== -->
+      <div class="gsc-foot">
+        <span><span class="dot"></span>Available for freelance</span>
+        <span class="sep">|</span>
+        <span class="tz" id="gscTime">Local time —</span>
+        <span class="sep">|</span>
+        <span>Hossein Moayedfard © 2026</span>
+      </div>
+    </div>
+  </section>
+  <!-- ================= /TEST SECTION ================= -->
 
   <!-- ================= FOOTER ================= -->
   <footer class="relative flex min-h-[400px] flex-col overflow-hidden bg-black md:flex-row">
@@ -1067,6 +1810,135 @@
 
   var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~|}{[]:;?><";
   function rnd() { return CHARS[Math.floor(Math.random() * CHARS.length)]; }
+
+  // ---------- Contact page v2 (#gsc-test): reveal + particle field + clock ----------
+  // (1) SCROLL REVEAL — same direct geometry test the #contact section uses
+  //     (IntersectionObserver misfires on early-starting sticky tracks).
+  // (2) PARTICLE FIELD — fine green specks drift scattered across the whole
+  //     card row (not a line), twinkling like fireflies behind glass.
+  // (3) LOCAL TIME — a live clock in the footer strip.
+  (function () {
+    var sec = document.getElementById("gsc-test");
+    if (!sec) return;
+
+    // — (1) reveal —
+    var reveal = function () {
+      if (sec.classList.contains("in")) return true;
+      var r = sec.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.75) { sec.classList.add("in"); return true; }
+      return false;
+    };
+    if (!reveal()) {
+      var watch = function () { if (!reveal()) requestAnimationFrame(watch); };
+      requestAnimationFrame(watch);
+    }
+
+    // — (3) local time —
+    var tzEl = document.getElementById("gscTime");
+    if (tzEl) {
+      var tz;
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { tz = ""; }
+      var tick = function () {
+        var now = new Date();
+        var hh = String(now.getHours()).padStart(2, "0");
+        var mm = String(now.getMinutes()).padStart(2, "0");
+        tzEl.textContent = "Local time " + hh + ":" + mm + (tz ? " — " + tz : "");
+      };
+      tick(); setInterval(tick, 30000);
+    }
+
+    // — (2) particle FIELD scattered behind the cards —
+    // Specks live anywhere across the card row (not a line): each one drifts
+    // with its own random velocity, bounces softly off the row bounds, and
+    // twinkles. Fireflies behind glass.
+    var canvas = sec.querySelector(".gsc-link");
+    var row = document.getElementById("gscCards");
+    if (!canvas || !row) return;
+    var ctx = canvas.getContext("2d");
+
+    // ===== TUNE — FIELD PARTICLES =====
+    var F_COUNT      = 100;          // specks alive at once
+    var F_SIZE       = [0.6, 1.8];  // speck radius, px
+    var F_SPEED      = [8, 30];     // wander speed, px/s
+    var F_COLOR      = "44,224,109";
+    var F_ALPHA      = 0.55;        // peak opacity (twinkle scales below this)
+    // ==================================
+
+    var W = 0, H = 0, parts = [], dpr = Math.max(1, window.devicePixelRatio || 1);
+    var lastT = 0, raf = 0;
+
+    function measure() {
+      var rowBox = row.getBoundingClientRect();
+      // the canvas is absolutely positioned INSIDE .gsc-cards, so offsets are
+      // relative to the row itself (top:0/left:0 = the row's own box)
+      W = Math.ceil(rowBox.width); H = Math.ceil(rowBox.height);
+      canvas.style.left = "0px";
+      canvas.style.top = "0px";
+      if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+        canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+        canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      }
+      while (parts.length < F_COUNT) parts.push(spawn());
+    }
+
+    function spawn() {
+      return {
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() * 2 - 1),
+        vy: (Math.random() * 2 - 1),     // unit-ish direction, normalised in step
+        speed: F_SPEED[0] + Math.random() * (F_SPEED[1] - F_SPEED[0]),
+        size: F_SIZE[0] + Math.random() * (F_SIZE[1] - F_SIZE[0]),
+        tw: Math.random() * Math.PI * 2, // twinkle phase
+        tws: 1 + Math.random() * 3       // twinkle speed
+      };
+    }
+
+    function step(now) {
+      var dt = Math.min(0.05, (now - lastT) / 1000 || 0.016);
+      lastT = now;
+      var w = canvas.width / dpr, h = canvas.height / dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        // wander: normalise the direction, then add a little swirl
+        var len = Math.sqrt(p.vx * p.vx + p.vy * p.vy) || 1;
+        p.vx += Math.sin(now / 1400 + p.tw) * 0.02;
+        p.vy += Math.cos(now / 1600 + p.tw) * 0.02;
+        p.x += (p.vx / len) * p.speed * dt;
+        p.y += (p.vy / len) * p.speed * dt;
+        // soft bounce off the field bounds
+        if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx); }
+        if (p.x > W) { p.x = W; p.vx = -Math.abs(p.vx); }
+        if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy); }
+        if (p.y > H) { p.y = H; p.vy = -Math.abs(p.vy); }
+        // twinkle
+        p.tw += p.tws * dt;
+        var a = F_ALPHA * (0.45 + 0.55 * Math.sin(p.tw));
+        if (a <= 0.01) continue;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, 6.2832);
+        ctx.fillStyle = "rgba(" + F_COLOR + "," + a.toFixed(3) + ")";
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(step);
+    }
+
+    function start() {
+      measure();
+      if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(step); }
+    }
+    start();
+    window.addEventListener("resize", start);
+    window.addEventListener("load", start);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(start);
+    var settle = 0, settleTimer = setInterval(function () {
+      start();
+      if (++settle >= 16) clearInterval(settleTimer);   // ~8 s of settle checks
+    }, 500);
+  })();
 
   // ---------- ScrambleIn (entrance reveal) ----------
   function scrambleIn(el, text, delay) {
@@ -1351,78 +2223,6 @@
       start();
       if (++settle >= 20) clearInterval(settleTimer);   // ~10 s of settle checks
     }, 500);
-  })();
-
-  // ---------- Contact: the orbiting address around each artwork ----------
-  // Like texttest.html's letter ring: every character of the address sits on a
-  // cylinder of radius --orbit-radius around the artwork centre; a rAF loop
-  // advances the phase, applying translateX + translateZ per character so
-  // letters sweep across the front, shrink toward the sides, pass BEHIND the
-  // image and re-emerge. Occlusion is real: each letter lives in one of TWO
-  // stacked rings — front (z 4, above the art's z 1) or back (z 0, below it) —
-  // and is MOVED between them as its angle crosses the sides, so the artwork
-  // genuinely covers the letters on the far side.
-  (function () {
-    if (!contactSec) return;
-    var orbits = contactSec.querySelectorAll(".contact-orbit");
-    if (!orbits.length) return;
-    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    var rings = [];
-    for (var i = 0; i < orbits.length; i++) {
-      var o = orbits[i];
-      var text = o.getAttribute("data-text") || "";
-      // repeat the address so the ring is always full
-      var sep = "  •  ";
-      var unit = text + sep;
-      var chars = "";
-      while (chars.length < 28) chars += unit;
-      var back = document.createElement("div");
-      var front = document.createElement("div");
-      back.className = "o-ring o-back";
-      front.className = "o-ring o-front";
-      o.appendChild(back);
-      o.appendChild(front);
-      var letters = [];
-      for (var c = 0; c < chars.length; c++) {
-        var s = document.createElement("span");
-        s.className = "o-letter";
-        s.textContent = chars[c] === " " ? " " : chars[c];
-        back.appendChild(s);                       // start every letter in the
-        letters.push(s);                           // back ring; tick() promotes
-      }                                            // the ones on the near side
-      rings.push({ front: front, back: back, letters: letters, phase: -i * 0.9 });
-    }
-
-    var SPEED = 2 * Math.PI / (parseFloat(getComputedStyle(orbits[0]).getPropertyValue("--orbit-speed")) || 12); // rad/s
-
-    var lastT = 0;
-    function tick(now) {
-      var dt = Math.min(0.05, (now - lastT) / 1000 || 0.016);
-      lastT = now;
-      for (var r = 0; r < rings.length; r++) {
-        var ring = rings[r];
-        var radius = parseFloat(getComputedStyle(ring.front.parentElement).getPropertyValue("--orbit-radius")) || 148;
-        ring.phase += SPEED * dt;
-        var n = ring.letters.length;
-        for (var c = 0; c < n; c++) {
-          var a = ring.phase + (2 * Math.PI / n) * c;
-          // x = sin(a) sweeps the letter across the face of the ring;
-          // z = cos(a) > 0 = the near half of the cylinder (in front of the
-          // artwork) and z < 0 = the far half (behind it)
-          var x = Math.sin(a) * radius;
-          var z = Math.cos(a) * radius;
-          var s = ring.letters[c];
-          var target = z >= 0 ? ring.front : ring.back;
-          if (s.parentElement !== target) target.appendChild(s);   // real occlusion:
-          s.style.opacity = z >= 0 ? 0.95 : 0.3;                   // behind -> covered
-          s.style.transform =
-            "translate(-50%, -50%) translateX(" + x.toFixed(1) + "px) translateZ(" + z.toFixed(1) + "px)";
-        }
-      }
-      requestAnimationFrame(tick);
-    }
-    if (!reduced) requestAnimationFrame(function (t) { lastT = t; requestAnimationFrame(tick); });
   })();
 
   // ---------- Section 2: PINNED scroll-scrubbed video + 3D text ----------
