@@ -249,6 +249,43 @@
   @media (max-width: 640px) {
     .page-count { right: 18px; bottom: 18px; }
   }
+
+  /* back-to-explore button — icon-only square in the standard top-left back
+     position, dressed in the navbar's own pill materials (bg-white/15, blur,
+     10px/14px radii, hover bg-white/[0.22]) so it reads as part of the nav. */
+  .back-chip { position: absolute; top: calc(100% + 2px); left: 16px;
+    display: flex; align-items: center; justify-content: center;
+    height: 36px; width: 36px; border-radius: 10px;
+    background: rgba(255,255,255,.15); color: #fff; text-decoration: none;
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    transition: background .25s ease, transform .25s ease; }
+  .back-chip i { font-size: 15px; line-height: 1; }
+  .back-chip:hover { background: rgba(255,255,255,.22); }
+  .back-chip:active { transform: scale(.97); }
+  @media (min-width: 640px) { .back-chip { left: 24px; height: 48px; width: 48px; border-radius: 14px; } .back-chip i { font-size: 17px; } }
+  @media (min-width: 768px) { .back-chip { left: 32px; } }
+
+  /* ===== FOOTER STRIP — identical to the contact section's footer in synapsex.html:
+     availability + local time (live clock) + copyright. Pinned stage is sticky, so the
+     strip is position:fixed at the bottom edge and fades out while a project preview
+     (zoom overlay) is open, mirroring how the nav and counter step aside. */
+  .gsc-foot { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%) translateY(16px);
+    z-index: 30; width: min(860px, 92vw);
+    display: flex; flex-wrap: wrap; gap: 14px 36px; align-items: center; justify-content: center;
+    padding: 18px 8px 16px; border-top: 1px solid rgba(255,255,255,.10);
+    font-family: "Space Mono", monospace; font-size: 12px; letter-spacing: .05em;
+    color: rgba(255,255,255,.45); opacity: 0; transition: opacity .9s ease 1s, transform .9s ease 1s; }
+  .gsc-foot.on { opacity: 1; transform: translateX(-50%); }
+  .gsc-foot .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #2ce06d; margin-right: 8px; box-shadow: 0 0 8px rgba(44,224,109,.9);
+    animation: gsc-pulse 2.2s ease-in-out infinite; }
+  @keyframes gsc-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } }
+  .gsc-foot .sep { color: rgba(255,255,255,.18); }
+  .gsc-foot .tz { color: rgba(255,255,255,.65); }
+  body.zoom-open .gsc-foot { opacity: 0; pointer-events: none; transition: opacity .4s ease; }
+  /* mobile: footer hidden entirely — the fixed strip crowds the small screen */
+  @media (max-width: 767px) { .gsc-foot { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .gsc-foot { transition: none; opacity: 1; transform: translateX(-50%); } }
 </style>
 </head>
 <body>
@@ -274,6 +311,8 @@
       <i class="bi bi-download text-[14px] sm:text-[16px]"></i>
       <span class="text-[13px] font-medium sm:text-[15px]">Download CV</span>
     </button>
+    <!-- back to the Explore section — standard top-left back affordance -->
+    <a href="synapsex.html#sec2-end" class="back-chip" aria-label="Back to Explore"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
   </nav>
 
   <canvas id="dotField"></canvas>
@@ -281,6 +320,15 @@
   <!-- running project index -->
   <div id="siteCount" class="page-count">
     <span class="pc-cur">01</span><span class="pc-sep">/</span><span class="pc-total">04</span>
+  </div>
+
+  <!-- footer strip (same content as the contact footer on synapsex.html) -->
+  <div class="gsc-foot" aria-hidden="false">
+    <span><span class="dot"></span>Available for freelance</span>
+    <span class="sep">|</span>
+    <span class="tz" id="gscTime">Local time —</span>
+    <span class="sep">|</span>
+    <span>Hossein Moayedfard © 2026</span>
   </div>
 
   <!-- ================= SCROLL SHOWCASE: one neon frame + copy per website ================= -->
@@ -490,6 +538,24 @@
     menuPill.classList.toggle("open", menuOpen);
   });
   document.getElementById("dlBtn").addEventListener("click", function () { window.location.href = "synapsex.html"; });
+
+  /* ---- footer strip: reveal once the nav is on, then a live local-time clock ---- */
+  (function () {
+    var foot = document.querySelector(".gsc-foot");
+    if (foot) setTimeout(function () { foot.classList.add("on"); }, 200);
+    var tzEl = document.getElementById("gscTime");
+    if (tzEl) {
+      var tz;
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { tz = ""; }
+      var tick = function () {
+        var now = new Date();
+        var hh = String(now.getHours()).padStart(2, "0");
+        var mm = String(now.getMinutes()).padStart(2, "0");
+        tzEl.textContent = "Local time " + hh + ":" + mm + (tz ? " — " + tz : "");
+      };
+      tick(); setInterval(tick, 30000);
+    }
+  })();
 
   /* ---- build one scroll section (neon frame + copy) per designed website ---- */
   (function () {

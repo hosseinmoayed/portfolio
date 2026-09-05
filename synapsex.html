@@ -101,6 +101,59 @@
   .menu-pill.open { width: 290px; }
   .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
   .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
+
+  /* ===== Mobile bottom tabs (iOS-style) ===== */
+  .m-tabs {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    transform: translateX(-50%);
+    z-index: 70;
+    display: none;
+    width: min(92vw, 420px);
+    padding: 4px 6px 6px;
+    border-radius: 16px;
+    background: rgba(18,18,18,.72);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 8px 28px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .m-tabs a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: rgba(255,255,255,.5);
+    text-decoration: none;
+    transition: color .25s ease, background .3s ease, box-shadow .3s ease, transform .2s ease;
+    padding: 2px 0;
+  }
+  .m-tabs a i {
+    font-size: 20px;
+    line-height: 1;
+    transition: transform .3s ease;
+  }
+  .m-tabs a span {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  .m-tabs a.active {
+    color: #d8ffe8;
+    background: linear-gradient(180deg, rgba(44,224,109,.2), rgba(44,224,109,.06));
+    box-shadow: 0 0 0 1px rgba(44,224,109,.3), 0 0 16px rgba(44,224,109,.12);
+  }
+  .m-tabs a.active i {
+    transform: translateY(-1px);
+  }
+  .m-tabs a:active { transform: scale(.94); }
   /* Mobile: the menu drops DOWN from the hamburger as a floating panel.
      The collapsed pill keeps its compact 48px size (no stretched background)
      and the dropdown is absolutely positioned, so opening it never shifts
@@ -127,6 +180,7 @@
       visibility: visible;
       transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1);
     }
+    .m-tabs { display: flex; gap: 4px; }
   }
 
   video { background: #000; }
@@ -724,6 +778,11 @@
       </div>
     </div>
    </div>
+   <!-- Anchor for "Back to Explore" from the sub-pages. Hash navigation aligns
+        an anchor's TOP with the viewport's TOP, so the anchor sits one viewport
+        above the section's end: jumping here lands the pin at its very end —
+        "EXPLORE MY WORK" + the two neon buttons fully shown (p = 1). -->
+   <div id="sec2-end" aria-hidden="true" style="position:absolute; left:0; bottom:100vh; bottom:100dvh; width:1px; height:1px; pointer-events:none;"></div>
   </section>
 
   <!-- ================= SECTION 3: CONTACT (v2 — glass cards) =================
@@ -1222,7 +1281,56 @@
 
 </div>
 
+<!-- Mobile bottom tabs -->
+<nav class="m-tabs" id="mobileTabs" aria-label="Mobile tabs">
+  <a href="#" data-mtab="#top" class="active"><i class="bi bi-house"></i><span>Home</span></a>
+  <a href="#" data-mtab="#sec2"><i class="bi bi-compass"></i><span>Explore</span></a>
+  <a href="#" data-mtab="#contact"><i class="bi bi-envelope"></i><span>Contact</span></a>
+</nav>
+
 <script>
+  // ---------- Mobile tabs ----------
+  (function () {
+    var tabsWrap = document.getElementById("mobileTabs");
+    if (!tabsWrap) return;
+    var tabs = [].slice.call(tabsWrap.querySelectorAll("[data-mtab]"));
+    var sections = [
+      { id: "#top", label: "Home" },
+      { id: "#sec2", label: "Explore" },
+      { id: "#contact", label: "Contact" }
+    ];
+
+    tabs.forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var sel = a.getAttribute("data-mtab");
+        var target = document.querySelector(sel);
+        if (target) scrollToY(target.offsetTop);
+      });
+    });
+
+    function updateActive() {
+      var probe = window.innerHeight * 0.5;
+      var activeSel = "#top";
+      for (var i = 0; i < sections.length; i++) {
+        var el = document.querySelector(sections[i].id);
+        if (!el) continue;
+        var r = el.getBoundingClientRect();
+        if (r.top <= probe && r.bottom > probe) {
+          activeSel = sections[i].id;
+          break;
+        }
+      }
+      tabs.forEach(function (a) {
+        a.classList.toggle("active", a.getAttribute("data-mtab") === activeSel);
+      });
+    }
+
+    window.addEventListener("scroll", updateActive, { passive: true });
+    window.addEventListener("resize", updateActive);
+    updateActive();
+  })();
+
   // ---------- SynapseX logo (4-fold rotational symmetry) ----------
   (function () {
     const P = "M 1.5,23 L 1.5,33 C 1.5,38.5 6,43 11.5,43 L 16.5,43 C 22,43 26.5,38.5 26.5,33 Q 28,28 33,26.5 C 38.5,26.5 43,22 43,16.5 L 43,11.5 C 43,6 38.5,1.5 33,1.5 L 23,1.5 Q 12,12 1.5,23 Z";
@@ -1634,15 +1742,50 @@
   });
 
   // ---------- Hero video mouse-scrub (absolute, eased) ----------
+  // Mobile (no hover/mouse): the film plays through on its own. It restarts
+  // every time the hero section is RE-ENTERED (scrolled back into view), but
+  // never restarts while the user stays within the section — so finishing the
+  // film doesn't loop over their head. Desktop keeps the mouse-scrub.
   var hero = document.getElementById("heroVideo");
   var target = 0, smooth = 0, seeking = false, lastX = null, dur = 0;
   var heroActive = true;    // true only while the hero section is on screen
   var SENS = 0.8;    // scrub sensitivity
   var EASE = 0.06;   // lower = smoother / softer follow
-  hero.addEventListener("loadedmetadata", function () { dur = hero.duration || 0; hero.pause(); hero.currentTime = 0; });
-  hero.addEventListener("loadeddata", function () { if (heroActive) hero.pause(); });
+  // mobile = no fine pointer (touch) — coarse pointers get autoplay, not scrub
+  var heroMobile = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+  hero.addEventListener("loadedmetadata", function () {
+    dur = hero.duration || 0;
+    if (heroMobile) {
+      // autoplay path: let the element own playback
+      hero.play().catch(function () {});
+      return;
+    }
+    hero.pause(); hero.currentTime = 0;
+  });
+  hero.addEventListener("loadeddata", function () {
+    if (!heroMobile && heroActive) hero.pause();
+  });
   hero.addEventListener("seeked", function () { seeking = false; });
 
+  if (heroMobile) {
+    // MOBILE: play through each time the section is brought into view;
+    // no restart while it stays on screen (played-out film stays put).
+    var heroMobileIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var vis = en.intersectionRatio >= 0.5;
+        if (vis === heroActive) return;          // no state change → nothing to do
+        heroActive = vis;
+        if (heroActive) {
+          // re-entered: rewind to the top and play from the start
+          try { hero.currentTime = 0; } catch (e) {}
+          hero.play().catch(function () {});
+        } else {
+          hero.pause();
+        }
+      });
+    }, { threshold: [0, 0.5, 1] });
+    heroMobileIO.observe(document.getElementById("top"));
+  } else {
   // scrub only responds while hero is visible; leaving it lets the video play to the end
   var heroIO = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
@@ -1666,9 +1809,10 @@
     // left edge = start (0), right edge = end (dur)
     target = Math.max(0, Math.min(dur, (e.clientX / window.innerWidth) * dur));
   });
+  }
   // eased follow loop: displayed time glides toward target instead of snapping
   function scrubFrame() {
-    if (dur && heroActive) {
+    if (dur && heroActive && !heroMobile) {   // mobile plays natively — no scrub loop
       smooth += (target - smooth) * EASE;
       if (!seeking && Math.abs(smooth - hero.currentTime) > 0.008) {
         seeking = true;
