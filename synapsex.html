@@ -101,19 +101,51 @@
   .menu-pill.open { width: 290px; }
   .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
   .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
+  /* Mobile: the menu drops DOWN from the hamburger as a floating panel.
+     The collapsed pill keeps its compact 48px size (no stretched background)
+     and the dropdown is absolutely positioned, so opening it never shifts
+     the navbar or the SynapseX logo. */
+  @media (max-width: 767px) {
+    #menuPill.menu-pill { position: relative; width: 36px; min-width: 36px; height: auto; overflow: visible; }
+    #menuPill.menu-pill.open { width: 36px; min-width: 36px; }
+    #menuPill .menu-links {
+      position: absolute; top: calc(100% + 12px); left: 0;
+      flex-direction: column; align-items: flex-start; gap: 14px;
+      width: max-content; min-width: 170px;
+      padding: 16px 22px;
+      border-radius: 14px;
+      background: rgba(18,18,18,.72);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+      transform: translateY(-10px);
+      visibility: hidden;
+      transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1), visibility 0s linear .3s;
+    }
+    #menuPill.menu-pill.open .menu-links {
+      transform: none;
+      visibility: visible;
+      transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1);
+    }
+  }
 
   video { background: #000; }
 
-  /* ===== Neon "EXPLORE MY WORK" button ===== */
+  /* ===== Neon "EXPLORE MY WORK" button =====
+     One centred label — the arrow and the divider line were removed at the
+     user's request, so the button is a single grid cell with the text dead
+     centre. Width/height/label size all scale with the viewport so the label
+     can never spill outside the frame on a phone. */
   .nbtn {
     --nb: #2ce06d;
     position: relative;
     display: grid;
-    grid-template-columns: 1fr 1px 88px;
-    align-items: center;
-    width: min(500px, 80vw);
-    height: 78px;
-    border-radius: 26px;        /* closer to a rectangle */
+    grid-template-columns: 1fr;      /* one cell: the label, centred */
+    place-items: center;
+    width: min(500px, 86vw);
+    height: clamp(58px, 13vw, 78px);
+    padding: 0 clamp(18px, 5vw, 34px);  /* keeps the text off the neon edge */
+    border-radius: clamp(18px, 4.5vw, 26px);
     border: none;
     background:
       radial-gradient(140% 130% at 50% -25%, rgba(44,224,109,.18) 0%, rgba(44,224,109,0) 45%),
@@ -149,29 +181,19 @@
   .nbtn-label {
     grid-column: 1;
     text-align: center;
-    font-size: clamp(14px, 2.6vw, 21px);
-    letter-spacing: 0.3em;
+    /* the label drives the button's readability, so it scales with the
+       viewport and its tracking tightens as the screen narrows — that is
+       what keeps "WEB EXPERIENCES" inside the frame on a phone */
+    font-size: clamp(11px, 3.2vw, 21px);
+    letter-spacing: clamp(0.08em, 0.9vw, 0.3em);
     text-transform: uppercase;
     color: #52ff96;
     white-space: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: clip;
   }
-  .nbtn-div {
-    grid-column: 2;
-    height: 80%;
-    background: linear-gradient(180deg, transparent, rgba(44,224,109,.55) 10%, rgba(44,224,109,.55) 90%, transparent);
-  }
-  .nbtn-arrow {
-    grid-column: 3;
-    display: grid; place-items: center;
-    font-size: 36px;
-    color: #52ff96;
-    transition: transform .35s cubic-bezier(0.34,1.4,0.64,1);
-  }
-  /* left-pointing variant — arrow sits on the LEFT edge, label on the right */
-  .nbtn.left { grid-template-columns: 88px 1px 1fr; }
-  .nbtn.left .nbtn-arrow { grid-column: 1; grid-row: 1; }
-  .nbtn.left .nbtn-div   { grid-column: 2; grid-row: 1; }
-  .nbtn.left .nbtn-label { grid-column: 3; grid-row: 1; }
   /* inner frame layer — a second outline inset a hair from the outer border (per reference) */
   .nbtn-inner {
     position: absolute; inset: 8px;
@@ -274,8 +296,6 @@
       inset 0 0 14px rgba(44,224,109,.38),
       inset 0 -11px 18px rgba(0,0,0,.78);
   }
-  .nbtn:hover .nbtn-arrow { transform: translateX(6px); }
-  .nbtn.left:hover .nbtn-arrow { transform: translateX(-6px); }
   .nbtn:active { transform: scale(0.985); }
 
   /* travelling edge highlight + momentary flash */
@@ -538,21 +558,23 @@
     <div class="flex items-center gap-2">
       <a href="#top" id="logoPill" class="flex h-9 items-center gap-2 rounded-[10px] bg-white/15 px-3 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-12 sm:rounded-[14px] sm:px-5">
         <span data-logo class="inline-block h-[16px] w-[16px] text-white sm:h-[18px] sm:w-[18px]"></span>
-        <span class="text-[13px] font-medium tracking-tight text-white sm:text-[16px]">SynapseX</span>
+        <span id="logoLabel" class="text-[13px] font-medium tracking-tight text-white sm:text-[16px]">Home</span>
       </a>
       <div id="menuPill" class="menu-pill flex h-9 items-center rounded-[10px] bg-white/15 backdrop-blur-md sm:h-12 sm:rounded-[14px]">
         <button id="hamBtn" aria-label="Menu" class="ham grid h-9 w-9 shrink-0 place-items-center rounded-[10px] transition-colors hover:bg-white/10 sm:h-12 sm:w-12 sm:rounded-[14px]">
           <span class="b1"></span><span class="b2"></span><span class="b3"></span>
         </button>
         <div class="menu-links flex items-center gap-5 whitespace-nowrap pr-5">
-          <a href="#" data-target="#sec2" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">About</a>
+          <a href="#" data-target="#top" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Home</a>
+          <a href="#" data-target="#sec2" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Explore</a>
+          <a href="#" data-target="#contact" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Contact</a>
         </div>
       </div>
     </div>
     <!-- Right download -->
     <button id="dlBtn" class="flex h-9 items-center gap-2 rounded-full bg-white px-3.5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-12 sm:px-6">
-      <i class="bi bi-apple text-[14px] sm:text-[16px]"></i>
-      <span data-scramble-dark class="text-[13px] font-medium sm:text-[15px]">Download</span>
+      <i class="bi bi-download text-[14px] sm:text-[16px]"></i>
+      <span data-scramble-dark class="text-[13px] font-medium sm:text-[15px]">Download CV</span>
     </button>
   </nav>
 
@@ -658,8 +680,10 @@
 
       <!-- Phase 5: Two buttons — fade in beneath EXPLORE MY WORK and stay.
            LEFT button = CINEMATIC ADS (arrow points left ←),
-           RIGHT button = WEB EXPERIENCES (arrow points right →). -->
-      <div id="sec2buttons" class="sec2-text absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-12 opacity-0" style="will-change: opacity, transform;">
+           RIGHT button = WEB EXPERIENCES (arrow points right →).
+           Mobile: flex-col stacks them vertically (user request); the JS
+           auto-fit already shrinks them to ~90vw either way. -->
+      <div id="sec2buttons" class="sec2-text absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col gap-6 md:flex-row md:gap-12 opacity-0" style="will-change: opacity, transform;">
           <!-- LEFT button: CINEMATIC ADS -->
           <a href="cinematic_ads_page.html" class="nbtn left" aria-label="Cinematic ads">
           <span class="nbtn-flash"></span>
@@ -675,9 +699,7 @@
           <span class="nbtn-bolt o3"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,10 L25,3 L48,11 L72,4 L95,10 L120,3 L145,11 L170,4 L200,10"/></svg></span>
           <span class="nbtn-inner"></span>
           <span class="nbtn-notch l"><svg viewBox="0 0 11 36" preserveAspectRatio="none"><path d="M0,0 L10,6.5 L10,29.5 L0,36"/></svg></span>
-          <span class="nbtn-label">CINEMATIC ADS</span>
-          <span class="nbtn-div"></span>
-          <span class="nbtn-arrow">&#8592;</span>
+          <span class="nbtn-label" data-section-label="Cinematic Ads">CINEMATIC ADS</span>
           <span class="nbtn-notch r"><svg viewBox="0 0 11 36" preserveAspectRatio="none"><path d="M10,0 L0,6.5 L0,29.5 L10,36"/></svg></span>
         </a>
 
@@ -696,9 +718,7 @@
           <span class="nbtn-bolt o3"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,10 L25,3 L48,11 L72,4 L95,10 L120,3 L145,11 L170,4 L200,10"/></svg></span>
           <span class="nbtn-inner"></span>
           <span class="nbtn-notch l"><svg viewBox="0 0 11 36" preserveAspectRatio="none"><path d="M0,0 L10,6.5 L10,29.5 L0,36"/></svg></span>
-          <span class="nbtn-label">WEB EXPERIENCES</span>
-          <span class="nbtn-div"></span>
-          <span class="nbtn-arrow">&#8594;</span>
+          <span class="nbtn-label" data-section-label="Web Experiences">WEB EXPERIENCES</span>
           <span class="nbtn-notch r"><svg viewBox="0 0 11 36" preserveAspectRatio="none"><path d="M10,0 L0,6.5 L0,29.5 L10,36"/></svg></span>
         </a>
       </div>
@@ -809,19 +829,21 @@
         gap: var(--slot-gap);
         transform: translateY(var(--cards-y, 0px));
       }
-      /* each card sits in a SLOT; staggered entrance, left to right */
+      /* each card sits in a SLOT; staggered entrance, left to right.
+         SLOW, visible entrance: ~1.4s rise + settle so each card's motion
+         reads clearly, with 0.55s between cards (user request). */
       #contact .gsc-slot {
         position: relative;         /* the hover halo's positioning anchor */
         display: flex;
         align-items: center;
         justify-content: center;
         opacity: 0;
-        transform: translateY(44px) scale(.94);
-        transition: opacity .8s ease, transform .9s cubic-bezier(.22,1,.36,1);
+        transform: translateY(64px) scale(.9);
+        transition: opacity 1.3s ease, transform 1.5s cubic-bezier(.22,1,.36,1);
       }
-      #contact.in .gsc-slot:nth-child(1) { transition-delay: .15s; }
-      #contact.in .gsc-slot:nth-child(2) { transition-delay: .32s; }
-      #contact.in .gsc-slot:nth-child(3) { transition-delay: .49s; }
+      #contact.in .gsc-slot:nth-child(1) { transition-delay: .25s; }
+      #contact.in .gsc-slot:nth-child(2) { transition-delay: .8s; }
+      #contact.in .gsc-slot:nth-child(3) { transition-delay: 1.35s; }
       #contact.in .gsc-slot { opacity: 1; transform: none; }
       /* slow idle float — each card breathes on its own phase */
       #contact.in .gsc-card {
@@ -837,9 +859,12 @@
       /* hover: the card lifts and the glass brightens. `translate`/`rotate`/
          `scale` are separate from `transform`, so the idle float (which
          animates `translate`) would fight them — the hover lift is applied
-         to the SLOT instead, keeping both free to move. */
+         to the SLOT instead, keeping both free to move.
+         NOTE: the fast .45s hover transition must NOT override the slow
+         entrance, so it only applies once the entrance has finished
+         (scoped to a `.settled` class the JS adds ~3.2s after reveal). */
       #contact .gsc-slot:hover { transform: translateY(-10px) scale(1.03); }
-      #contact.in .gsc-slot { transition: opacity .8s ease, transform .45s cubic-bezier(.34,1.4,.64,1); }
+      #contact.in .gsc-slot.settled { transition: opacity .8s ease, transform .45s cubic-bezier(.34,1.4,.64,1); }
       #contact .gsc-card { transition: box-shadow .45s ease, border-color .45s ease; }
       #contact .gsc-slot:hover .gsc-card {
         border-color: rgba(44,224,109,.55);
@@ -1017,6 +1042,107 @@
         50%,100% { top: 0%;   left: 70%; }
       }
       /* — the orb keyframes were removed together with the orbs — */
+
+      /* ===== MOBILE CAROUSEL (≤ 820px) — one card at a time, swipe between =====
+         The three slots stack in a row (flex) but the row shows ONE card width;
+         `scroll-snap` handles the swipe + snapping natively, JS adds arrows,
+         dots, the swipe-up/down block and a fancy transition class.
+         Order on mobile: TELEGRAM centred first, then GITHUB (swipe left→
+         appears from the right… i.e. scroll right) and EMAIL — the user asked
+         Telegram visible, Email one swipe left, GitHub one swipe right. */
+      @media (max-width: 820px) {
+        #contact .gsc-cards {
+          --slot-gap: 24px;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          align-items: center;
+          width: min(420px, 92vw);
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;            /* Firefox */
+          padding: 20px 0 26px;
+          transform: none;
+        }
+        #contact .gsc-cards::-webkit-scrollbar { display: none; }
+        /* order: telegram (1st), github (2nd), email (3rd) — telegram shows first */
+        #contact .gsc-slot { order: 0; }
+        #contact .gsc-slot[data-ch="telegram"] { order: 1; }
+        #contact .gsc-slot[data-ch="github"]   { order: 2; }
+        #contact .gsc-slot[data-ch="email"]    { order: 3; }
+        #contact .gsc-slot {
+          flex: 0 0 100%;
+          scroll-snap-align: center;
+          scroll-snap-stop: always;         /* one card per swipe, no coasting past */
+        }
+        /* fancy snap transition: the incoming card pops from slightly small */
+        #contact .gsc-cards.snapping .gsc-slot .gsc-card {
+          animation: gsc-snap-pop .45s cubic-bezier(.34,1.3,.5,1);
+        }
+        @keyframes gsc-snap-pop {
+          0%   { scale: .92; filter: brightness(.7); }
+          100% { scale: 1;   filter: brightness(1); }
+        }
+        /* active card gets the green border + halo (desktop's hover equivalent) */
+        #contact .gsc-slot.active .gsc-card {
+          border-color: rgba(44,224,109,.55);
+          box-shadow:
+            inset 2px 1px 6px #ffffff45,
+            0 0 22px rgba(44,224,109,.18),
+            0 18px 38px rgba(0,0,0,.55);
+        }
+        #contact .gsc-slot.active .gsc-card.icon-top > i.bi {
+          background-image: linear-gradient(90deg, #123d24, #2ce06d);
+          filter: drop-shadow(0 0 14px rgba(44,224,109,.5));
+        }
+        #contact .gsc-slot.active .gsc-addr { opacity: 1; transform: none; }
+        #contact .gsc-slot.active .gsc-halo { opacity: 1; }
+        /* swipe hint + dots + arrows */
+        #contact .gsc-nav {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 18px;
+          margin-top: 14px;
+          width: 100%;
+        }
+        #contact .gsc-nav .hint {
+          font-size: 11px;
+          letter-spacing: .22em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,.35);
+        }
+        #contact .gsc-nav button {
+          background: rgba(255,255,255,.08);
+          border: 1px solid rgba(255,255,255,.18);
+          border-radius: 50%;
+          width: 40px; height: 40px;
+          color: #fff;
+          font-size: 16px;
+          cursor: pointer;
+          display: grid; place-items: center;
+          transition: background .3s ease, border-color .3s ease, transform .3s ease;
+        }
+        #contact .gsc-nav button:hover { background: rgba(44,224,109,.18); border-color: rgba(44,224,109,.5); }
+        #contact .gsc-nav button:active { transform: scale(.92); }
+        #contact .gsc-dots { display: flex; gap: 8px; }
+        #contact .gsc-dots span {
+          width: 8px; height: 8px;
+          border-radius: 50%;
+          background: rgba(255,255,255,.25);
+          transition: background .3s ease, transform .3s ease;
+        }
+        #contact .gsc-dots span.on {
+          background: var(--nb-green);
+          transform: scale(1.25);
+          box-shadow: 0 0 8px rgba(44,224,109,.8);
+        }
+      }
+      /* desktop: the nav strip is hidden (media query below re-shows it) */
+      @media (min-width: 821px) {
+        #contact .gsc-nav { display: none; }
+      }
     </style>
     <div class="gsc-container">
       <!-- ===== TITLE ===== -->
@@ -1031,8 +1157,9 @@
 
       <!-- ===== CARD ROW + particle field ===== -->
       <div class="gsc-cards" id="gscCards">
-        <!-- GITHUB card — 2× icon on top, label under it (the keeper) -->
-        <div class="gsc-slot">
+        <!-- GITHUB card — 2× icon on top, label under it (the keeper).
+             data-ch drives the mobile carousel order (telegram → github → email). -->
+        <div class="gsc-slot" data-ch="github">
           <div class="gsc-halo"></div>
           <a class="gsc-card icon-top" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
             <i class="bi bi-github"></i>
@@ -1042,7 +1169,7 @@
           </a>
         </div>
         <!-- TELEGRAM card — same recipe, telegram glyph -->
-        <div class="gsc-slot">
+        <div class="gsc-slot" data-ch="telegram">
           <div class="gsc-halo"></div>
           <a class="gsc-card icon-top" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
             <i class="bi bi-telegram"></i>
@@ -1052,7 +1179,7 @@
           </a>
         </div>
         <!-- EMAIL card — same recipe, envelope glyph -->
-        <div class="gsc-slot">
+        <div class="gsc-slot" data-ch="email">
           <div class="gsc-halo"></div>
           <a class="gsc-card icon-top" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
             <i class="bi bi-envelope"></i>
@@ -1063,6 +1190,13 @@
         </div>
         <!-- the particle field drifting behind the cards -->
         <canvas class="gsc-link" aria-hidden="true"></canvas>
+      </div>
+
+      <!-- ===== MOBILE CAROUSEL NAV (visible ≤820px only) ===== -->
+      <div class="gsc-nav" aria-hidden="false">
+        <button type="button" class="gsc-prev" aria-label="Previous channel"><i class="bi bi-chevron-left"></i></button>
+        <div class="gsc-dots"><span></span><span></span><span></span></div>
+        <button type="button" class="gsc-next" aria-label="Next channel"><i class="bi bi-chevron-right"></i></button>
       </div>
 
       <!-- ===== FOOTER STRIP ===== -->
@@ -1115,13 +1249,53 @@
     var reveal = function () {
       if (sec.classList.contains("in")) return true;
       var r = sec.getBoundingClientRect();
-      if (r.top < window.innerHeight * 0.75) { sec.classList.add("in"); return true; }
+      if (r.top < window.innerHeight * 0.75) {
+        sec.classList.add("in");
+        // the slow per-card entrance runs ~1.35s delay + 1.5s motion; after it
+        // settles, hand the slots over to the fast hover transitions
+        setTimeout(function () {
+          sec.querySelectorAll(".gsc-slot").forEach(function (s) { s.classList.add("settled"); });
+        }, 3100);
+        return true;
+      }
       return false;
     };
     if (!reveal()) {
       var watch = function () { if (!reveal()) requestAnimationFrame(watch); };
       requestAnimationFrame(watch);
     }
+
+    // — (1b) MAGNETIC SNAP — when the user has scrolled ~60% into the contact
+    // screen (i.e. it fills ≥40% of the viewport), finish the journey for them:
+    // one smooth glide seats the section flush to the viewport. Fires once per
+    // approach; scrolling back up past the threshold re-arms it.
+    var magnetized = false;
+    var magnetBusy = false;
+    var snapToContact = function () {
+      if (magnetBusy) return;
+      magnetBusy = true;
+      // global smooth-scroll helper (defined further down) or native fallback
+      var target = sec.offsetTop;
+      if (typeof scrollToY === "function") scrollToY(target);
+      else window.scrollTo({ top: target, behavior: "smooth" });
+      setTimeout(function () { magnetBusy = false; }, 1400);  // glide + settle
+    };
+    var magnetCheck = function () {
+      var r = sec.getBoundingClientRect();
+      // ~60% of the way in: at least 40% of the screen is the contact section
+      var entered = window.innerHeight - r.top;
+      if (entered >= window.innerHeight * 0.4 && r.bottom > window.innerHeight * 0.5) {
+        if (!magnetized) { magnetized = true; snapToContact(); }
+      } else if (r.top >= window.innerHeight) {
+        magnetized = false;   // fully left the screen — re-arm for the next approach
+      }
+    };
+    // scroll is the primary driver; wheel/touchmove cover Lenis-driven setups
+    // where synthetic scrolls bypass the window scroll event
+    window.addEventListener("scroll", magnetCheck, { passive: true });
+    window.addEventListener("wheel", magnetCheck, { passive: true });
+    window.addEventListener("touchmove", magnetCheck, { passive: true });
+    window.addEventListener("keydown", magnetCheck);   // PgDn / End / arrow keys
 
     // — (3) local time —
     var tzEl = document.getElementById("gscTime");
@@ -1136,6 +1310,115 @@
       };
       tick(); setInterval(tick, 30000);
     }
+
+    // — (2b) MOBILE CAROUSEL (≤820px) — one card per swipe, endless feel —
+    // scroll-snap handles the gesture natively; JS tracks the active card,
+    // drives arrows/dots, adds the pop transition, and blocks vertical scroll
+    // while a horizontal swipe is in progress. Carousel order:
+    // TELEGRAM → (swipe right) GITHUB / (swipe left) EMAIL, wrapping around.
+    (function () {
+      var row = document.getElementById("gscCards");
+      if (!row) return;
+      var slots = [].slice.call(row.querySelectorAll(".gsc-slot"));
+      if (!slots.length) return;
+      // carousel order: telegram, github, email (set in CSS order too)
+      var order = slots.slice().sort(function (a, b) {
+        return (parseInt(getComputedStyle(a).order, 10) || 0) -
+               (parseInt(getComputedStyle(b).order, 10) || 0);
+      });
+      var dots = document.querySelectorAll(".gsc-dots span");
+      var prevBtn = document.querySelector(".gsc-nav .gsc-prev");
+      var nextBtn = document.querySelector(".gsc-nav .gsc-next");
+      var active = 0;
+      var snapTimer = null;
+
+      var mq = window.matchMedia("(max-width: 820px)");
+
+      function setActive(i) {
+        active = (i + order.length) % order.length;   // wrap both ways
+        slots.forEach(function (s) { s.classList.remove("active"); });
+        order[active].classList.add("active");
+        if (dots.length) [].forEach.call(dots, function (d, k) {
+          d.classList.toggle("on", k === active);
+        });
+        // the fancy transition: pop the row while snapping
+        if (mq.matches) {
+          row.classList.remove("snapping");
+          void row.offsetWidth;                    // restart the pop animation
+          row.classList.add("snapping");
+          clearTimeout(snapTimer);
+          snapTimer = setTimeout(function () { row.classList.remove("snapping"); }, 480);
+        }
+      }
+
+      function centerOf(i) {
+        var s = order[i];
+        return s.offsetLeft - (row.clientWidth - s.clientWidth) / 2;
+      }
+      function goTo(i, smooth) {
+        setActive(i);
+        if (smooth === false) {
+          row.scrollTo({ left: centerOf(active), behavior: "auto" });
+          return;
+        }
+        // pause the scroll tracker for the glide's duration (+ settle margin)
+        gliding = true;
+        row.scrollTo({ left: centerOf(active), behavior: "smooth" });
+        setTimeout(function () { gliding = false; }, 550);
+      }
+
+      // track swipes: the snap event tells us which card won.
+      // While a programmatic glide (arrow click) is in flight, the tracker is
+      // paused — otherwise it would re-detect the outgoing card mid-glide and
+      // cancel the wrap-around.
+      var scrollTimer = null;
+      var gliding = false;
+      row.addEventListener("scroll", function () {
+        if (!mq.matches || gliding) return;
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function () {
+          var mid = row.scrollLeft + row.clientWidth / 2;
+          var best = 0, bestDist = Infinity;
+          order.forEach(function (s, i) {
+            var c = s.offsetLeft + s.clientWidth / 2;
+            var d = Math.abs(c - mid);
+            if (d < bestDist) { bestDist = d; best = i; }
+          });
+          if (best !== active) setActive(best);   // no re-scroll — snap already did it
+        }, 90);
+      }, { passive: true });
+
+      // arrows wrap: after email, next shows telegram again (user's "endless" ask)
+      if (prevBtn) prevBtn.addEventListener("click", function () { goTo(active - 1); });
+      if (nextBtn) nextBtn.addEventListener("click", function () { goTo(active + 1); });
+
+      // block vertical page scroll while a horizontal swipe is running.
+      // NOTE: preventDefault on touchmove only works while the scroll hasn't
+      // started (cancelable=true) — once the browser is already scrolling, the
+      // cancellation is ignored (harmless warning). scroll-snap keeps the
+      // gesture contained either way.
+      var startX = 0, startY = 0, locked = false;
+      row.addEventListener("touchstart", function (e) {
+        startX = e.touches[0].clientX; startY = e.touches[0].clientY; locked = false;
+      }, { passive: true });
+      row.addEventListener("touchmove", function (e) {
+        if (!mq.matches || locked || !e.cancelable) return;
+        var dx = Math.abs(e.touches[0].clientX - startX);
+        var dy = Math.abs(e.touches[0].clientY - startY);
+        if (dx > dy && dx > 12) { locked = true; e.preventDefault(); }
+      }, { passive: false });
+
+      // init: activate the first (telegram) once layout is known
+      var initTries = 0;
+      var initTimer = setInterval(function () {
+        initTries++;
+        if (order[0] && order[0].offsetWidth > 0) { clearInterval(initTimer); goTo(0, false); }
+        else if (initTries > 20) clearInterval(initTimer);
+      }, 250);
+      window.addEventListener("resize", function () {
+        if (mq.matches) row.scrollTo({ left: centerOf(active), behavior: "auto" });
+      });
+    })();
 
     // — (2) particle FIELD scattered behind the cards —
     // Specks live anywhere across the card row (not a line): each one drifts
@@ -1230,6 +1513,35 @@
     }, 500);
   })();
 
+  // ---------- Section-aware navbar label ----------
+  // The logo pill shows the name of whatever section is currently on screen
+  // (Home / Explore / Contact) and links back to the page top. The two
+  // showcase buttons (cinematic / web pages) keep their own fixed labels.
+  (function () {
+    var logoLabel = document.getElementById("logoLabel");
+    var logoPill = document.getElementById("logoPill");
+    if (!logoLabel || !logoPill) return;
+    // order matters: first section whose bounds cover mid-viewport wins
+    var watched = [
+      { id: "top",     label: "Home" },
+      { id: "sec2",    label: "Explore" },
+      { id: "contact", label: "Contact" }
+    ];
+    var els = watched.map(function (w) { return { el: document.getElementById(w.id), label: w.label }; })
+                     .filter(function (w) { return w.el; });
+    function update() {
+      var probe = window.innerHeight * 0.5;             // mid-viewport line
+      var current = els[0] ? els[0].label : "";
+      for (var i = 0; i < els.length; i++) {
+        var r = els[i].el.getBoundingClientRect();
+        if (r.top <= probe && r.bottom > probe) { current = els[i].label; break; }
+      }
+      if (logoLabel.textContent !== current) logoLabel.textContent = current;
+    }    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+  })();
+
   // ---------- ScrambleIn (entrance reveal) ----------
   function scrambleIn(el, text, delay) {
     el.innerHTML = "&nbsp;";
@@ -1307,14 +1619,13 @@
     menuOpen = !menuOpen;
     hamBtn.classList.toggle("open", menuOpen);
     menuPill.classList.toggle("open", menuOpen);
-    // hide logo pill on small screens when open
-    if (window.innerWidth < 768) logoPill.style.display = menuOpen ? "none" : "";
-    else logoPill.style.display = "";
   });
   document.querySelectorAll("[data-target]").forEach(function (a) {
     a.addEventListener("click", function (e) {
       e.preventDefault();
       var el = document.querySelector(a.getAttribute("data-target"));
+      // close the hamburger dropdown after tapping a link (mobile)
+      if (menuOpen) hamBtn.click();
       if (el) scrollToY(el.offsetTop);
     });
   });

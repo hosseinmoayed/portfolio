@@ -40,6 +40,32 @@
   .menu-pill.open { width: 290px; }
   .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
   .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
+  /* Mobile: the menu drops DOWN from the hamburger as a floating panel
+     (same behaviour as synapsex.html) — the collapsed pill stays 48px wide,
+     and opening never shifts the navbar or hides the logo. */
+  @media (max-width: 767px) {
+    #menuPill.menu-pill { position: relative; width: 36px; min-width: 36px; height: auto; overflow: visible; }
+    #menuPill.menu-pill.open { width: 36px; min-width: 36px; }
+    #menuPill .menu-links {
+      position: absolute; top: calc(100% + 12px); left: 0;
+      flex-direction: column; align-items: flex-start; gap: 14px;
+      width: max-content; min-width: 170px;
+      padding: 16px 22px;
+      border-radius: 14px;
+      background: rgba(18,18,18,.72);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+      transform: translateY(-10px);
+      visibility: hidden;
+      transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1), visibility 0s linear .3s;
+    }
+    #menuPill.menu-pill.open .menu-links {
+      transform: none;
+      visibility: visible;
+      transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1);
+    }
+  }
   video { background: #000; }
 
   /* ===== Neon frame (from the section-2 .nbtn design, turned into a video showcase) ===== */
@@ -238,14 +264,15 @@
           <span class="b1"></span><span class="b2"></span><span class="b3"></span>
         </button>
         <div class="menu-links flex items-center gap-5 whitespace-nowrap pr-5">
-          <a href="synapsex.html#sec2" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">About</a>
-          <a href="synapsex.html#metrics" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Metrics</a>
+          <a href="synapsex.html" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Home</a>
+          <a href="synapsex.html#sec2" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Explore</a>
+          <a href="synapsex.html#contact" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Contact</a>
         </div>
       </div>
     </div>
     <button id="dlBtn" class="flex h-9 items-center gap-2 rounded-full bg-white px-3.5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-12 sm:px-6">
-      <i class="bi bi-apple text-[14px] sm:text-[16px]"></i>
-      <span class="text-[13px] font-medium sm:text-[15px]">Download</span>
+      <i class="bi bi-download text-[14px] sm:text-[16px]"></i>
+      <span class="text-[13px] font-medium sm:text-[15px]">Download CV</span>
     </button>
   </nav>
 
@@ -461,8 +488,6 @@
     menuOpen = !menuOpen;
     hamBtn.classList.toggle("open", menuOpen);
     menuPill.classList.toggle("open", menuOpen);
-    if (window.innerWidth < 768) logoPill.style.display = menuOpen ? "none" : "";
-    else logoPill.style.display = "";
   });
   document.getElementById("dlBtn").addEventListener("click", function () { window.location.href = "synapsex.html"; });
 
