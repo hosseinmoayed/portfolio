@@ -407,7 +407,7 @@ function templateBasicsHtml(item) {
       </div>
       <div class="frow" style="margin:14px 0 0;"><label>Description</label><div><textarea id="mi_desc" style="min-height:56px;">${escapeHtml(item.desc || "")}</textarea></div></div>
       <div class="f3" style="margin-top:14px;">
-        <div class="frow" style="margin:0;"><label>Link</label><div><input type="text" id="mi_link" value="${escapeHtml(item.link || "synapsex.html")}"></div></div>
+        <div class="frow" style="margin:0;"><label>Link</label><div><input type="text" id="mi_link" value="${escapeHtml(item.link || "index.html")}"></div></div>
         <div class="frow" style="margin:0;"><label>Order</label><div><input type="number" id="mi_order" value="${Number(item.order ?? nextOrder("templates"))}"></div></div>
         <div class="frow" style="margin:0;"><label>Visible</label><div><label class="check"><input type="checkbox" id="mi_pub" ${item.published !== false ? "checked" : ""}> shown on site</label></div></div>
       </div>
@@ -522,7 +522,7 @@ async function saveItem(kind, id) {
       }
     : {
         tag: g("#mi_tag"), name: g("#mi_name"), desc: g("#mi_desc"),
-        src: g("#mi_src"), link: g("#mi_link") || "synapsex.html",
+        src: g("#mi_src"), link: g("#mi_link") || "index.html",
         order: Number(g("#mi_order") || 0), published: modal.querySelector("#mi_pub").checked,
         updated_at: serverTimestamp()
       };

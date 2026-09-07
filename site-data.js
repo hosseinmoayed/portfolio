@@ -58,17 +58,17 @@ const SITE_CONTENT_DEFAULTS = {
 
 /* Showcase cards → the SITES arrays in web_experiences_page.html / cinematic_ads_page.html */
 const TEMPLATES_DEFAULT = [
-  { tag: "Landing Page",    name: "NOVA",  src: "web_expreience_scrub.mp4", link: "synapsex.html",
+  { tag: "Landing Page",    name: "NOVA",  src: "web_expreience_scrub.mp4", link: "index.html",
     desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
-  { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", link: "synapsex.html",
+  { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", link: "index.html",
     desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
-  { tag: "Commerce",        name: "FLUX",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", link: "synapsex.html",
+  { tag: "Commerce",        name: "FLUX",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", link: "index.html",
     desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
-  { tag: "Portfolio",       name: "HALO",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", link: "synapsex.html",
+  { tag: "Portfolio",       name: "HALO",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", link: "index.html",
     desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
 ];
 
-/* WE cards → the WE_DATA array in synapsex.html (sec2 "generated" cards) */
+/* WE cards → the WE_DATA array in index.html (sec2 "generated" cards) */
 const TEASERS_DEFAULT = [
   { h: "Realtime UI",     p: "Fluid interfaces that respond in milliseconds.",            src: "web_expreience_scrub.mp4" },
   { h: "Cinematic Web",   p: "Scroll-driven stories with video-grade motion.",           src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
@@ -128,7 +128,7 @@ async function loadFromFirestore() {
     .map(d => ({
       tag: d.tag || "", name: d.name || "",
       src: d.src || "", desc: d.desc || "",
-      link: d.link || "synapsex.html"
+      link: d.link || "index.html"
     }));
 
   const teasers = teasersSnap.docs
