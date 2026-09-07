@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Anton+SC&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
+<script type="module" src="site-data.js"></script>
 <script>
   tailwind.config = { theme: { fontFamily: {
     sans: ['"Space Mono"', 'monospace'], serif: ['"Space Mono"', 'monospace'], mono: ['"Space Mono"', 'monospace'],
@@ -40,31 +41,10 @@
   .menu-pill.open { width: 290px; }
   .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
   .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
-  /* Mobile: the menu drops DOWN from the hamburger as a floating panel
-     (same behaviour as synapsex.html) — the collapsed pill stays 48px wide,
-     and opening never shifts the navbar or hides the logo. */
+  /* Mobile: the hamburger is hidden — the back-chip covers navigation
+     (same behaviour as synapsex.html hiding it in favour of its bottom tabs). */
   @media (max-width: 767px) {
-    #menuPill.menu-pill { position: relative; width: 36px; min-width: 36px; height: auto; overflow: visible; }
-    #menuPill.menu-pill.open { width: 36px; min-width: 36px; }
-    #menuPill .menu-links {
-      position: absolute; top: calc(100% + 12px); left: 0;
-      flex-direction: column; align-items: flex-start; gap: 14px;
-      width: max-content; min-width: 170px;
-      padding: 16px 22px;
-      border-radius: 14px;
-      background: rgba(18,18,18,.72);
-      -webkit-backdrop-filter: blur(14px);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
-      transform: translateY(-10px);
-      visibility: hidden;
-      transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1), visibility 0s linear .3s;
-    }
-    #menuPill.menu-pill.open .menu-links {
-      transform: none;
-      visibility: visible;
-      transition: opacity .3s ease, transform .35s cubic-bezier(0.22,1,0.36,1);
-    }
+    #menuPill { display: none; }
   }
   video { background: #000; }
 
@@ -557,15 +537,12 @@
     }
   })();
 
-  /* ---- build one scroll section (neon frame + copy) per designed website ---- */
-  (function () {
-    var CF = "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/";
-    var SITES = [
-      { tag: "Landing Page", name: "NOVA",  src: "web_expreience_scrub.mp4", desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
-      { tag: "Creative Studio", name: "AXIOM", src: CF + "hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
-      { tag: "Commerce", name: "FLUX", src: CF + "hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
-      { tag: "Portfolio", name: "HALO", src: CF + "hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
-    ];
+  /* ---- build one scroll section (neon frame + copy) per designed website ----
+     Idempotent: a second call (Firestore data arriving after the default build)
+     replaces the stage content and the scroll logic re-targets the new sections —
+     no duplicate stages, no duplicate listeners. */
+  var sitesBuilt = false, sitesUpdate = null;
+  function buildSites(list) {
     var B = function (v, d) { return '<span class="nbtn-bolt ' + v + '"><svg viewBox="' + (v[0] === "l" || v[0] === "r" ? "0 0 14 200" : "0 0 200 14") + '" preserveAspectRatio="none"><path d="' + d + '"/></svg></span>'; };
     var ZAP = '<span class="nbtn-flash"></span><span class="nbtn-flow"></span>'
       + B("t",  "M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8")
@@ -580,9 +557,11 @@
     var countEl = document.getElementById("siteCount");
     var countCurEl = countEl ? countEl.querySelector(".pc-cur") : null;
     var countTotalEl = countEl ? countEl.querySelector(".pc-total") : null;
-    if (countTotalEl) countTotalEl.textContent = ("0" + SITES.length).slice(-2);
-    var stage = document.createElement("div"); stage.className = "site-stage";
-    SITES.forEach(function (s, i) {
+    if (countTotalEl) countTotalEl.textContent = ("0" + list.length).slice(-2);
+    var stage = sitesBuilt ? scroll.querySelector(".site-stage") : null;   // reuse on rebuild
+    if (!stage) { stage = document.createElement("div"); stage.className = "site-stage"; }
+    stage.innerHTML = "";
+    list.forEach(function (s, i) {
       var n = ("0" + (i + 1)).slice(-2);
       var sec = document.createElement("section");
       sec.className = "site";
@@ -597,13 +576,14 @@
             '<span class="site-kicker">' + n + ' &mdash; ' + s.tag + '</span>' +
             '<h2 class="site-title">' + s.name + '</h2>' +
             '<p class="site-desc">' + s.desc + '</p>' +
-            '<a class="site-link" href="synapsex.html">View project &#8594;</a>' +
+            '<a class="site-link" href="' + s.link + '">View project &#8594;</a>' +
           '</div>' +
         '</div>';
       stage.appendChild(sec);
     });
-    scroll.appendChild(stage);
-    scroll.style.height = (SITES.length * 100) + "vh";   // scroll runway: one screen of scroll per card
+    if (!sitesBuilt) scroll.appendChild(stage);
+    scroll.style.height = (list.length * 100) + "vh";   // scroll runway: one screen of scroll per card
+    sitesBuilt = true;
     var sections = [].slice.call(stage.querySelectorAll(".site"));
     var current = -1;
     function setActive(i) {
@@ -621,7 +601,9 @@
         else { try { v.pause(); } catch (x) {} }
       });
     }
-    // scroll progress drives which card is on the (pinned) stage
+    // scroll progress drives which card is on the (pinned) stage.
+    // Listeners bind once; `sitesUpdate` always references the LATEST closure
+    // so a rebuild keeps driving the new sections without re-binding.
     var ticking = false;
     function update() {
       ticking = false;
@@ -630,10 +612,27 @@
       p = Math.max(0, Math.min(0.9999, p));
       setActive(Math.floor(p * sections.length));
     }
-    document.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
-    window.addEventListener("resize", update);
+    sitesUpdate = update;
+    if (!sitesBuilt) {
+      document.addEventListener("scroll", function () {
+        if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; if (sitesUpdate) sitesUpdate(); }); }
+      }, { passive: true });
+      window.addEventListener("resize", function () { if (sitesUpdate) sitesUpdate(); });
+    }
     update();
-  })();
+  }
+
+  /* SITES data: Firestore (via site-data.js) wins, local array is the fallback. */
+  var SITES = [
+    { tag: "Landing Page", name: "NOVA",  src: "web_expreience_scrub.mp4", desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action.", link: "synapsex.html" },
+    { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll.", link: "synapsex.html" },
+    { tag: "Commerce", name: "FLUX", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium.", link: "synapsex.html" },
+    { tag: "Portfolio", name: "HALO", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure.", link: "synapsex.html" }
+  ];
+  var ready = (window.SITE_DATA && window.SITE_DATA.ready) || Promise.resolve(null);
+  ready.then(function (d) {
+    buildSites((d && d.templates && d.templates.length) ? d.templates : SITES);
+  });
 </script>
 </body>
 </html>

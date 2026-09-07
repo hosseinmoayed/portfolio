@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script type="module" src="site-data.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
 <script>
   tailwind.config = {
@@ -117,6 +118,10 @@
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     backdrop-filter: blur(18px) saturate(140%);
     box-shadow: 0 8px 28px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  /* Hamburger is hidden on mobile — the bottom tabs replace it */
+  @media (max-width: 767px) {
+    #menuPill { display: none; }
   }
   .m-tabs a {
     flex: 1;
@@ -626,7 +631,7 @@
       </div>
     </div>
     <!-- Right download -->
-    <button id="dlBtn" class="flex h-9 items-center gap-2 rounded-full bg-white px-3.5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-12 sm:px-6">
+    <button id="dlBtn" class="flex h-9 items-center gap-2 rounded-full bg-white px-3.5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-12 sm:px-6" data-key="cv_url">
       <i class="bi bi-download text-[14px] sm:text-[16px]"></i>
       <span data-scramble-dark class="text-[13px] font-medium sm:text-[15px]">Download CV</span>
     </button>
@@ -651,16 +656,16 @@
           <!-- name block — move up/down by editing the md:-translate-y-[220px] value below -->
           <div class="md:-translate-y-[200px]">
             <h1 class="font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(40px,10vw,100px)]">
-              <span data-scin data-text="I'M" data-delay="200"></span><br>
-              <span data-scin data-text="HOSSEIN" data-delay="500"></span>
+              <span data-scin data-text="I'M" data-delay="200" data-key="hero_name1"></span><br>
+              <span data-scin data-text="HOSSEIN" data-delay="500" data-key="hero_name2"></span>
             </h1>
-            <p data-slide class="slide-left mt-3 text-white/60 text-[13px] sm:text-[15px] tracking-[0.25em] uppercase">AI Creative Designer</p>
+            <p data-slide data-key="hero_subtitle" class="slide-left mt-3 text-white/60 text-[13px] sm:text-[15px] tracking-[0.25em] uppercase">AI Creative Designer</p>
           </div>
         </div>
         <!-- right -->
         <h1 class="text-left font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(40px,10vw,100px)]">
-          <span data-scin data-text="Ideas" data-delay="700"></span><br>
-          <span data-scin data-text="into" data-delay="1000"></span> <br class="hidden md:inline"><span data-scin data-text="visuals" data-delay="1300"></span>
+          <span data-scin data-text="Ideas" data-delay="700" data-key="hero_right1"></span><br>
+          <span data-scin data-text="into" data-delay="1000" data-key="hero_right2"></span> <br class="hidden md:inline"><span data-scin data-text="visuals" data-delay="1300" data-key="hero_right3"></span>
         </h1>
       </div>
     </div>
@@ -714,22 +719,22 @@
     <div class="relative z-20 flex h-full items-center justify-center px-6">
       <!-- Phase 1: EVERY IDEA STARTS SOMEWHERE — emerges from the dark -->
       <div id="sec2text1" class="sec2-text absolute text-center opacity-0" style="will-change: opacity, transform, filter;">
-        <h2 class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">EVERY IDEA<br>STARTS<br>SOMEWHERE</h2>
+        <h2 data-br data-key="sec2_text1" class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">EVERY IDEA<br>STARTS<br>SOMEWHERE</h2>
       </div>
 
       <!-- Phase 2: I DESIGN DIGITAL EXPERIENCES — takes shape -->
       <div id="sec2text2" class="sec2-text absolute text-center opacity-0" style="will-change: opacity, transform, filter;">
-        <h2 class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">I DESIGN<br>DIGITAL<br>EXPERIENCES</h2>
+        <h2 data-br data-key="sec2_text2" class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">I DESIGN<br>DIGITAL<br>EXPERIENCES</h2>
       </div>
 
       <!-- Phase 3: FROM WEBSITES TO CINEMATIC ADS — full clarity -->
       <div id="sec2text3" class="sec2-text absolute text-center opacity-0" style="will-change: opacity, transform, filter;">
-        <h2 class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">FROM WEBSITES<br>TO CINEMATIC<br>ADS</h2>
+        <h2 data-br data-key="sec2_text3" class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">FROM WEBSITES<br>TO CINEMATIC<br>ADS</h2>
       </div>
 
       <!-- Phase 4: EXPLORE MY WORK — arrives and STAYS through the final frame -->
       <div id="sec2text4" class="sec2-text absolute text-center opacity-0" style="will-change: opacity, transform, filter; transform: translateY(-60px);">
-        <h2 class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">EXPLORE MY WORK</h2>
+        <h2 data-br data-key="sec2_text4" class="font-light leading-[1.1] tracking-[-0.02em] text-white text-[clamp(28px,6vw,64px)]">EXPLORE MY WORK</h2>
       </div>
 
       <!-- Phase 5: Two buttons — fade in beneath EXPLORE MY WORK and stay.
@@ -1208,10 +1213,10 @@
       <div class="gsc-heading">
         <span class="eyebrow">Contact</span>
         <h2>
-          <span class="w">GET&nbsp;IN</span>
-          <span class="w lit">TOUCH</span>
+          <span class="w" data-key="contact_title1">GET&nbsp;IN</span>
+          <span class="w lit" data-key="contact_title2">TOUCH</span>
         </h2>
-        <p class="sub">Have an idea in mind? Pick a channel — I reply fast.</p>
+        <p class="sub" data-key="contact_subtitle">Have an idea in mind? Pick a channel — I reply fast.</p>
       </div>
 
       <!-- ===== CARD ROW + particle field ===== -->
@@ -1220,31 +1225,31 @@
              data-ch drives the mobile carousel order (telegram → github → email). -->
         <div class="gsc-slot" data-ch="github">
           <div class="gsc-halo"></div>
-          <a class="gsc-card icon-top" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub">
+          <a class="gsc-card icon-top" href="https://github.com/hosseinmoayed" target="_blank" rel="noopener" aria-label="GitHub" data-href data-key="contact_github_url">
             <i class="bi bi-github"></i>
-            <p class="gsc-innerText" style="margin:0;">Github</p>
-            <p class="gsc-desc">Explore my work</p>
-            <span class="gsc-addr">github.com/hosseinmoayed</span>
+            <p class="gsc-innerText" style="margin:0;" data-key="contact_github_label">Github</p>
+            <p class="gsc-desc" data-key="contact_github_desc">Explore my work</p>
+            <span class="gsc-addr" data-key="contact_github_addr">github.com/hosseinmoayed</span>
           </a>
         </div>
         <!-- TELEGRAM card — same recipe, telegram glyph -->
         <div class="gsc-slot" data-ch="telegram">
           <div class="gsc-halo"></div>
-          <a class="gsc-card icon-top" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram">
+          <a class="gsc-card icon-top" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Telegram" data-href data-key="contact_telegram_url">
             <i class="bi bi-telegram"></i>
-            <p class="gsc-innerText" style="margin:0;">Telegram</p>
-            <p class="gsc-desc">Fastest way to reach me</p>
-            <span class="gsc-addr">t.me/hosseinammyd</span>
+            <p class="gsc-innerText" style="margin:0;" data-key="contact_telegram_label">Telegram</p>
+            <p class="gsc-desc" data-key="contact_telegram_desc">Fastest way to reach me</p>
+            <span class="gsc-addr" data-key="contact_telegram_addr">t.me/hosseinammyd</span>
           </a>
         </div>
         <!-- EMAIL card — same recipe, envelope glyph -->
         <div class="gsc-slot" data-ch="email">
           <div class="gsc-halo"></div>
-          <a class="gsc-card icon-top" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email">
+          <a class="gsc-card icon-top" href="mailto:Hossein.moayedfard@gmail.com" aria-label="Email" data-href data-key="contact_email_url">
             <i class="bi bi-envelope"></i>
-            <p class="gsc-innerText" style="margin:0;">Email</p>
-            <p class="gsc-desc">For business &amp; collabs</p>
-            <span class="gsc-addr">Hossein.moayedfard@gmail.com</span>
+            <p class="gsc-innerText" style="margin:0;" data-key="contact_email_label">Email</p>
+            <p class="gsc-desc" data-key="contact_email_desc">For business &amp; collabs</p>
+            <span class="gsc-addr" data-key="contact_email_addr">Hossein.moayedfard@gmail.com</span>
           </a>
         </div>
         <!-- the particle field drifting behind the cards -->
@@ -1260,11 +1265,11 @@
 
       <!-- ===== FOOTER STRIP ===== -->
       <div class="gsc-foot">
-        <span><span class="dot"></span>Available for freelance</span>
+        <span><span class="dot"></span><span data-key="footer_status">Available for freelance</span></span>
         <span class="sep">|</span>
         <span class="tz" id="gscTime">Local time —</span>
         <span class="sep">|</span>
-        <span>Hossein Moayedfard © 2026</span>
+        <span data-key="footer_credit">Hossein Moayedfard © 2026</span>
       </div>
     </div>
   </section>
@@ -1706,7 +1711,13 @@
   }
 
   // ---------- Entrance (after 800ms) ----------
-  setTimeout(function () {
+  // Gated on SITE_DATA: Firestore text (if any) is applied to the data-text
+  // attributes BEFORE the scramble starts, so the hero never swaps mid-effect.
+  // Hard safety timer guarantees the entrance even if the data promise stalls.
+  var entranceStarted = false;
+  function startEntrance() {
+    if (entranceStarted) return;
+    entranceStarted = true;
     document.querySelectorAll(".entrance, .entrance-nav").forEach(function (el) { el.classList.add("on"); });
     // trigger ScrambleIn on hero headings
     document.querySelectorAll("[data-scin]").forEach(function (el) {
@@ -1716,7 +1727,36 @@
     document.querySelectorAll("[data-slide]").forEach(function (el) {
       setTimeout(function () { el.classList.add("on"); }, 900);
     });
-  }, 800);
+  }
+
+  // Apply Firestore text to every [data-key] element on the page.
+  function applySiteContent(content) {
+    if (!content) return;
+    Object.keys(content).forEach(function (k) {
+      // special-case keys handled elsewhere
+      if (k === "cv_url" && content.cv_url) { cvUrl = content.cv_url; return; }
+      document.querySelectorAll('[data-key="' + k + '"]').forEach(function (el) {
+        if (el.hasAttribute("data-scin")) {
+          el.setAttribute("data-text", content[k]);
+        } else if (el.hasAttribute("data-br")) {
+          el.innerHTML = String(content[k]).replace(/[&<>]/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+          }).replace(/\n/g, "<br>");
+        } else if (el.hasAttribute("data-href")) {
+          el.setAttribute("href", content[k]);
+        } else {
+          el.textContent = content[k];
+        }
+      });
+    });
+  }
+
+  (function () {
+    var boot = function (d) { applySiteContent(d && d.content); setTimeout(startEntrance, 800); };
+    if (window.SITE_DATA) window.SITE_DATA.ready.then(boot);
+    else setTimeout(startEntrance, 800);
+    setTimeout(startEntrance, 3200);   // belt-and-suspenders: never hold the entrance for long
+  })();
 
   // ---------- Navbar menu toggle ----------
   var menuPill = document.getElementById("menuPill");
@@ -1737,8 +1777,9 @@
       if (el) scrollToY(el.offsetTop);
     });
   });
+  var cvUrl = "https://apps.apple.com";   // default — overwritten by siteContent.cv_url
   document.getElementById("dlBtn").addEventListener("click", function () {
-    window.open("https://apps.apple.com", "_blank");
+    window.open(cvUrl, "_blank");
   });
 
   // ---------- Hero video mouse-scrub (absolute, eased) ----------
@@ -1987,20 +2028,20 @@
       + b("o2", "M0,4 L22,10 L47,3 L66,9 L90,2 L115,10 L139,3 L158,9 L184,3 L200,8"));
   }
   // full card dataset — chunked 2-per-page; every page is generated from the template card
-  var WE_CF = "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/";
   var WE_DATA = [
     { h: "Realtime UI",     p: "Fluid interfaces that respond in milliseconds.",    src: "web_expreience_scrub.mp4" },
-    { h: "Cinematic Web",   p: "Scroll-driven stories with video-grade motion.",    src: WE_CF + "hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
-    { h: "Immersive 3D",    p: "Depth, light and shaders, straight in the browser.", src: WE_CF + "hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4" },
-    { h: "Design Systems",  p: "Scalable component architecture, end to end.",       src: WE_CF + "hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4" },
+    { h: "Cinematic Web",   p: "Scroll-driven stories with video-grade motion.",    src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
+    { h: "Immersive 3D",    p: "Depth, light and shaders, straight in the browser.", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4" },
+    { h: "Design Systems",  p: "Scalable component architecture, end to end.",       src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4" },
     { h: "Storefronts",     p: "Conversion-first commerce, fast by default.",        src: "web_expreience_scrub.mp4" },
-    { h: "Live Dashboards", p: "Realtime data, visualised the moment it lands.",     src: WE_CF + "hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
-    { h: "Generative UX",   p: "Interfaces that adapt to each visitor.",             src: WE_CF + "hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4" },
-    { h: "Brand Sites",     p: "Identity-driven pages with a signature feel.",       src: WE_CF + "hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4" }
+    { h: "Live Dashboards", p: "Realtime data, visualised the moment it lands.",     src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
+    { h: "Generative UX",   p: "Interfaces that adapt to each visitor.",             src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4" },
+    { h: "Brand Sites",     p: "Identity-driven pages with a signature feel.",       src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4" }
   ];
   var WE_PER_PAGE = 2;
-  (function setupWePages() {
-    if (!weStage) return;
+  function buildWePages(data) {
+    if (!weStage || weBuilt) return;
+    WE_DATA = data || WE_DATA;
     var page0 = weStage.querySelector('.we-grid[data-page="0"]');
     var tpl = page0 && page0.querySelector(".we-card");
     if (!page0 || !tpl) return;
@@ -2025,7 +2066,20 @@
       weStage.appendChild(grid);
     }
     [].slice.call(webexpCards.querySelectorAll(".we-card")).forEach(injectZap);
-  })();
+    wePages = [].slice.call(weStage.querySelectorAll(".we-grid"));
+  }
+  buildWePages();                               // build from the local defaults first
+  if (window.SITE_DATA) window.SITE_DATA.ready.then(function (d) {
+    // swap in Firestore teasers if they arrived and the card grid hasn't been animated yet
+    if (d && d.teasers && d.teasers.length) {
+      var different = JSON.stringify(d.teasers) !== JSON.stringify(WE_DATA.map(function (t) {
+        return { h: t.h, p: t.p, src: t.src };
+      }));
+      if (different && !weBuilt) {              // weBuilt flips when the grid animates on entry
+        buildWePages(d.teasers);
+      }
+    }
+  });
   var wePages = weStage ? [].slice.call(weStage.querySelectorAll(".we-grid")) : [];
   function clearWeTimers() { weTimers.forEach(clearTimeout); weTimers = []; }
   function buildCardsIn(grid) {

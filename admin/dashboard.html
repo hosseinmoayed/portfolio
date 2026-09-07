@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Portfolio Admin — Dashboard</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="mark"></span><span>PORTFOLIO</span></div>
+      <nav id="sideNav">
+        <button data-nav="texts" class="active">Site Text</button>
+        <button data-nav="tags">Tags</button>
+        <button data-nav="templates">Templates</button>
+        <button data-nav="teasers">Teasers</button>
+      </nav>
+      <div class="side-foot">
+        <a class="btn btn-ghost btn-sm" href="../synapsex.html" target="_blank">View site ↗</a>
+        <span class="side-email" id="sideEmail"></span>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <!-- ================= SITE TEXT ================= -->
+      <section class="section active" id="sec-texts">
+        <h2 class="page-title">Site Text</h2>
+        <p class="page-sub">Every editable text on the public site. Empty fields fall back to the built-in defaults.</p>
+
+        <div class="panel">
+          <h3>Content</h3>
+          <form id="textForm"><!-- rows rendered by admin.js from SITE_TEXT_KEYS --></form>
+          <div style="display:flex; align-items:center; gap:14px; margin-top:6px;">
+            <button class="btn btn-primary" id="saveTextsBtn" disabled>Save texts</button>
+            <span class="dirty" id="textDirty" style="display:none;">● unsaved changes</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAGS ================= -->
+      <section class="section" id="sec-tags">
+        <h2 class="page-title">Tags</h2>
+        <p class="page-sub">Labels available when editing templates. Used by the site later — managing them here is safe.</p>
+
+        <div class="panel">
+          <h3>All tags</h3>
+          <div style="display:flex; gap:10px; margin-bottom:14px;">
+            <input type="text" id="newTagName" placeholder="New tag name…" style="max-width:280px;">
+            <button class="btn btn-primary" id="addTagBtn">Add tag</button>
+          </div>
+          <div id="tagList"></div>
+        </div>
+      </section>
+
+      <!-- ================= TEMPLATES ================= -->
+      <section class="section" id="sec-templates">
+        <h2 class="page-title">Templates</h2>
+        <p class="page-sub">The showcase cards on “Web Experiences” and “Cinematic Ads” pages. Sorted by order.</p>
+
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0;">All templates</h3>
+            <button class="btn btn-primary btn-sm" id="addTemplateBtn">+ Add template</button>
+          </div>
+          <div id="templateList"></div>
+        </div>
+      </section>
+
+      <!-- ================= TEASERS ================= -->
+      <section class="section" id="sec-teasers">
+        <h2 class="page-title">Teasers</h2>
+        <p class="page-sub">The “generated” cards inside the main page’s Explore section. Sorted by order, two per page.</p>
+
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0;">All teasers</h3>
+            <button class="btn btn-primary btn-sm" id="addTeaserBtn">+ Add teaser</button>
+          </div>
+          <div id="teaserList"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- modal (add/edit template & teaser) -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="itemModal"><!-- populated by admin.js --></div>
+  </div>
+
+  <!-- confirm dialog -->
+  <div id="confirmBox">
+    <div class="box">
+      <p id="confirmMsg"></p>
+      <div class="actions">
+        <button class="btn" id="confirmNo">Cancel</button>
+        <button class="btn btn-danger" id="confirmYes">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>

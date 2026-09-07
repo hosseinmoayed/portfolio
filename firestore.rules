@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The single owner allowed to write. Paste this file into
+    // Firebase Console → Firestore Database → Rules → Publish.
+    function isOwner() {
+      return request.auth != null
+          && request.auth.token.email == "Hossein.moayedfard@gmail.com";
+      // After verifying the account in the console, tighten to:
+      // && request.auth.token.email_verified == true
+    }
+
+    // Public read, owner-only write.
+    match /siteContent/{doc} { allow read: if true; allow write: if isOwner(); }
+    match /tags/{doc}        { allow read: if true; allow write: if isOwner(); }
+    match /templates/{doc}   { allow read: if true; allow write: if isOwner(); }
+    match /teasers/{doc}     { allow read: if true; allow write: if isOwner(); }
+
+    // Everything else: locked.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
