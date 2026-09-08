@@ -2104,7 +2104,7 @@
   var sec2text = document.getElementById("sec2text");
   var sec2vid = document.getElementById("sec2video");
   var curY = 60, curOp = 0;
-  var v2dur = 0, v2smooth = 0.5, v2seeking = false, v2start = 0.5;
+  var v2dur = 0, v2smooth = 0.5, v2seeking = false, v2start = 0.5, v2seekAt = 0;
   // WEB EXPERIENCES mode: swaps the scroll-scrub film for a normal-playback film;
   // uiFade eases the narrative texts + buttons away (1 -> 0) while it's active.
   var webexpActive = false, uiFade = 1;
@@ -2153,11 +2153,18 @@
     var p = Math.min(1, praw / HOLD_END);          // animation progress finishes before release
     // scroll-scrub: pin progress maps to the video timeline (full video: 0.5s -> end)
     // softer follow (0.08) = slower, silkier cinematic glide.
+    // MOBILE NOTE: the v2seeking flag relied on a `seeked` event firing for every
+    // programmatic seek. Mobile Chrome/Android coalesce superseded seeks and may
+    // never fire `seeked`, leaving the flag stuck true → the scrub dies after its
+    // first seek (exactly "plays on desktop, frozen on phones"). The flag now
+    // self-clears: a seek that hasn't completed within 250ms is treated as done,
+    // and the guard only blocks a seek when one is genuinely still in flight.
     if (v2dur && !webexpActive) {
       var v2target = v2start + p * (v2dur - v2start);
       v2smooth += (v2target - v2smooth) * 0.08;
+      if (v2seeking && performance.now() - v2seekAt > 250) v2seeking = false;   // stalled seek watchdog
       if (!v2seeking && Math.abs(v2smooth - sec2vid.currentTime) > 0.008) {
-        v2seeking = true;
+        v2seeking = true; v2seekAt = performance.now();
         try { sec2vid.currentTime = Math.max(0, Math.min(v2dur, v2smooth)); } catch (e) { v2seeking = false; }
       }
     }
@@ -2171,8 +2178,9 @@
       var rawWe = Math.max(0, Math.min(1, (scrolled - weScrolledAtEntry) / weSpan));
       var weTarget = ss(0, 1, rawWe) * (wedur - WEBEXP_FRAME * WEBEXP_HIDE);   // skip trailing frames
       weSmooth += (weTarget - weSmooth) * 0.08;
+      if (weSeeking && performance.now() - weSeekAt > 250) weSeeking = false;  // same mobile watchdog
       if (!weSeeking && Math.abs(weSmooth - webexpVideo.currentTime) > 0.01) {
-        weSeeking = true;
+        weSeeking = true; weSeekAt = performance.now();
         try { webexpVideo.currentTime = Math.max(0, Math.min(wedur - 0.001, weSmooth)); } catch (e) { weSeeking = false; }
       }
       if (weSmooth >= WEBEXP_CARDS_AT) buildWebexpCards();     // cards once the film passes 3.5s
@@ -2219,7 +2227,7 @@
   var WEBEXP_CARDS_AT = 3.5;                    // begin generating the cards at this film second
   var WEBEXP_EXTRA_VH = 300;                    // <-- tune: extra scroll runway for the web film
   var SEC2_BASE_H = "560vh";                    // section-2 height before the web runway
-  var weEntry = 0, weSmooth = 0, weSeeking = false, weScrolledAtEntry = 0;
+  var weEntry = 0, weSmooth = 0, weSeeking = false, weScrolledAtEntry = 0, weSeekAt = 0;
   webexpVideo.addEventListener("seeked", function () { weSeeking = false; });
 
   // ---------- WEB EXPERIENCES: real-time card construction ----------
