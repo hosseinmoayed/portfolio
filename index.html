@@ -2014,6 +2014,11 @@
   var EASE = 0.06;   // lower = smoother / softer follow
   // mobile = no fine pointer (touch) — coarse pointers get autoplay, not scrub
   var heroMobile = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+  // iOS Safari needs a different render-refresh strategy in the sec2 scrub
+  // (seeks succeed but a paused element can stop pushing frames to screen).
+  var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var v2iosStall = 0, v2iosLastT = 0;
   hero.addEventListener("loadedmetadata", function () {
     dur = hero.duration || 0;
     if (heroMobile) {
@@ -2170,6 +2175,26 @@
       if (!v2seeking && Math.abs(v2smooth - sec2vid.currentTime) > 0.008) {
         v2seeking = true; v2seekAt = performance.now();
         try { sec2vid.currentTime = Math.max(0, Math.min(v2dur, v2smooth)); } catch (e) { v2seeking = false; }
+      }
+      // iOS SAFARI: a paused <video> whose currentTime is driven purely by
+      // seeks stops refreshing its on-screen texture — seeks "succeed"
+      // (currentTime updates, no error) but the element keeps showing a
+      // stale/blank frame. Kicking play() for one tick whenever time hasn't
+      // moved for a while forces VideoToolbox to push a fresh frame into
+      // the compositor. Desktop never hits this: its currentTime always
+      // tracks the scrub. isIOS is set just below the hero-scrub block.
+      if (isIOS && !v2seeking && sec2vid.paused) {
+        if (v2iosStall === undefined) v2iosStall = 0;
+        v2iosStall = (Math.abs(sec2vid.currentTime - v2iosLastT) < 0.001) ? v2iosStall + 1 : 0;
+        v2iosLastT = sec2vid.currentTime;
+        if (v2iosStall > 10) {           // ~10 frames with no time movement
+          v2iosStall = 0;
+          try {
+            var v2pr = sec2vid.play();
+            if (v2pr && v2pr.then) v2pr.then(function () { sec2vid.pause(); }).catch(function () {});
+            else sec2vid.pause();
+          } catch (e) {}
+        }
       }
     }
     // ===== WEB EXPERIENCES scrub — same structure as the page-2 film =====
