@@ -792,13 +792,14 @@
    <div class="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden">
     <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
       src="lion_page2_new_hd.mp4"></video>
-    <!-- DIAGNOSTIC (temporary): image overlay — does ANY media render in this
-         section on the phone? Image on top, video underneath. Remove after test. -->
-    <img id="sec2img" class="absolute inset-0 h-full w-full object-cover" src="button.png">
-    <!-- WEB EXPERIENCES film: preloaded + stacked on top, revealed instantly (seamless — its
-         first frame matches lion's last frame, so no black flash on switch). -->
-    <video id="webexpVideo" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
-      src="web_expreience_scrub.mp4" style="opacity:0;"></video>
+    <!-- MOBILE scrub fix: mobile decoders refuse to render frames for a
+         video whose currentTime is parked by rapid programmatic seeks while
+         display:none/opacity tricks or stacked clips compete for the
+         hardware decoder. The webexp clip is therefore NOT preloaded on
+         touch devices — it only gets a src when the Web Experiences flow
+         is actually entered (desktop keeps the old preload behaviour). -->
+    <video id="webexpVideo" class="absolute inset-0 h-full w-full object-cover" muted playsinline
+      data-src="web_expreience_scrub.mp4" style="opacity:0;"></video>
     <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-[180px]" style="background:linear-gradient(#010103, transparent);"></div>
 
     <!-- WEB EXPERIENCES: cards "generated" in real time once the web film ends -->
@@ -2225,6 +2226,11 @@
   // timeline through a smoothed follower (lerp 0.08) with guarded seeks. Entering grows
   // section 2 by WEBEXP_EXTRA_VH so there is fresh pinned runway to scrub through.
   var webexpVideo = document.getElementById("webexpVideo");
+  // MOBILE: the web clip gets its src only when actually entered (see
+  // enterWebexp). A preloaded second <video> competes for the phone's
+  // single hardware decoder and blanks the lion film's rendering.
+  var isTouch = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+  if (!isTouch && webexpVideo.dataset.src) webexpVideo.src = webexpVideo.dataset.src;
   var webexpBack = document.getElementById("webexpBack");
   var WEBEXP_FRAME = 1 / 24, WEBEXP_HIDE = 6;   // never rest on the last frames (24fps)
   var WEBEXP_CARDS_AT = 3.5;                    // begin generating the cards at this film second
@@ -2399,6 +2405,8 @@
     if (webexpActive) return;
     webexpActive = true;                       // freezes lion scrub + fades overlay (uiFade)
     weEntry = 0; weSmooth = 0;
+    // touch devices load the web clip lazily (see isTouch above) — attach now
+    if (!webexpVideo.src && webexpVideo.dataset.src) webexpVideo.src = webexpVideo.dataset.src;
     // anchor the web-film runway at the current scroll position: everything below this
     // point (plus the extra section height) becomes scrub distance for the web clip
     var vh0 = window.innerHeight;
