@@ -14,3 +14,6 @@ Desktop.ini
 # Node/tooling artifacts (none expected, safety net)
 node_modules/
 __pycache__/
+
+.vercel
+.env*
