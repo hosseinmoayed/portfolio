@@ -790,8 +790,10 @@
   <!-- ================= SECTION 2: CINEMATIC TEXT ================= -->
   <section id="sec2" class="relative w-full" style="height:560vh;">
    <div class="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden">
+    <!-- DIAGNOSTIC (temporary): sec2 runs the HERO film to isolate the mobile
+         playback failure. Original src: lion_page2_new_hd.mp4 — restore after the test. -->
     <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
-      src="lion_page2_new_hd.mp4"></video>
+      src="lion_hero_scrub.mp4"></video>
     <!-- WEB EXPERIENCES film: preloaded + stacked on top, revealed instantly (seamless — its
          first frame matches lion's last frame, so no black flash on switch). -->
     <video id="webexpVideo" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
