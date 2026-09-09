@@ -1004,14 +1004,9 @@
         --nb-deep: #123d24;            /* gradient tail of the orbs */
         --title-gap: 56px;             /* space under the title block */
         --cards-y: 0px;                /* nudge the card row up/down */
-        /* ===== CONTACT TITLES: UP/DOWN KNOB =========================
-           Move the whole title block (CONTACT + GET IN TOUCH + the sub
-           line) up or down. The card row follows by the SAME amount, so
-           the title↔cards distance stays exactly as designed.
-             negative (e.g. -40px) = move titles (and cards) UP
-             positive (e.g. 30px)  = move titles (and cards) DOWN   */
-        --contact-titles-y: 0px;
-        /* ========================== */
+        /* CONTACT TITLES knob: the editable value lives at the END of
+           this <style> block — search "MOBILE UP/DOWN KNOB" below.
+           Desktop (above 820px) is untouched. */
       }
       /* ===== TITLE — "GET IN TOUCH", green glow headline ===== */
       #contact .gsc-heading {
@@ -1305,6 +1300,7 @@
          appears from the right… i.e. scroll right) and EMAIL — the user asked
          Telegram visible, Email one swipe left, GitHub one swipe right. */
       @media (max-width: 820px) {
+
         #contact .gsc-cards {
           --slot-gap: 24px;
           flex-wrap: nowrap;
@@ -1398,6 +1394,18 @@
       /* desktop: the nav strip is hidden (media query below re-shows it) */
       @media (min-width: 821px) {
         #contact .gsc-nav { display: none; }
+      }
+
+      /* ===== CONTACT TITLES: MOBILE UP/DOWN KNOB =====================
+         Mobile only — desktop is untouched. The card row follows the
+         title by the SAME amount, so the title↔cards gap stays as is.
+           negative (e.g. -40px) = move titles (and cards) UP
+           positive (e.g. 30px)  = move titles (and cards) DOWN
+         NOTE: last rules in the stylesheet so they win the cascade;
+         `!important` guards against the mobile-carousel transform. */
+      @media (max-width: 820px) {
+        #contact .gsc-heading { transform: translateY(var(--contact-titles-y, -40px)) !important; }
+        #contact .gsc-cards   { transform: translateY(var(--contact-titles-y, -40px)) !important; }
       }
     </style>
     <div class="gsc-container">
