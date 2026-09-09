@@ -639,13 +639,14 @@
        positive (e.g. 30px)  = move texts DOWN
      Desktop is untouched (it uses md:-translate-y-[200px] in the markup). */
   .hero-copy { transform: translateY(var(--hero-shift-m, -70px)); }
-  /* MOBILE font-size knob: scales the hero headings + subtitle (~1.2x).
-     1 = unchanged; the whole block stays desktop-untouched above 768px. */
-  .hero-copy { font-size: calc(1em * var(--hero-scale-m, 1.2)); }
-  .hero-copy h1 { font-size: calc(clamp(40px, 10vw, 100px) * var(--hero-scale-m, 1.2)); }
-  .hero-copy [data-key="hero_subtitle"] { font-size: calc(13px * var(--hero-scale-m, 1.2)); }
+  /* MOBILE font-size knobs:
+     --hero-h1-scale-m: heading scale — 40px base x 1.1 = 44px on phones
+     --hero-sub-m:      subtitle size below 640px (default 14.7px)
+     Desktop type stays untouched above 768px. */
+  .hero-copy h1 { font-size: calc(clamp(40px, 10vw, 100px) * var(--hero-h1-scale-m, 1.1)); }
+  .hero-copy [data-key="hero_subtitle"] { font-size: var(--hero-sub-m, 14.7px); }
   @media (min-width: 640px) {
-    .hero-copy [data-key="hero_subtitle"] { font-size: calc(15px * var(--hero-scale-m, 1.2)); }
+    .hero-copy [data-key="hero_subtitle"] { font-size: calc(15px * var(--hero-h1-scale-m, 1.1)); }
   }
   @media (min-width: 768px) { .hero-copy { transform: none; } }
   /* faint dot grid echo of the hero backdrop */
