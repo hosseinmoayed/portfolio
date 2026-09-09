@@ -1239,7 +1239,10 @@
         transform: translateY(16px);
         transition: opacity .9s ease 1s, transform .9s ease 1s;
       }
-      #contact.in .gsc-foot { opacity: 1; transform: none; }
+      #contact.in .gsc-foot { opacity: 1; transform: translateY(var(--contact-foot-y-m, 0px)); }
+      /* ===== FOOTER STRIP: MOBILE UP/DOWN KNOB =====================
+         Edit --contact-foot-y-m in the MOBILE UP/DOWN KNOB block at the
+         end of this <style>. Negative = footer UP, positive = DOWN. */
       #contact .gsc-foot .dot {
         display: inline-block;
         width: 7px; height: 7px;
@@ -1267,7 +1270,9 @@
       #contact .gsc-container {
         z-index: 0;
         background-color: #000;   /* contact's black — keep both rules in sync */
-        /* the page stack: heading → cards → footer strip, all centred */
+        /* the page stack: heading → cards → footer strip, all centred.
+           MOBILE: taller than the screen (min-height 100vh + the knob
+           shifts + tab-bar clearance) so the footer sits at the bottom. */
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -1276,6 +1281,15 @@
         min-height: 100vh;
         display: flex;
         position: relative;
+      }
+      @media (max-width: 820px) {
+        #contact .gsc-container {
+          min-height: calc(100vh + var(--contact-titles-y, 0px) / 1);
+          /* stack from the top; the footer's auto margin pins it to the
+             very bottom of the taller-than-screen section */
+          justify-content: flex-start;
+        }
+        #contact.in .gsc-foot { margin-top: auto; }
       }
       @media (prefers-reduced-motion: reduce) {
         #contact .gsc-card::after { animation: none; }
@@ -1396,17 +1410,42 @@
         #contact .gsc-nav { display: none; }
       }
 
-      /* ===== CONTACT TITLES: MOBILE UP/DOWN KNOB =====================
-         Mobile only — desktop is untouched. The card row follows the
-         title by the SAME amount, so the title↔cards gap stays as is.
-           negative (e.g. -40px) = move titles (and cards) UP
-           positive (e.g. 30px)  = move titles (and cards) DOWN
-         NOTE: last rules in the stylesheet so they win the cascade;
-         `!important` guards against the mobile-carousel transform. */
+      /* ===== CONTACT MOBILE KNOBS: TITLES / ARROWS / FOOTER ==========
+         Mobile only (≤820px) — desktop is untouched. Edit the values
+         inside `#contact { ... }` below:
+         --contact-titles-y : title block + card row together
+                              (negative = UP, positive = DOWN — yours: 170px)
+         --contact-nav-y    : the ← dots → strip, INDEPENDENT of cards.
+         --contact-foot-y-m : footer strip, independent.
+                              (yours: 40px)
+         The nav keeps a constant 20px of air under the card row; the
+         footer's own margin (48-90px) separates it from the arrows. */
       @media (max-width: 820px) {
-        #contact .gsc-heading { transform: translateY(var(--contact-titles-y, -40px)) !important; }
-        #contact .gsc-cards   { transform: translateY(var(--contact-titles-y, -40px)) !important; }
+        #contact { --contact-titles-y: 160px; --contact-nav-y: -40px; --contact-foot-y-m: 60px !important; }
+        /* reserve room BELOW the footer for the fixed tab bar (bar ≈ 62px
+           + safe-area): the footer then ends above the bar at max scroll */
+        #contact { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
+        #contact .gsc-heading { transform: translateY(var(--contact-titles-y, 170px)) !important; }
+        #contact .gsc-cards   { transform: translateY(var(--contact-titles-y, 160px)) !important; }
+        /* nav rides the card shift, then your --contact-nav-y on top */
+        #contact .gsc-nav {
+          transform: translateY(calc(var(--contact-titles-y, 160px) + var(--contact-nav-y, 0px))) !important;
+          margin-top: 34px;   /* air between the card row and the arrows */
+          position: relative; z-index: 6;
+        }
+        #contact.in .gsc-foot { translate: 0 var(--contact-foot-y-m, 0px); }
       }
+
+      /* ===== TOP NAVBAR over CONTACT ==================================
+         The fixed top navbar (logo pill + Download CV) covers the
+         contact titles, so it fades out while the contact section fills
+         the screen and fades back on the rest of the page. JS toggles
+         .nav-off (see the mobile-tabs scroll handler).
+         NOTE: this <style> lives INSIDE #contact, so `.entrance-nav`
+         here would be scoped wrong — use html.nav-off as the trigger
+         and plain (unscoped-safe) selectors. */
+      .entrance-nav { transition: opacity .35s ease; }
+      html.nav-off .entrance-nav { opacity: 0 !important; pointer-events: none; }
     </style>
     <div class="gsc-container">
       <!-- ===== TITLE ===== -->
@@ -1529,6 +1568,17 @@
       tabs.forEach(function (a) {
         a.classList.toggle("active", a.getAttribute("data-mtab") === activeSel);
       });
+      // hide the TOP navbar over the contact screen (it covers the titles);
+      // the bottom tab bar stays visible everywhere
+      var navEl = document.querySelector(".entrance-nav");
+      var contactEl = document.getElementById("contact");
+      if (navEl && contactEl) {
+        var cr = contactEl.getBoundingClientRect();
+        var covers = cr.top <= window.innerHeight * 0.35 &&
+                     cr.bottom >= window.innerHeight * 0.65;
+        navEl.classList.toggle("nav-off", covers);
+        document.documentElement.classList.toggle("nav-off", covers);
+      }
     }
 
     window.addEventListener("scroll", updateActive, { passive: true });
@@ -1584,11 +1634,22 @@
     // approach; scrolling back up past the threshold re-arms it.
     var magnetized = false;
     var magnetBusy = false;
+    /* ===== TUNE — MAGNETIC SNAP LANDING OFFSET =====================
+       How far past the section's top the auto-scroll seats the contact
+       section. 0 = flush with the viewport top; positive = land LOWER
+       (further into the section); negative = land HIGHER.
+       Mobile uses its own value (contact is taller than the screen). */
+    var SNAP_OFFSET = 0;             // desktop (px past section top)
+    var SNAP_OFFSET_MOBILE = 150;      // mobile  (edit me)
+    var snapOffset = function () {
+      return window.matchMedia("(max-width: 820px)").matches
+        ? SNAP_OFFSET_MOBILE : SNAP_OFFSET;
+    };
     var snapToContact = function () {
       if (magnetBusy) return;
       magnetBusy = true;
       // global smooth-scroll helper (defined further down) or native fallback
-      var target = sec.offsetTop;
+      var target = sec.offsetTop + snapOffset();
       if (typeof scrollToY === "function") scrollToY(target);
       else window.scrollTo({ top: target, behavior: "smooth" });
       setTimeout(function () { magnetBusy = false; }, 1400);  // glide + settle
