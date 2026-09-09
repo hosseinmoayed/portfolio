@@ -2019,6 +2019,8 @@
   var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
               (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   var v2iosStall = 0, v2iosLastT = 0;
+  // iOS blob-scrub: see startSec2Blob() below.
+  var v2blobStarted = false, v2blobSwap = false, v2blobTime = 0;
   hero.addEventListener("loadedmetadata", function () {
     dur = hero.duration || 0;
     if (heroMobile) {
@@ -2141,6 +2143,71 @@
   sec2vid.addEventListener("loadeddata", primeSec2);
   sec2vid.addEventListener("canplay", primeSec2);
   sec2vid.addEventListener("seeked", function () { v2seeking = false; });
+
+  // ===== iOS SAFARI: canvas/blob scrub fallback ==============================
+  // iOS won't render frames for a paused element driven purely by seeks —
+  // currentTime advances, no errors, but the compositor keeps the last frame
+  // (the play()/pause() kick alone didn't fully fix it on-device). So on iOS
+  // we take the bulletproof route: fetch the MP4 as a Blob, draw each frame
+  // into a <canvas> that replaces the <video>, and scrub the canvas. Canvas
+  // drawImage from a blob: video renders reliably on iOS (it owns a real
+  // playing decoder while we nudge currentTime between draws).
+  function startSec2Blob() {
+    if (v2blobStarted) return;
+    v2blobStarted = true;
+    var canvas = document.createElement("canvas");
+    canvas.id = "sec2Canvas";
+    canvas.style.cssText = "position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none;";
+    sec2vid.parentNode.insertBefore(canvas, sec2vid);
+    var ctx = canvas.getContext("2d");
+
+    function drawNow() {
+      try {
+        canvas.width = sec2vid.videoWidth || 1920;
+        canvas.height = sec2vid.videoHeight || 1006;
+        // cover-fit: match object-fit:cover math
+        var cw = canvas.width, ch = canvas.height;
+        var sw = sec2vid.videoWidth, sh = sec2vid.videoHeight;
+        var scale = Math.max(cw / sw, ch / sh);
+        var dw = sw * scale, dh = sh * scale;
+        ctx.drawImage(sec2vid, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+      } catch (e) {}
+    }
+
+    // Paint loop: while iOS mode is on, keep the canvas glued to the video's
+    // currentTime. The video element itself plays/pauses around each seek —
+    // a playing element DOES push frames on iOS, so play → seek → draw → pause.
+    function tick() {
+      if (!v2blobSwap) { canvas.style.display = "none"; return; }
+      var want = v2smooth;
+      if (!sec2vid.seeking && Math.abs(sec2vid.currentTime - want) > 0.01) {
+        if (sec2vid.paused) {
+          var pr = sec2vid.play();
+          if (pr && pr.then) pr.then(function () {
+            try { sec2vid.currentTime = Math.max(0, Math.min(v2dur, want)); } catch (e) {}
+          }).catch(function () {});
+        } else {
+          try { sec2vid.currentTime = Math.max(0, Math.min(v2dur, want)); } catch (e) {}
+        }
+      }
+      drawNow();
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // Swap in the canvas once the blob has loaded and the first frame drew.
+    fetch("lion_page2_new_hd.mp4").then(function (r) { return r.blob(); }).then(function (b) {
+      sec2vid.src = URL.createObjectURL(b);
+      sec2vid.load();
+      sec2vid.addEventListener("loadeddata", function () { drawNow(); }, { once: true });
+      sec2vid.addEventListener("canplay", function () {
+        drawNow();
+        v2blobSwap = true;
+        canvas.style.display = "block";
+      }, { once: true });
+    }).catch(function () { /* network hiccup: keep the native path */ });
+  }
+  if (isIOS) startSec2Blob();
   // smoothstep easing — soft acceleration/deceleration for a cinematic feel
   function ss(a, b, x) { var t = (x - a) / (b - a); t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
   // apply opacity + vertical drift + blur to a text layer
@@ -2183,7 +2250,9 @@
       // moved for a while forces VideoToolbox to push a fresh frame into
       // the compositor. Desktop never hits this: its currentTime always
       // tracks the scrub. isIOS is set just below the hero-scrub block.
-      if (isIOS && !v2seeking && sec2vid.paused) {
+      // (The canvas/blob swap above makes this redundant but harmless —
+      // canvas covers the video element while v2blobSwap is true.)
+      if (isIOS && !v2blobSwap && !v2seeking && sec2vid.paused) {
         if (v2iosStall === undefined) v2iosStall = 0;
         v2iosStall = (Math.abs(sec2vid.currentTime - v2iosLastT) < 0.001) ? v2iosStall + 1 : 0;
         v2iosLastT = sec2vid.currentTime;
