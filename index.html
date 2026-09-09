@@ -1134,16 +1134,19 @@
         z-index: -2;
       }
       #contact .gsc-slot:hover .gsc-halo { opacity: 1; }
-      /* ===== CARDS — the component's glass card, kept 1:1 ===== */
+      /* ===== CARDS — the component's glass card, kept 1:1 ============== */
+      /* +30% size knob: multiplies the card box, its type and its icon.
+         1 = unchanged (desktop default). Mobile bumps it in its block. */
+      #contact { --gsc-card-scale: 1; }
       #contact .gsc-card {
         -webkit-backdrop-filter: blur(10.5px);
         backdrop-filter: blur(10.5px);
         z-index: 0;
         border: 1px solid #ffffff56;
-        border-radius: 10px;
-        width: 190px;
-        height: 254px;
-        padding: 10px;
+        border-radius: calc(10px * var(--gsc-card-scale));
+        width: calc(190px * var(--gsc-card-scale));
+        height: calc(254px * var(--gsc-card-scale));
+        padding: calc(10px * var(--gsc-card-scale));
         position: relative;
         overflow: hidden;
         box-shadow: inset 2px 1px 6px #ffffff45;
@@ -1168,7 +1171,7 @@
         background-image: linear-gradient(90deg, #000, #746f6f);
         -webkit-background-clip: text;
         margin: 10px 0;
-        font-size: 36px;
+        font-size: calc(36px * var(--gsc-card-scale, 1));
         font-weight: 800;
         line-height: 1em;
       }
@@ -1191,7 +1194,7 @@
       /* the 2× icons: bootstrap-icons is a font, so just scale the glyphs.
          One shared rule for all three cards keeps them identical. */
       #contact .gsc-card.icon-top > i.bi {
-        font-size: 72px;           /* base glyph renders ~36px → 72px = 2× */
+        font-size: calc(72px * var(--gsc-card-scale, 1));  /* base ~36px → 72px = 2× */
         line-height: 1;
         color: #0000;
         background-image: linear-gradient(90deg, #000, #746f6f);
@@ -1421,7 +1424,7 @@
          The nav keeps a constant 20px of air under the card row; the
          footer's own margin (48-90px) separates it from the arrows. */
       @media (max-width: 820px) {
-        #contact { --contact-titles-y: 160px; --contact-nav-y: -40px; --contact-foot-y-m: 60px !important; }
+        #contact { --contact-titles-y: 160px; --contact-nav-y: -40px; --contact-foot-y-m: 60px !important; --gsc-card-scale: 1.3; }
         /* reserve room BELOW the footer for the fixed tab bar (bar ≈ 62px
            + safe-area): the footer then ends above the bar at max scroll */
         #contact { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
@@ -1816,9 +1819,12 @@
 
     function measure() {
       var rowBox = row.getBoundingClientRect();
-      // the canvas is absolutely positioned INSIDE .gsc-cards, so offsets are
-      // relative to the row itself (top:0/left:0 = the row's own box)
-      W = Math.ceil(rowBox.width); H = Math.ceil(rowBox.height);
+      // The canvas is absolutely positioned INSIDE .gsc-cards. On mobile the
+      // row is a horizontal carousel, so span the FULL scroll width — using
+      // the visible width left the specks behind the first card (telegram)
+      // only, and they vanished as soon as you swiped to github / email.
+      W = Math.ceil(row.scrollWidth || rowBox.width);
+      H = Math.ceil(rowBox.height);
       canvas.style.left = "0px";
       canvas.style.top = "0px";
       if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
