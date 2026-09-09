@@ -631,6 +631,15 @@
   #loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
   /* repeat visits in this tab: never render the loader at all (no flash) */
   html.ld-skip #loader { display: none; }
+
+  /* ===== HERO COPY: MOBILE UP/DOWN KNOB =============================
+     Nudge the hero texts (name block + "Ideas into visuals") up or down
+     on mobile only. Edit the single value below:
+       negative (e.g. -40px) = move texts UP
+       positive (e.g. 30px)  = move texts DOWN
+     Desktop is untouched (it uses md:-translate-y-[200px] in the markup). */
+  .hero-copy { transform: translateY(var(--hero-shift-m, -50px)); }
+  @media (min-width: 768px) { .hero-copy { transform: none; } }
   /* faint dot grid echo of the hero backdrop */
   #loader::before {
     content: ""; position: absolute; inset: 0;
@@ -778,7 +787,7 @@
     <!-- content -->
     <div class="entrance relative z-10 flex h-full flex-col px-4 pb-8 pt-20 sm:px-6 sm:pb-12 sm:pt-24 md:px-8">
       <div class="flex-1"></div>
-      <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between hero-copy">
         <!-- left -->
         <div class="flex flex-col gap-4">
           <!-- name block — move up/down by editing the md:-translate-y-[220px] value below -->
