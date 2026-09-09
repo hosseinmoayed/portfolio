@@ -664,7 +664,7 @@
        negative (e.g. -40px) = move texts UP
        positive (e.g. 30px)  = move texts DOWN
      Desktop is untouched (it uses md:-translate-y-[200px] in the markup). */
-  .hero-copy { transform: translateY(var(--hero-shift-m, -70px)); }
+  .hero-copy { transform: translateY(var(--hero-shift-m, -75px)); }
   /* ===== SEC2 NARRATIVE TEXT: MOBILE SIZE KNOB ======================
      Scales the cinematic text layers that ride over the sec2 video
      (EVERY IDEA… / I DESIGN… / FROM WEBSITES… / EXPLORE MY WORK).
@@ -2389,7 +2389,7 @@
       var natW = t5.offsetWidth || 1;
       var fit = Math.min(0.66 * 1.3, (window.innerWidth * 0.9) / natW * 1.3);
       fit = Math.min(fit, (window.innerWidth * 0.94) / natW);
-      t5.style.transform = "translateX(-50%) translateY(" + (((1 - in5) * 24) - 30).toFixed(1) + "px) scale(" + fit.toFixed(3) + ")";
+      t5.style.transform = "translateX(-50%) translateY(" + (((1 - in5) * 24) - 70).toFixed(1) + "px) scale(" + fit.toFixed(3) + ")";
     }
     requestAnimationFrame(frame);
   }
