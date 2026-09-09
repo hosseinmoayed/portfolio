@@ -1004,6 +1004,13 @@
         --nb-deep: #123d24;            /* gradient tail of the orbs */
         --title-gap: 56px;             /* space under the title block */
         --cards-y: 0px;                /* nudge the card row up/down */
+        /* ===== CONTACT TITLES: UP/DOWN KNOB =========================
+           Move the whole title block (CONTACT + GET IN TOUCH + the sub
+           line) up or down. The card row follows by the SAME amount, so
+           the title↔cards distance stays exactly as designed.
+             negative (e.g. -40px) = move titles (and cards) UP
+             positive (e.g. 30px)  = move titles (and cards) DOWN   */
+        --contact-titles-y: 0px;
         /* ========================== */
       }
       /* ===== TITLE — "GET IN TOUCH", green glow headline ===== */
@@ -1012,7 +1019,7 @@
         z-index: 5;
         text-align: center;
         margin-bottom: var(--title-gap);
-        transform: translateY(var(--cards-y, 0px));
+        transform: translateY(calc(var(--cards-y, 0px) + var(--contact-titles-y, 0px)));
       }
       #contact .gsc-heading .eyebrow {
         display: block;
@@ -1074,7 +1081,7 @@
         justify-content: center;
         align-items: stretch;
         gap: var(--slot-gap);
-        transform: translateY(var(--cards-y, 0px));
+        transform: translateY(calc(var(--cards-y, 0px) + var(--contact-titles-y, 0px)));
       }
       /* each card sits in a SLOT; staggered entrance, left to right.
          SLOW, visible entrance: ~1.4s rise + settle so each card's motion
@@ -1310,7 +1317,9 @@
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;            /* Firefox */
           padding: 20px 0 26px;
-          transform: none;
+          /* the knob must survive on mobile too: keep the shared shift here
+             (the heading keeps it via its own transform above) */
+          transform: translateY(calc(var(--cards-y, 0px) + var(--contact-titles-y, 0px)));
         }
         #contact .gsc-cards::-webkit-scrollbar { display: none; }
         /* order: telegram (1st), github (2nd), email (3rd) — telegram shows first */
