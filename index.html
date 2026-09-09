@@ -21,6 +21,21 @@
       document.documentElement.classList.add("ld-skip");
     }
   } catch (e) {}
+  // Landing on a #hash (e.g. #sec2-end from "Back to Explore"): strip the
+  // hash from the URL before first paint so a refresh afterwards loads the
+  // clean page — and reset the scroll to the top so the story always starts
+  // from the hero, never mid-section-2.
+  (function () {
+    if (!location.hash) return;
+    history.replaceState(null, "", location.origin + location.pathname + location.search);
+    // the browser may still perform the anchor jump after layout; undo it
+    try { history.scrollRestoration = "manual"; } catch (e) {}
+    var reset = function () { window.scrollTo(0, 0); };
+    reset();
+    window.addEventListener("load", reset);          // after full layout
+    setTimeout(reset, 0);                            // after the anchor jump
+    setTimeout(reset, 120);                          // after video/layout settle
+  })();
 </script>
 <script>
   tailwind.config = {
@@ -107,8 +122,8 @@
   .ham.open .b2 { transform: translate(-50%, 0) scaleX(0); opacity: 0; }
   .ham.open .b3 { transform: translate(-50%, 0) rotate(-45deg); }
 
-  .menu-pill { width: 48px; transition: width .45s cubic-bezier(0.22,1,0.36,1); overflow: hidden; }
-  .menu-pill.open { width: 290px; }
+  .menu-pill { width: 56px; transition: width .45s cubic-bezier(0.22,1,0.36,1); overflow: hidden; }
+  .menu-pill.open { width: 330px; }
   .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
   .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
 
@@ -173,8 +188,8 @@
      and the dropdown is absolutely positioned, so opening it never shifts
      the navbar or the SynapseX logo. */
   @media (max-width: 767px) {
-    #menuPill.menu-pill { position: relative; width: 36px; min-width: 36px; height: auto; overflow: visible; }
-    #menuPill.menu-pill.open { width: 36px; min-width: 36px; }
+    #menuPill.menu-pill { position: relative; width: 44px; min-width: 44px; height: auto; overflow: visible; }
+    #menuPill.menu-pill.open { width: 44px; min-width: 44px; }
     #menuPill .menu-links {
       position: absolute; top: calc(100% + 12px); left: 0;
       flex-direction: column; align-items: flex-start; gap: 14px;
@@ -639,6 +654,13 @@
        positive (e.g. 30px)  = move texts DOWN
      Desktop is untouched (it uses md:-translate-y-[200px] in the markup). */
   .hero-copy { transform: translateY(var(--hero-shift-m, -70px)); }
+  /* ===== SEC2 NARRATIVE TEXT: MOBILE SIZE KNOB ======================
+     Scales the cinematic text layers that ride over the sec2 video
+     (EVERY IDEA… / I DESIGN… / FROM WEBSITES… / EXPLORE MY WORK).
+     1 = unchanged. Default 1.2 = +20%. Desktop untouched. */
+  @media (max-width: 767px) {
+    .sec2-text h2 { font-size: calc(clamp(28px, 6vw, 64px) * var(--sec2-scale-m, 1.2)) !important; }
+  }
   /* MOBILE font-size knobs:
      --hero-h1-scale-m: heading scale — 40px base x 1.1 = 44px on phones
      --hero-sub-m:      subtitle size below 640px (default 14.7px)
@@ -761,25 +783,25 @@
   <nav class="entrance-nav fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between px-4 sm:px-6 md:px-8">
     <!-- Left group -->
     <div class="flex items-center gap-2">
-      <a href="#top" id="logoPill" class="flex h-9 items-center gap-2 rounded-[10px] bg-white/15 px-3 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-12 sm:rounded-[14px] sm:px-5">
-        <span data-logo class="inline-block h-[16px] w-[16px] text-white sm:h-[18px] sm:w-[18px]"></span>
-        <span id="logoLabel" class="text-[13px] font-medium tracking-tight text-white sm:text-[16px]">Home</span>
+      <a href="#top" id="logoPill" class="flex h-11 items-center gap-2 rounded-[12px] bg-white/15 px-4 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-14 sm:rounded-[16px] sm:px-6">
+        <span data-logo class="inline-block h-[18px] w-[18px] text-white sm:h-[21px] sm:w-[21px]"></span>
+        <span id="logoLabel" class="text-[15px] font-medium tracking-tight text-white sm:text-[18px]">Home</span>
       </a>
-      <div id="menuPill" class="menu-pill flex h-9 items-center rounded-[10px] bg-white/15 backdrop-blur-md sm:h-12 sm:rounded-[14px]">
-        <button id="hamBtn" aria-label="Menu" class="ham grid h-9 w-9 shrink-0 place-items-center rounded-[10px] transition-colors hover:bg-white/10 sm:h-12 sm:w-12 sm:rounded-[14px]">
+      <div id="menuPill" class="menu-pill flex h-11 items-center rounded-[12px] bg-white/15 backdrop-blur-md sm:h-14 sm:rounded-[16px]">
+        <button id="hamBtn" aria-label="Menu" class="ham grid h-11 w-11 shrink-0 place-items-center rounded-[12px] transition-colors hover:bg-white/10 sm:h-14 sm:w-14 sm:rounded-[16px]">
           <span class="b1"></span><span class="b2"></span><span class="b3"></span>
         </button>
         <div class="menu-links flex items-center gap-5 whitespace-nowrap pr-5">
-          <a href="#" data-target="#top" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Home</a>
-          <a href="#" data-target="#sec2" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Explore</a>
-          <a href="#" data-target="#contact" data-scramble class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px]">Contact</a>
+          <a href="#" data-target="#top" data-scramble class="text-[15px] font-normal text-white/85 hover:text-white sm:text-[18px]">Home</a>
+          <a href="#" data-target="#sec2" data-scramble class="text-[15px] font-normal text-white/85 hover:text-white sm:text-[18px]">Explore</a>
+          <a href="#" data-target="#contact" data-scramble class="text-[15px] font-normal text-white/85 hover:text-white sm:text-[18px]">Contact</a>
         </div>
       </div>
     </div>
     <!-- Right download -->
-    <button id="dlBtn" class="flex h-9 items-center gap-2 rounded-full bg-white px-3.5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-12 sm:px-6" data-key="cv_url">
-      <i class="bi bi-download text-[14px] sm:text-[16px]"></i>
-      <span data-scramble-dark class="text-[13px] font-medium sm:text-[15px]">Download CV</span>
+    <button id="dlBtn" class="flex h-11 items-center gap-2 rounded-full bg-white px-5 text-black transition-all hover:scale-[1.03] active:scale-[0.97] sm:h-14 sm:px-7" data-key="cv_url">
+      <i class="bi bi-download text-[16px] sm:text-[19px]"></i>
+      <span data-scramble-dark class="text-[15px] font-medium sm:text-[17px]">Download CV</span>
     </button>
   </nav>
 
