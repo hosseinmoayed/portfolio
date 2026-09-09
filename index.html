@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>HOSSEIN</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -70,6 +70,11 @@
     white-space: nowrap;
     user-select: none;
   }
+  /* mobile: shrink the wordmark so it stays inside the viewport instead of
+     spilling 300px past the right edge (375px screens rendered a 667px mark) */
+  @media (max-width: 767px) {
+    .watermark { font-size: 16vw; letter-spacing: -1px; }
+  }
 
   /* whileInView reveal */
   .reveal { opacity: 0; transform: translateY(30px); transition: opacity 1s ease, transform 1s cubic-bezier(0.215,0.610,0.355,1); }
@@ -122,6 +127,11 @@
   /* Hamburger is hidden on mobile — the bottom tabs replace it */
   @media (max-width: 767px) {
     #menuPill { display: none; }
+    /* slimmer top bar: 80px of chrome ate a tenth of a phone screen */
+    :root { --nav-h: 56px; }
+    nav.entrance-nav { padding-top: env(safe-area-inset-top, 0px); }
+    #dlBtn { height: 34px !important; padding-left: 12px; padding-right: 12px; }
+    #dlBtn span, #dlBtn i { font-size: 12px; }
   }
   .m-tabs a {
     flex: 1;
@@ -729,7 +739,7 @@
   </div>
 
   <!-- ================= NAVBAR ================= -->
-  <nav class="entrance-nav fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between px-4 sm:px-6 md:px-8">
+  <nav class="entrance-nav fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 sm:px-6 md:px-8" style="height:var(--nav-h, 80px);">
     <!-- Left group -->
     <div class="flex items-center gap-2">
       <a href="#top" id="logoPill" class="flex h-9 items-center gap-2 rounded-[10px] bg-white/15 px-3 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-12 sm:rounded-[14px] sm:px-5">
@@ -765,14 +775,14 @@
     </div>
 
     <!-- content -->
-    <div class="entrance relative z-10 flex h-full flex-col px-4 pb-8 pt-20 sm:px-6 sm:pb-12 sm:pt-24 md:px-8">
+    <div class="entrance relative z-10 flex h-full flex-col px-4 pb-8 pt-20 sm:px-6 sm:pb-12 sm:pt-24 md:px-8" style="padding-top:calc(var(--nav-h, 80px) + 8px);">
       <div class="flex-1"></div>
       <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <!-- left -->
         <div class="flex flex-col gap-4">
           <!-- name block — move up/down by editing the md:-translate-y-[220px] value below -->
           <div class="md:-translate-y-[200px]">
-            <h1 class="font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(40px,10vw,100px)]">
+            <h1 class="font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(40px,10vw,100px)] max-[400px]:text-[15vw] max-[479px]:text-[13.5vw]">
               <span data-scin data-text="I'M" data-delay="200" data-key="hero_name1"></span><br>
               <span data-scin data-text="HOSSEIN" data-delay="500" data-key="hero_name2"></span>
             </h1>
@@ -780,7 +790,7 @@
           </div>
         </div>
         <!-- right -->
-        <h1 class="text-left font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(40px,10vw,100px)]">
+        <h1 class="text-left font-light leading-[0.95] tracking-[-0.03em] text-white text-[clamp(40px,10vw,100px)] max-[400px]:text-[15vw] max-[479px]:text-[13.5vw] max-[479px]:mt-2">
           <span data-scin data-text="Ideas" data-delay="700" data-key="hero_right1"></span><br>
           <span data-scin data-text="into" data-delay="1000" data-key="hero_right2"></span> <br class="hidden md:inline"><span data-scin data-text="visuals" data-delay="1300" data-key="hero_right3"></span>
         </h1>
@@ -863,7 +873,7 @@
            RIGHT button = WEB EXPERIENCES (arrow points right →).
            Mobile: flex-col stacks them vertically (user request); the JS
            auto-fit already shrinks them to ~90vw either way. -->
-      <div id="sec2buttons" class="sec2-text absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col gap-6 md:flex-row md:gap-12 opacity-0" style="will-change: opacity, transform;">
+      <div id="sec2buttons" class="sec2-text absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col gap-6 md:flex-row md:gap-12 opacity-0" style="will-change: opacity, transform; gap: clamp(12px, 3vh, 24px); bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));">
           <!-- LEFT button: CINEMATIC ADS -->
           <a href="cinematic_ads_page.html" class="nbtn left" aria-label="Cinematic ads">
           <span class="nbtn-flash"></span>
@@ -972,6 +982,13 @@
         letter-spacing: -0.03em;
         line-height: .95;
         color: #fff;
+      }
+      /* mobile: the 44px clamp floor was too loud on a phone — scale it down
+         and tighten the fixed 56px gap under the title */
+      @media (max-width: 767px) {
+        #contact { --title-gap: 30px; }
+        #contact .gsc-heading h2 { font-size: clamp(34px, 10vw, 44px); }
+        #contact .gsc-heading .sub { font-size: 13px; }
       }
       /* the word "TOUCH" carries the orbs' gradient, like a lit neon sign */
       #contact .gsc-heading h2 .lit {
@@ -1191,6 +1208,16 @@
       }
       #contact .gsc-foot .sep { color: rgba(255,255,255,.18); }
       #contact .gsc-foot .tz { color: rgba(255,255,255,.65); }
+      /* mobile: bottom tabs share this screen — clear them and shrink type.
+         11px × .05em tracking makes each segment wrap to at most 2 lines. */
+      @media (max-width: 767px) {
+        #contact .gsc-foot {
+          gap: 8px 18px;
+          font-size: 11px;
+          padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px) + 62px);   /* clears .m-tabs */
+          margin-top: clamp(28px, 5vh, 60px);
+        }
+      }
       /* ===== the particle FIELD behind the cards =====
          A canvas covering the card row; green specks drift and scatter
          across the whole area (not a line) — like fireflies behind glass.
@@ -1212,6 +1239,8 @@
         min-height: 100vh;
         display: flex;
         position: relative;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
       }
       @media (prefers-reduced-motion: reduce) {
         #contact .gsc-card::after { animation: none; }
@@ -1247,8 +1276,18 @@
           scroll-snap-type: x mandatory;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;            /* Firefox */
-          padding: 20px 0 26px;
+          padding: 14px 0 20px;
           transform: none;
+        }
+        /* ≤400px: the 190×254px card fills the whole width — shrink card +
+           icon so the snap row leaves breathing room on small phones */
+        @media (max-width: 400px) {
+          #contact .gsc-card { width: 158px; height: 212px; }
+          #contact .gsc-card.icon-top > i.bi { font-size: 58px; }
+          #contact .gsc-innerText { font-size: 30px; }
+        }
+        @media (max-width: 767px) {
+          #contact .gsc-nav { margin-top: 8px; }
         }
         #contact .gsc-cards::-webkit-scrollbar { display: none; }
         /* order: telegram (1st), github (2nd), email (3rd) — telegram shows first */
