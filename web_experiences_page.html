@@ -601,14 +601,54 @@
         else { try { v.pause(); } catch (x) {} }
       });
     }
-    // scroll progress drives which card is on the (pinned) stage.
+    // ===== MOBILE: horizontal swipe instead of vertical scroll =========
+    // On touch devices the page never scrolls through the runway — the
+    // stage is fixed to the viewport height and a left/right swipe
+    // advances to the next / previous card.
+    var mqTouch = window.matchMedia("(hover: none), (pointer: coarse)");
+    function applyMobileScroll() {
+      if (mqTouch.matches) {
+        scroll.style.height = "100vh";
+        scroll.style.height = "100dvh";
+      } else {
+        scroll.style.height = (list.length * 100) + "vh";
+      }
+    }
+    applyMobileScroll();
+    if (mqTouch.matches) {
+      var swStartX = 0, swStartY = 0, swOn = false, swLock = null;
+      stage.addEventListener("touchstart", function (e) {
+        if (!sections.length) return;
+        swStartX = e.touches[0].clientX; swStartY = e.touches[0].clientY; swOn = true; swLock = null;
+      }, { passive: true });
+      stage.addEventListener("touchmove", function (e) {
+        if (!swOn || !e.cancelable) return;
+        var dx = e.touches[0].clientX - swStartX;
+        var dy = e.touches[0].clientY - swStartY;
+        if (swLock === null && (Math.abs(dx) > 14 || Math.abs(dy) > 14)) {
+          swLock = (Math.abs(dx) > Math.abs(dy)) ? "x" : "y";
+        }
+        if (swLock === "x") {
+          e.preventDefault();                        // horizontal intent — own it
+          if (dx < -60) { setActive(Math.min(sections.length - 1, current + 1)); swOn = false; }
+          else if (dx > 60) { setActive(Math.max(0, current - 1)); swOn = false; }
+        }
+      }, { passive: false });
+      stage.addEventListener("touchend", function () { swOn = false; swLock = null; }, { passive: true });
+    }
+    window.addEventListener("resize", applyMobileScroll);
+    // touch devices start with the first card active (no scroll to derive it)
+    if (mqTouch.matches) setActive(0);
+    // scroll progress drives which card is on the (pinned) stage — desktop
+    // only (mobile height is 100vh so range = 0 and scroll never advances it).
     // Listeners bind once; `sitesUpdate` always references the LATEST closure
     // so a rebuild keeps driving the new sections without re-binding.
     var ticking = false;
     function update() {
       ticking = false;
       var range = scroll.offsetHeight - window.innerHeight;
-      var p = range > 0 ? (window.scrollY - scroll.offsetTop) / range : 0;
+      if (mqTouch.matches || range <= 0) return;   // touch mode: swipe drives cards
+      var p = (window.scrollY - scroll.offsetTop) / range;
       p = Math.max(0, Math.min(0.9999, p));
       setActive(Math.floor(p * sections.length));
     }
