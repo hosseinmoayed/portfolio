@@ -273,8 +273,9 @@
     text-align: center;
     /* the label drives the button's readability, so it scales with the
        viewport and its tracking tightens as the screen narrows — that is
-       what keeps "WEB EXPERIENCES" inside the frame on a phone */
-    font-size: clamp(11px, 3.2vw, 21px);
+       what keeps "WEB EXPERIENCES" inside the frame on a phone.
+       +30% knob: --nbtn-label-scale (default 1.3) multiplies the size. */
+    font-size: calc(clamp(11px, 3.2vw, 21px) * var(--nbtn-label-scale, 1.3));
     letter-spacing: clamp(0.08em, 0.9vw, 0.3em);
     text-transform: uppercase;
     color: #52ff96;
