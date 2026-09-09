@@ -1881,12 +1881,19 @@
 
   // ---------- Loader: real progress until the hero film can scrub ----------
   // Progress = hero video buffered fraction (what actually causes the early
-  // scrub lag), smoothed with a slow crawl so the bar never sits dead.
-  // Hard caps: loader dismisses at most 20s after load even if buffering
-  // stalls; min on-screen time 1.2s so fast connections still see the reveal.
+  // scrub lag), eased so the bar never jumps. No fake time-based crawl —
+  // the loader lives and dies by the home-section video alone.
   (function () {
     var loader = document.getElementById("loader");
     if (!loader) return;
+    // Show the loader only once per tab session — returning from a sub-page
+    // (web experiences / cinematic ads) skips it entirely.
+    var seen = false;
+    try {
+      seen = sessionStorage.getItem("sxLoaderSeen") === "1";
+      sessionStorage.setItem("sxLoaderSeen", "1");
+    } catch (e) {}
+    if (seen) { loader.classList.add("done"); return; }   // entrance still runs via SITE_DATA boot
     var hero = document.getElementById("heroVideo");
     var fill = document.getElementById("ldFill");
     var spark = document.getElementById("ldSpark");
@@ -1900,7 +1907,6 @@
     var shown = 0;          // eased % on the bar
     var target = 0;         // measured buffered %
     var done = false;
-    var t0 = performance.now();
 
     // stage log lines by progress (0-indexed)
     function stageLine(i, state) {
@@ -1945,23 +1951,17 @@
       }, 550);
     }
 
-    // crawl: eased display value chases the measured one; +0.35%/tick drift
-    // Preview tip: append ?loader=slow to the URL for a slow-motion preview
-    // of this screen (kept as a hidden debugging affordance, harmless in prod).
-    var DEBUG = /[?&]loader=slow/.test(location.search);
+    // eased display value chases the measured buffered fraction — nothing else
     var iv = setInterval(function () {
       measure();
-      var age = (performance.now() - t0) / 1000;
-      var crawl = Math.min(99, age * (DEBUG ? 0.8 : 6));   // 6%/s fallback (0.8%/s in slow preview)
-      target = Math.max(target, Math.min(crawl, 99));
-      shown += (target - shown) * (DEBUG ? 0.02 : 0.06) + (DEBUG ? 0.03 : 0.12);
+      shown += (target - shown) * 0.06;
       if (shown > 99) shown = 99;
       render();
     }, 80);
 
-    // dismissal: hero ready to scrub (enough data + metadata), or hard cap
+    // dismissal: hero ready to scrub (enough data + metadata) — video only
     function heroReady() {
-      if (!hero || done || DEBUG) return;                  // DEBUG: only the cap dismisses
+      if (!hero || done) return;
       try {
         if (hero.readyState >= 2 && hero.duration > 0) {
           var end = hero.buffered.length ? hero.buffered.end(hero.buffered.length - 1) : 0;
@@ -1973,9 +1973,12 @@
       hero.addEventListener("loadeddata", heroReady);
       hero.addEventListener("progress", heroReady);
       hero.addEventListener("canplay", heroReady);
+      hero.addEventListener("error", dismiss);           // broken film — release the screen
+      measure(); heroReady();                            // catch an already-buffered hero
+      setTimeout(heroReady, 400);
+    } else {
+      dismiss();                                         // no hero film — nothing to wait for
     }
-    setTimeout(dismiss, DEBUG ? 30000 : 20000);   // absolute cap — never trap a visitor
-    setTimeout(function () { if (!done) { measure(); heroReady(); } }, 400);
   })();
 
   // ---------- Navbar menu toggle ----------
