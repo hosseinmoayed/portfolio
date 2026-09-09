@@ -86,7 +86,7 @@
     opacity: 0.05;
   }
 
-  /* TRANSCENDENCE watermark */
+  /* TRANSCENDENCE watermark — desktop only: hidden on mobile (user request) */
   .watermark {
     font-family: "Anton SC", sans-serif;
     text-transform: uppercase;
@@ -100,6 +100,9 @@
     color: transparent;
     white-space: nowrap;
     user-select: none;
+  }
+  @media (max-width: 767px) {
+    .dot-grid, .watermark { display: none; }
   }
 
   /* whileInView reveal */
