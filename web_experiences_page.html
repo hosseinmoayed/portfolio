@@ -671,7 +671,9 @@
   ];
   var ready = (window.SITE_DATA && window.SITE_DATA.ready) || Promise.resolve(null);
   ready.then(function (d) {
-    buildSites((d && d.templates && d.templates.length) ? d.templates : SITES);
+    var all = (d && d.templates && d.templates.length) ? d.templates : SITES;
+    // page split: "web" → here, "cinematic" → the cinematic page, "" → both
+    buildSites(all.filter(function (t) { return (t.page || "") !== "cinematic"; }));
   });
 </script>
 </body>
