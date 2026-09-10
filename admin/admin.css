@@ -188,6 +188,10 @@ textarea { resize: vertical; min-height: 70px; }
 
 .f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .f3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+/* inside these grids each field is a single stacked cell — the default
+   210px label column would overflow the narrow columns */
+.f2 .frow, .f3 .frow { grid-template-columns: 1fr; gap: 5px; margin: 0; }
+.f2 .frow > label, .f3 .frow > label { padding-top: 0; }
 
 .check { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--txt); cursor: pointer; }
 .check input { width: 15px; height: 15px; accent-color: var(--nb); cursor: pointer; }

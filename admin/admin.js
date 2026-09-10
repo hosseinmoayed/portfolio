@@ -397,6 +397,7 @@ function templateBasicsHtml(item) {
   const tagOptions = tagsCache.map((t) =>
     `<option value="${escapeHtml(t.name)}" ${item.tag === t.name ? "selected" : ""}>${escapeHtml(t.name)}</option>`).join("");
   const page = item.page || "";
+  const showView = page !== "cinematic";
   return `
     <div class="fgroup">
       <h4>Basics</h4>
@@ -413,9 +414,12 @@ function templateBasicsHtml(item) {
           <option value="" ${page === "" ? "selected" : ""}>Both pages</option>
         </select>
       </div></div>
+      <div class="frow" id="mi_viewRow" style="margin:14px 0 0; ${showView ? "" : "display:none;"}"><label>View project link</label><div>
+        <input type="text" id="mi_view_link" value="${escapeHtml(item.link || "index.html")}">
+        <div class="fhelp">Target of the &ldquo;View project &rarr;&rdquo; link on Web Experiences.</div>
+      </div></div>
       <div class="frow" style="margin:14px 0 0;"><label>Description</label><div><textarea id="mi_desc" style="min-height:56px;">${escapeHtml(item.desc || "")}</textarea></div></div>
-      <div class="f3" style="margin-top:14px;">
-        <div class="frow" style="margin:0;"><label>Link</label><div><input type="text" id="mi_link" value="${escapeHtml(item.link || "index.html")}"></div></div>
+      <div class="f2" style="margin-top:14px;">
         <div class="frow" style="margin:0;"><label>Order</label><div><input type="number" id="mi_order" value="${Number(item.order ?? nextOrder("templates"))}"></div></div>
         <div class="frow" style="margin:0;"><label>Visible</label><div><label class="check"><input type="checkbox" id="mi_pub" ${item.published !== false ? "checked" : ""}> shown on site</label></div></div>
       </div>
@@ -503,6 +507,14 @@ function openItemModal(kind, item = null) {
     }
   });
 
+  const pageSel = modal.querySelector("#mi_page");
+  const viewRow = modal.querySelector("#mi_viewRow");
+  if (pageSel && viewRow) {
+    pageSel.addEventListener("change", () => {
+      viewRow.style.display = pageSel.value === "cinematic" ? "none" : "";
+    });
+  }
+
   modal.querySelector("#mi_cancel").addEventListener("click", closeModal);
   modal.querySelector("#mi_save").addEventListener("click", () => saveItem(kind, editing ? item.id : null));
 }
@@ -530,7 +542,7 @@ async function saveItem(kind, id) {
       }
     : {
         tag: g("#mi_tag"), name: g("#mi_name"), desc: g("#mi_desc"),
-        src: g("#mi_src"), link: g("#mi_link") || "index.html",
+        src: g("#mi_src"), link: g("#mi_view_link") || "index.html",
         page: g("#mi_page") || "",
         order: Number(g("#mi_order") || 0), published: modal.querySelector("#mi_pub").checked,
         updated_at: serverTimestamp()
