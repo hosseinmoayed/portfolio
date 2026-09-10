@@ -541,7 +541,7 @@
      Idempotent: a second call (Firestore data arriving after the default build)
      replaces the stage content and the scroll logic re-targets the new sections —
      no duplicate stages, no duplicate listeners. */
-  var sitesBuilt = false, sitesUpdate = null;
+  var sitesBuilt = false, sitesUpdate = null, sitesSwipe = null, sitesApplyHeight = null;
   function buildSites(list) {
     var B = function (v, d) { return '<span class="nbtn-bolt ' + v + '"><svg viewBox="' + (v[0] === "l" || v[0] === "r" ? "0 0 14 200" : "0 0 200 14") + '" preserveAspectRatio="none"><path d="' + d + '"/></svg></span>'; };
     var ZAP = '<span class="nbtn-flash"></span><span class="nbtn-flow"></span>'
@@ -581,7 +581,10 @@
         '</div>';
       stage.appendChild(sec);
     });
-    if (!sitesBuilt) scroll.appendChild(stage);
+    // capture before sitesBuilt flips — the scroll-listener block below must
+    // bind on the first build only
+    var firstBuild = !sitesBuilt;
+    if (firstBuild) scroll.appendChild(stage);
     scroll.style.height = (list.length * 100) + "vh";   // scroll runway: one screen of scroll per card
     sitesBuilt = true;
     var sections = [].slice.call(stage.querySelectorAll(".site"));
@@ -602,12 +605,12 @@
       });
     }
     // ===== MOBILE: horizontal swipe instead of vertical scroll =========
-    // On touch devices the page never scrolls through the runway — the
-    // stage is fixed to the viewport height and a left/right swipe
-    // advances to the next / previous card.
-    var mqTouch = window.matchMedia("(hover: none), (pointer: coarse)");
+    // Split by viewport width (the site's usual 820px breakpoint), NOT by a
+    // pointer media query: touchscreen laptops report (pointer: coarse) and
+    // were getting the 100vh runway, leaving desktop with nothing to scroll.
+    var mqMobile = window.matchMedia("(max-width: 820px)");
     function applyMobileScroll() {
-      if (mqTouch.matches) {
+      if (mqMobile.matches) {
         scroll.style.height = "100vh";
         scroll.style.height = "100dvh";
       } else {
@@ -615,10 +618,19 @@
       }
     }
     applyMobileScroll();
-    if (mqTouch.matches) {
+    sitesSwipe = function (dir) {
+      var next = current + dir;
+      if (next < 0) next = 0;
+      if (next > sections.length - 1) next = sections.length - 1;
+      setActive(next);
+    };
+    sitesApplyHeight = applyMobileScroll;
+    // bind once — a data re-render rebuilds the sections, and re-binding here
+    // would stack a second set of touch listeners on the same stage
+    if (firstBuild) {
       var swStartX = 0, swStartY = 0, swOn = false, swLock = null;
       stage.addEventListener("touchstart", function (e) {
-        if (!sections.length) return;
+        if (!mqMobile.matches || !sitesSwipe) return;
         swStartX = e.touches[0].clientX; swStartY = e.touches[0].clientY; swOn = true; swLock = null;
       }, { passive: true });
       stage.addEventListener("touchmove", function (e) {
@@ -629,16 +641,19 @@
           swLock = (Math.abs(dx) > Math.abs(dy)) ? "x" : "y";
         }
         if (swLock === "x") {
-          e.preventDefault();                        // horizontal intent — own it
-          if (dx < -60) { setActive(Math.min(sections.length - 1, current + 1)); swOn = false; }
-          else if (dx > 60) { setActive(Math.max(0, current - 1)); swOn = false; }
+          e.preventDefault();                          // horizontal intent — own it
+          if (dx < -60) { sitesSwipe(1); swOn = false; }
+          else if (dx > 60) { sitesSwipe(-1); swOn = false; }
         }
       }, { passive: false });
       stage.addEventListener("touchend", function () { swOn = false; swLock = null; }, { passive: true });
+      window.addEventListener("resize", function () {
+        if (sitesApplyHeight) sitesApplyHeight();
+        if (mqMobile.matches && sitesSwipe) sitesSwipe(0);
+      });
     }
-    window.addEventListener("resize", applyMobileScroll);
-    // touch devices start with the first card active (no scroll to derive it)
-    if (mqTouch.matches) setActive(0);
+    // narrow screens start on the first card (no scroll to derive it)
+    if (mqMobile.matches) setActive(0);
     // scroll progress drives which card is on the (pinned) stage — desktop
     // only (mobile height is 100vh so range = 0 and scroll never advances it).
     // Listeners bind once; `sitesUpdate` always references the LATEST closure
@@ -647,13 +662,13 @@
     function update() {
       ticking = false;
       var range = scroll.offsetHeight - window.innerHeight;
-      if (mqTouch.matches || range <= 0) return;   // touch mode: swipe drives cards
+      if (mqMobile.matches || range <= 0) return;   // narrow screens: swipe drives cards
       var p = (window.scrollY - scroll.offsetTop) / range;
       p = Math.max(0, Math.min(0.9999, p));
       setActive(Math.floor(p * sections.length));
     }
     sitesUpdate = update;
-    if (!sitesBuilt) {
+    if (firstBuild) {
       document.addEventListener("scroll", function () {
         if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; if (sitesUpdate) sitesUpdate(); }); }
       }, { passive: true });
@@ -669,12 +684,31 @@
     { tag: "Commerce", name: "FLUX", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium.", link: "index.html" },
     { tag: "Portfolio", name: "HALO", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure.", link: "index.html" }
   ];
-  var ready = (window.SITE_DATA && window.SITE_DATA.ready) || Promise.resolve(null);
-  ready.then(function (d) {
+  // page split: "web" → here, "cinematic" → the cinematic page, "" → both
+  function pick(d) {
     var all = (d && d.templates && d.templates.length) ? d.templates : SITES;
-    // page split: "web" → here, "cinematic" → the cinematic page, "" → both
-    buildSites(all.filter(function (t) { return (t.page || "") !== "cinematic"; }));
-  });
+    return all.filter(function (t) { return (t.page || "") !== "cinematic"; });
+  }
+  // site-data.js is a module, so it has NOT run yet while this classic script
+  // parses — reading window.SITE_DATA here always found undefined and the page
+  // silently rendered the local SITES array. Deferred modules run before
+  // DOMContentLoaded, so wait for that.
+  function initSites() {
+    var SD = window.SITE_DATA;
+    if (!SD) { buildSites(pick(null)); return; }   // module absent → local SITES
+    SD.ready.then(function (d) {
+      buildSites(pick(d));
+      // `ready` hands out the embedded defaults when Firestore is slow —
+      // rebuild once the real data lands
+      if (SD.source !== "firestore") {
+        SD.live.then(function (live) {
+          if (SD.source === "firestore") buildSites(pick(live));
+        });
+      }
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initSites);
+  else initSites();
 </script>
 </body>
 </html>

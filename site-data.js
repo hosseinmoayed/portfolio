@@ -174,12 +174,23 @@ async function resolve() {
   }
 }
 
+window.SITE_DATA = { ready: null, live: null, source: "pending", defaults };
+
+/* The timeout only races the FIRST paint: if Firestore is slow (a cold SDK
+   import can easily outlast it) `ready` hands out the embedded defaults so the
+   page never blocks. `live` keeps waiting and resolves with the real Firestore
+   data whenever it lands, so consumers can re-render from it. Both always
+   resolve and never reject. */
+const live = resolve();
 const ready = Promise.race([
-  resolve(),
+  live,
   new Promise(res => setTimeout(() => {
-    window.SITE_DATA.source = "fallback";
+    // never clobber a real Firestore result — the loser of this race still
+    // runs its callback, so guard the write
+    if (window.SITE_DATA.source !== "firestore") window.SITE_DATA.source = "fallback";
     res(defaults);
   }, DATA_TIMEOUT_MS))
 ]);
 
-window.SITE_DATA = { ready, source: "pending", defaults };
+window.SITE_DATA.ready = ready;
+window.SITE_DATA.live = live;
