@@ -394,8 +394,12 @@ function mediaBlockHtml(kind, item) {
 }
 
 function templateBasicsHtml(item) {
-  const tagOptions = tagsCache.map((t) =>
-    `<option value="${escapeHtml(t.name)}" ${item.tag === t.name ? "selected" : ""}>${escapeHtml(t.name)}</option>`).join("");
+  const names = tagsCache.map((t) => t.name);
+  // a card may still carry a tag that was removed from the Tags section —
+  // keep it selectable so editing never silently reassigns the card
+  const extra = item.tag && !names.includes(item.tag) ? [item.tag] : [];
+  const tagOptions = extra.concat(names).map((n) =>
+    `<option value="${escapeHtml(n)}" ${item.tag === n ? "selected" : ""}>${escapeHtml(n)}</option>`).join("");
   const page = item.page || "";
   const showView = page !== "cinematic";
   return `
@@ -404,6 +408,7 @@ function templateBasicsHtml(item) {
       <div class="f2">
         <div class="frow" style="margin:0;"><label>Tag</label><div>
           <select id="mi_tag">${tagOptions || '<option value="">— no tags yet —</option>'}</select>
+          <div class="fhelp">Create tags in the Tags section.</div>
         </div></div>
         <div class="frow" style="margin:0;"><label>Name</label><div><input type="text" id="mi_name" value="${escapeHtml(item.name || "")}"></div></div>
       </div>
