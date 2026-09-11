@@ -13,16 +13,17 @@ A static portfolio site (SynapseX) with cinematic scroll-scrubbed video experien
 python serve.py 5599
 ```
 
-Then open http://localhost:5599/synapsex.html (main), /web_experiences_page.html, /cinematic_ads_page.html, or /admin/login.html (admin panel).
+Then open http://localhost:5599/ (main), /web-experiences, /cinematic-ads, or /admin (admin panel).
 
 **Note:** `serve.py` implements Range/206 responses and threading; a plain `python -m http.server` breaks video seeking. The Browser-pane launch config uses `serve.py`.
 
 ## Repository Structure
 
 ```
-├── synapsex.html              # Main page: hero, sec2 scroll-scrub film, WE cards, contact
-├── web_experiences_page.html  # Showcase sub-page (SITES builder + SITE_DATA wiring)
-├── cinematic_ads_page.html    # Showcase sub-page (same + "View project" zoom feature)
+├── index.html                 # Main page: hero, sec2 scroll-scrub film, WE cards, contact
+├── web-experiences.html       # Showcase sub-page (SITES builder + SITE_DATA wiring)
+├── cinematic-ads.html         # Showcase sub-page (same + "View project" zoom feature)
+├── vercel.json                # cleanUrls + /admin redirect (deployed on Vercel)
 ├── site-data.js               # ES module: embedded defaults + Firestore fetch (2s timeout) → window.SITE_DATA
 ├── firebase-config.js         # Public-by-design config: Firebase web config, Cloudinary unsigned preset, ADMIN_EMAIL
 ├── firestore.rules            # Canonical security rules — paste into Firebase Console

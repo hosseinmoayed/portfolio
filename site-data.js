@@ -56,8 +56,8 @@ const SITE_CONTENT_DEFAULTS = {
   cv_url: "https://apps.apple.com"
 };
 
-/* Showcase cards → the SITES arrays in web_experiences_page.html / cinematic_ads_page.html.
-   `page` splits them: "web" → web_experiences_page, "cinematic" → cinematic_ads_page,
+/* Showcase cards → the SITES arrays in web-experiences.html / cinematic-ads.html.
+   `page` splits them: "web" → web-experiences, "cinematic" → cinematic-ads,
    "" / missing → both (back-compat with seeded docs). */
 const TEMPLATES_DEFAULT = [
   { tag: "Landing Page",    name: "NOVA",  src: "web_expreience_scrub.mp4", link: "/", page: "web",
