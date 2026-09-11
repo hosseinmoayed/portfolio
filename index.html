@@ -21,6 +21,33 @@
       document.documentElement.classList.add("ld-skip");
     }
   } catch (e) {}
+  // All layout comes from the Tailwind Play CDN, whose stylesheet is applied
+  // asynchronously — hold the page hidden until it lands (see the probe below)
+  // so the first paint can never show an unstyled page.
+  document.documentElement.classList.add("tw-pending");
+  // The Play CDN builds its stylesheet after this script runs. Reveal the page
+  // only once a probe element actually picks up a utility class. setTimeout
+  // (not rAF — that never fires in a background tab) plus a load-event
+  // fallback keep a slow or failed CDN from blanking the site forever.
+  (function () {
+    var done = false;
+    function reveal() {
+      if (done) return;
+      done = true;
+      document.documentElement.classList.remove("tw-pending");
+    }
+    var probe = document.createElement("div");
+    probe.className = "hidden";
+    document.head.appendChild(probe);
+    var tries = 0;
+    (function check() {
+      if (done) return;
+      if (getComputedStyle(probe).display === "none") { reveal(); return; }
+      if (++tries > 40) { reveal(); return; }
+      setTimeout(check, 100);
+    })();
+    window.addEventListener("load", reveal);
+  })();
   // Landing rules:
   // - #hash entry (Back to Explore from a sub-page): strip the hash so a
   //   refresh never re-lands there, but still scroll to the anchor target —
@@ -63,6 +90,9 @@
     --font-mono: "Space Mono", monospace;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* Tailwind's Play CDN stylesheet lands asynchronously; keep the page hidden
+     (html stays black) until the probe in <head> confirms it is applied. */
+  html.tw-pending body { visibility: hidden; }
   html, body {
     background: #000;
     color: #fff;
