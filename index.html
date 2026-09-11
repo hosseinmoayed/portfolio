@@ -2080,7 +2080,7 @@
   // presentation, not data-waiting: hold a MINIMUM dwell of 1.2 s so the
   // boot sequence always plays as one clean entrance (a warm cache would
   // otherwise flash it), and dismiss as soon as the sequence's first frames
-  // have arrived (~100 frames / 42%) — a cold network simply holds it longer, never less.
+  // have arrived (~140 frames / 58%) — a cold network simply holds it longer, never less.
   (function () {
     // MOBILE = coarse pointer / no hover — must match the hero-scrub block's
     // heroMobile (declared later; var-hoisting leaves it undefined here, so
@@ -2202,7 +2202,7 @@
       render();
     }, 80);
 
-    // dismissal: hero ready. Desktop = ~100 frames (≈42%) of the sequence
+    // dismissal: hero ready. Desktop = ~140 frames (≈58%) of the sequence
     // loaded — enough headroom for a full-speed scrub past the fold; mobile =
     // video buffered like before. The bar reports what the active path
     // actually downloads: sequence progress on desktop, video buffered on
@@ -2211,7 +2211,7 @@
       if (!hero || done) return;
       try {
         if (!loaderIsMobile && window.__frameScrubHero) {
-          if (window.__frameScrubHero() >= 0.42) dismiss();
+          if (window.__frameScrubHero() >= 0.583) dismiss();
           return;
         }
         if (hero.readyState >= 2 && hero.duration > 0) {
@@ -2227,7 +2227,7 @@
       hero.addEventListener("canplay", heroReady);
       hero.addEventListener("error", dismiss);           // broken film — release the screen
       measure(); heroReady();                            // catch an already-buffered hero
-      // Poll: on the desktop sequence path the dismissal condition (~42% of
+      // Poll: on the desktop sequence path the dismissal condition (~58% of
       // frames loaded) only becomes true AFTER these video events have fired,
       // so the events alone never re-check it. A short interval closes that
       // gap; dismiss() clears it — the loader is dismissed exactly once.
