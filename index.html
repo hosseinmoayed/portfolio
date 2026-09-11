@@ -817,9 +817,26 @@
   <section id="top" class="relative h-screen h-[100dvh] w-full overflow-hidden">
     <!-- desktop scrub path: a canvas + WEBP frame sequence (see frame-scrub.js).
          The <video> below stays as the mobile autoplay path and the fallback if
-         the sequence can't load. The canvas paints over it once ready. -->
+         the sequence can't load. The canvas paints over it once ready.
+         The inline script below the tag revokes the desktop src BEFORE the
+         fetch starts — the MP4 is dead weight on desktop (canvas scrubs the
+         sequence) and would steal bandwidth from the frames. -->
     <video id="heroVideo" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
       src="lion_hero_scrub.mp4"></video>
+    <script>
+      (function () {
+        var coarse = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+        var heroEl = document.getElementById("heroVideo");
+        if (!coarse && heroEl) {
+          // park the src in data-src; restoreHeroMp4() puts it back if the
+          // sequence ever fails to arrive
+          heroEl.dataset.mp4src = heroEl.getAttribute("src");
+          heroEl.removeAttribute("src");
+          heroEl.load();                       // abort the auto-prefetch
+          window.__heroMp4Parked = true;
+        }
+      })();
+    </script>
     <canvas id="heroCanvas" aria-hidden="true"
       class="pointer-events-none absolute inset-0 h-full w-full object-cover"
       style="opacity:0; transition:opacity .4s ease;"></canvas>
@@ -2123,6 +2140,12 @@
     function measure() {
       if (!hero) return;
       try {
+        // Desktop: the bar tracks the frame-sequence download (what the scrub
+        // actually consumes). Mobile: the video's buffered fraction, as before.
+        if (!loaderIsMobile && window.__frameScrubHero) {
+          target = Math.min(100, window.__frameScrubHero() * 100);
+          return;
+        }
         if (hero.buffered.length && hero.duration) {
           var end = hero.buffered.end(hero.buffered.length - 1);
           target = Math.min(100, (end / hero.duration) * 100);
@@ -2180,13 +2203,14 @@
     }, 80);
 
     // dismissal: hero ready. Desktop = 15% of the frame sequence (its scrub
-    // surface); mobile = video buffered like before.
+    // surface); mobile = video buffered like before. The bar reports what the
+    // active path actually downloads: sequence progress on desktop, video
+    // buffered fraction on mobile.
     function heroReady() {
       if (!hero || done) return;
       try {
         if (!loaderIsMobile && window.__frameScrubHero) {
-          if (hero.readyState >= 2 && hero.duration > 0 &&
-              window.__frameScrubHero() >= 0.15) dismiss();
+          if (window.__frameScrubHero() >= 0.15) dismiss();
           return;
         }
         if (hero.readyState >= 2 && hero.duration > 0) {
@@ -2212,37 +2236,43 @@
     }
   })();
 
-  // ---------- Section-2 film: deferred load ----------
-  // sec2video carries preload="none" and a data-src so the hero film gets the
-  // whole pipe to itself while the loader is on screen. Two 15 MB+ films
-  // fetching at once made the hero's buffered fraction crawl, which kept the
-  // loader up (and left the scrub starved) on a cold cache.
-  // With the desktop canvas/sequence path the <video> elements are only the
-  // mobile path — no src assignment needed when FrameScrub owns the section.
+  // ---------- Section-2 film: deferred load (mobile path only) ----------
+  // sec2video carries preload="none" and a data-src. On mobile (which has no
+  // frame sequence) it loads once the hero video has buffered. On desktop the
+  // sequence owns the scrub, so the check moved INSIDE start(): at init time
+  // window.__frameScrubSec2 doesn't exist yet (the sequence mounts later), so
+  // the old pre-check always passed and the 14 MB MP4 downloaded for nothing.
   (function () {
     var v = document.getElementById("sec2video");
     if (!v || !v.dataset.src || v.getAttribute("src")) return;
-    if (window.__frameScrubSec2) return;             // canvas path owns section 2
     var started = false;
     function start() {
       if (started) return;
       started = true;
+      clearInterval(iv); clearTimeout(cap);
+      if (window.__frameScrubSec2) return;           // sequence took over — never fetch the MP4
       v.setAttribute("src", v.dataset.src);
       v.load();
     }
     var heroV = document.getElementById("heroVideo");
-    if (!heroV) { start(); return; }
-    var iv = setInterval(function () {
+    var iv, cap;
+    if (!heroV || window.__heroMp4Parked) {
+      // desktop: hero video is parked (sequence path) — give the sequence a
+      // moment to mount, then skip the MP4 fetch entirely
+      cap = setTimeout(start, 1500);
+      return;
+    }
+    iv = setInterval(function () {
       try {
         if (heroV.readyState >= 4 ||
             (heroV.duration > 0 && heroV.buffered.length &&
              heroV.buffered.end(heroV.buffered.length - 1) / heroV.duration > 0.9)) {
-          clearInterval(iv); start();
+          start();
         }
       } catch (e) {}
     }, 400);
     // never leave section 2 empty, however slow the hero is
-    setTimeout(function () { clearInterval(iv); start(); }, 12000);
+    cap = setTimeout(start, 12000);
   })();
 
   // ---------- Navbar menu toggle ----------
@@ -2317,7 +2347,7 @@
       name: "hero", frames: 240, fps: 24,
       width: 1280, height: 720,
       onprogress: function (r) {
-        // expose the sequence's load fraction to the loader gate
+        // expose the sequence's load fraction to the loader gate + bar
         window.__frameScrubHero = function () { return r; };
         // treat 60% of the sequence as fully usable (first frames load first)
         if (!heroSeqReady && r >= 0.6) { heroSeqReady = true; }
@@ -2328,6 +2358,19 @@
       heroCanvas.style.opacity = "1";
       if (heroActive) { hero.pause(); }
     });
+    // FALLBACK: if the sequence can't arrive (frames 404 / network dead),
+    // restore the parked MP4 and let the legacy video scrub take over.
+    var heroMp4Back = false;
+    setTimeout(function () {
+      if (heroSeqReady || heroMp4Back) return;
+      heroMp4Back = true;
+      if (hero.dataset.mp4src) {
+        hero.setAttribute("src", hero.dataset.mp4src);
+        hero.load();
+        window.__frameScrubHero = null;      // loader falls back to video gate
+        heroCanvas.style.opacity = "0";      // keep the canvas out of the way
+      }
+    }, 9000);
   }
 
   if (heroMobile) {

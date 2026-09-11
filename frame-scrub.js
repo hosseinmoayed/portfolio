@@ -29,6 +29,7 @@ function FrameScrub(opts) {
 
   var imgs = new Array(count);                  // decoded ImageBitmap/HTMLImage
   var pending = count;
+  var failed = 0;                               // frames that 404'd (not "loaded")
   var lastIndex = -1;
   var drawn = false;
   var destroyed = false;
@@ -84,10 +85,10 @@ function FrameScrub(opts) {
     im.onload = function () {
       imgs[i] = im;
       pending--;
-      if (opts.onprogress) opts.onprogress(1 - pending / count);
+      if (opts.onprogress) opts.onprogress(1 - (pending + failed) / count);
       if (!drawn && i === 0) paint(0);
     };
-    im.onerror = function () { imgs[i] = null; pending--; };   // count gaps as done
+    im.onerror = function () { imgs[i] = null; pending--; failed++; if (opts.onprogress) opts.onprogress(1 - (pending + failed) / count); };
     im.src = dir + "f" + String(i + 1).padStart(pad, "0") + ".webp";
     fetchHead++;
     // throttle: one decode per idle slice keeps the main thread responsive
