@@ -132,7 +132,7 @@
      with one number — their contents scale along with them.
      scale: 1 = unchanged · 0.85 = 15% smaller · 0.8 = 20% smaller …
      Desktop (≥1440px) and mobile stay untouched. */
-  :root { --nav-scale: 0.85; }                    /* <-- EDIT THIS NUMBER */
+  :root { --nav-scale: .9; }                    /* <-- EDIT THIS NUMBER */
   @media (min-width: 1024px) and (max-width: 1439.98px) {
     #logoPill { transform: scale(var(--nav-scale)); transform-origin: left center; }
     #menuPill { transform: scale(var(--nav-scale)); transform-origin: left center; }
