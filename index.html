@@ -889,8 +889,8 @@
   <!-- ================= SECTION 2: CINEMATIC TEXT ================= -->
   <section id="sec2" class="relative w-full" style="height:560vh;">
    <div class="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden">
-    <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
-      src="lion_page2_new_hd.mp4"></video>
+    <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="none"
+      data-src="lion_page2_new_hd.mp4"></video>
     <!-- MOBILE scrub fix: mobile decoders refuse to render frames for a
          video whose currentTime is parked by rapid programmatic seeks while
          display:none/opacity tricks or stacked clips compete for the
@@ -2202,6 +2202,36 @@
     } else {
       dismiss();                                         // no hero film — nothing to wait for
     }
+  })();
+
+  // ---------- Section-2 film: deferred load ----------
+  // sec2video carries preload="none" and a data-src so the hero film gets the
+  // whole pipe to itself while the loader is on screen. Two 15 MB+ films
+  // fetching at once made the hero's buffered fraction crawl, which kept the
+  // loader up (and left the scrub starved) on a cold cache.
+  (function () {
+    var v = document.getElementById("sec2video");
+    if (!v || !v.dataset.src || v.getAttribute("src")) return;
+    var started = false;
+    function start() {
+      if (started) return;
+      started = true;
+      v.setAttribute("src", v.dataset.src);
+      v.load();
+    }
+    var heroV = document.getElementById("heroVideo");
+    if (!heroV) { start(); return; }
+    var iv = setInterval(function () {
+      try {
+        if (heroV.readyState >= 4 ||
+            (heroV.duration > 0 && heroV.buffered.length &&
+             heroV.buffered.end(heroV.buffered.length - 1) / heroV.duration > 0.9)) {
+          clearInterval(iv); start();
+        }
+      } catch (e) {}
+    }, 400);
+    // never leave section 2 empty, however slow the hero is
+    setTimeout(function () { clearInterval(iv); start(); }, 12000);
   })();
 
   // ---------- Navbar menu toggle ----------
