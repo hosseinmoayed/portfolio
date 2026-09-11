@@ -127,6 +127,20 @@
   .menu-links { opacity: 0; transform: translateX(15px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
   .menu-pill.open .menu-links { opacity: 1; transform: none; pointer-events: auto; }
 
+  /* ===== NAVBAR SIZE KNOB (laptop 1024–1439px only) ====================
+     Shrink all three navbar elements (logo pill, menu pill, download CV)
+     with one number — their contents scale along with them.
+     scale: 1 = unchanged · 0.85 = 15% smaller · 0.8 = 20% smaller …
+     Desktop (≥1440px) and mobile stay untouched. */
+  :root { --nav-scale: 0.85; }                    /* <-- EDIT THIS NUMBER */
+  @media (min-width: 1024px) and (max-width: 1439.98px) {
+    #logoPill { transform: scale(var(--nav-scale)); transform-origin: left center; }
+    #menuPill { transform: scale(var(--nav-scale)); transform-origin: left center; }
+    #dlBtn    { transform: scale(var(--nav-scale)); transform-origin: right center; }
+    #dlBtn:hover  { transform: scale(calc(var(--nav-scale) * 1.035)); }
+    #dlBtn:active { transform: scale(calc(var(--nav-scale) * 0.97)); }
+  }
+
   /* ===== Mobile bottom tabs (iOS-style) ===== */
   .m-tabs {
     position: fixed;
