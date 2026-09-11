@@ -2056,11 +2056,19 @@
     setTimeout(startEntrance, 3200);   // belt-and-suspenders: never hold the entrance for long
   })();
 
-  // ---------- Loader: real progress until the hero film can scrub ----------
-  // Progress = hero video buffered fraction (what actually causes the early
-  // scrub lag), eased so the bar never jumps. No fake time-based crawl —
-  // the loader lives and dies by the home-section video alone.
+  // ---------- Loader ----------
+  // MOBILE: progress = hero video buffered fraction (the autoplay path still
+  // streams the MP4), dismissed once it can play — same as it always was.
+  // DESKTOP: the frame sequence is the scrub surface, so the loader's job is
+  // presentation, not data-waiting: hold a MINIMUM dwell of 1.2 s so the
+  // boot sequence always plays as one clean entrance (a warm cache would
+  // otherwise flash it), and dismiss as soon as the sequence's first frames
+  // have arrived (15%) — a cold network simply holds it longer, never less.
   (function () {
+    // MOBILE = coarse pointer / no hover — must match the hero-scrub block's
+    // heroMobile (declared later; var-hoisting leaves it undefined here, so
+    // compute it locally).
+    var loaderIsMobile = window.matchMedia("(hover: none), (pointer: coarse)").matches;
     var loader = document.getElementById("loader");
     if (!loader) return;
     // Bfcache restore (browser Back from a sub-page): scripts don't re-run,
@@ -2099,6 +2107,9 @@
     var shown = 0;          // eased % on the bar
     var target = 0;         // measured buffered %
     var done = false;
+    var openedAt = Date.now();
+    // Desktop dwell floor: the boot sequence always plays as a complete beat.
+    var DWELL_MS = loaderIsMobile ? 0 : 1200;
 
     // stage log lines by progress (0-indexed)
     function stageLine(i, state) {
@@ -2134,30 +2145,46 @@
     function dismiss() {
       if (done) return;
       done = true;
+      clearInterval(readyIv);
+      // desktop: stretch the bar to 100% over the remaining dwell so the
+      // fill/ring never jump from half to full at dismissal
+      var remaining = Math.max(0, DWELL_MS - (Date.now() - openedAt));
+      var fadeDelay = remaining + 550;
+      if (!heroMobile && remaining > 0) {
+        var startPct = shown;
+        var t0 = Date.now();
+        var stretch = setInterval(function () {
+          var k = Math.min(1, (Date.now() - t0) / remaining);
+          shown = startPct + (100 - startPct) * k;
+          render();
+          if (k >= 1) clearInterval(stretch);
+        }, 40);
+      } else {
+        target = shown = 100; render();
+      }
       stageLine(2, "ONLINE");
       stageLine(3, "GO");
-      target = shown = 100; render();
       setTimeout(function () {
         loader.classList.add("done");
         startEntrance();               // hand off to the site's own entrance
-      }, 550);
+      }, fadeDelay);
     }
 
     // eased display value chases the measured buffered fraction — nothing else
     var iv = setInterval(function () {
+      if (done) return;
       measure();
       shown += (target - shown) * 0.06;
       if (shown > 99) shown = 99;
       render();
     }, 80);
 
-    // dismissal: hero ready to scrub. On desktop the frame sequence is the
-    // scrub surface — 15% of it (early frames load first) plus the video's
-    // metadata is enough. Mobile still waits on the video like before.
+    // dismissal: hero ready. Desktop = 15% of the frame sequence (its scrub
+    // surface); mobile = video buffered like before.
     function heroReady() {
       if (!hero || done) return;
       try {
-        if (window.__frameScrubHero && heroMobile !== true) {
+        if (!loaderIsMobile && window.__frameScrubHero) {
           if (hero.readyState >= 2 && hero.duration > 0 &&
               window.__frameScrubHero() >= 0.15) dismiss();
           return;
@@ -2168,6 +2195,7 @@
         }
       } catch (e) {}
     }
+    var readyIv = null;
     if (hero) {
       hero.addEventListener("loadeddata", heroReady);
       hero.addEventListener("progress", heroReady);
@@ -2177,10 +2205,8 @@
       // Poll: on the desktop sequence path the dismissal condition (15% of
       // frames loaded) only becomes true AFTER these video events have fired,
       // so the events alone never re-check it. A short interval closes that
-      // gap; the loader is dismissed exactly once regardless.
-      var readyIv = setInterval(heroReady, 300);
-      // and stop polling once the loader is gone
-      (function stopWhenDone() { if (done) { clearInterval(readyIv); return; } setTimeout(stopWhenDone, 500); })();
+      // gap; dismiss() clears it — the loader is dismissed exactly once.
+      readyIv = setInterval(heroReady, 300);
     } else {
       dismiss();                                         // no hero film — nothing to wait for
     }
