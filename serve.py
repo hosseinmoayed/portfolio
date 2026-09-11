@@ -12,8 +12,44 @@ import sys
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 
+# Mirrors the rewrites in vercel.json so localhost URLs match production.
+CLEAN_URLS = {
+    "/web-experiences": "/web_experiences_page.html",
+    "/cinematic-ads": "/cinematic_ads_page.html",
+}
+
+# Mirrors vercel.json's redirects. These must send the browser to a new URL
+# (not rewrite in place): the admin pages link to each other relatively, so
+# serving login.html at "/admin" would resolve "dashboard.html" to "/dashboard.html".
+REDIRECTS = {
+    "/admin": "/admin/login",
+}
+
+
 class RangeRequestHandler(SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        clean = path.split("?")[0].split("#")[0]
+        if len(clean) > 1 and clean.endswith("/"):
+            clean = clean[:-1]
+        if clean in CLEAN_URLS:
+            return super().translate_path(CLEAN_URLS[clean])
+        # extensionless URL → the matching .html file, like Vercel's cleanUrls
+        resolved = super().translate_path(path)
+        if not os.path.exists(resolved) and os.path.isfile(resolved + ".html"):
+            return resolved + ".html"
+        return resolved
+
     def send_head(self):
+        clean = self.path.split("?")[0].split("#")[0]
+        if len(clean) > 1 and clean.endswith("/"):
+            clean = clean[:-1]
+        if clean in REDIRECTS:
+            self.send_response(302)
+            self.send_header("Location", REDIRECTS[clean])
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return None
+
         path = self.translate_path(self.path)
         if os.path.isdir(path) or not os.path.exists(path):
             return super().send_head()

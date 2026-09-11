@@ -272,7 +272,7 @@
   <!-- ================= NAVBAR (identical to the other pages) ================= -->
   <nav class="entrance-nav fixed top-0 left-0 z-50 flex h-20 w-full items-center justify-between px-4 sm:px-6 md:px-8">
     <div class="flex items-center gap-2">
-      <a href="index.html" id="logoPill" class="flex h-9 items-center gap-2 rounded-[10px] bg-white/15 px-3 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-12 sm:rounded-[14px] sm:px-5 lg:h-11 lg:px-4 xl:h-14 xl:rounded-[16px] xl:px-6">
+      <a href="/" id="logoPill" class="flex h-9 items-center gap-2 rounded-[10px] bg-white/15 px-3 backdrop-blur-md transition-all hover:bg-white/[0.22] sm:h-12 sm:rounded-[14px] sm:px-5 lg:h-11 lg:px-4 xl:h-14 xl:rounded-[16px] xl:px-6">
         <span data-logo class="inline-block h-[16px] w-[16px] text-white sm:h-[18px] sm:w-[18px] lg:h-[17px] lg:w-[17px] xl:h-[21px] xl:w-[21px]"></span>
         <span class="text-[13px] font-medium tracking-tight text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Web Experiences</span>
       </a>
@@ -281,9 +281,9 @@
           <span class="b1"></span><span class="b2"></span><span class="b3"></span>
         </button>
         <div class="menu-links flex items-center gap-5 whitespace-nowrap pr-5">
-          <a href="index.html" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Home</a>
-          <a href="index.html#sec2" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Explore</a>
-          <a href="index.html#contact" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Contact</a>
+          <a href="/" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Home</a>
+          <a href="/#sec2" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Explore</a>
+          <a href="/#contact" class="text-[13px] font-normal text-white/85 hover:text-white sm:text-[16px] lg:text-[14px] xl:text-[18px]">Contact</a>
         </div>
       </div>
     </div>
@@ -292,7 +292,7 @@
       <span class="text-[13px] font-medium sm:text-[15px] lg:text-[14px] xl:text-[17px]">Download CV</span>
     </button>
     <!-- back to the Explore section — standard top-left back affordance -->
-    <a href="index.html#sec2-end" class="back-chip" aria-label="Back to Explore"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+    <a href="/#sec2-end" class="back-chip" aria-label="Back to Explore"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
   </nav>
 
   <canvas id="dotField"></canvas>
@@ -517,7 +517,7 @@
     hamBtn.classList.toggle("open", menuOpen);
     menuPill.classList.toggle("open", menuOpen);
   });
-  document.getElementById("dlBtn").addEventListener("click", function () { window.location.href = "index.html"; });
+  document.getElementById("dlBtn").addEventListener("click", function () { window.location.href = "/"; });
 
   /* ---- footer strip: reveal once the nav is on, then a live local-time clock ---- */
   (function () {

@@ -424,6 +424,11 @@
     --wg-bright: #47c07e;
   }
   #webexpCards.on { opacity: 1; }
+  /* inert until it is actually on stage — its cards are transparent but still
+     laid out, so without this they sit above the section-2 buttons (z-index 40
+     vs 20) and swallow their hover */
+  #webexpCards:not(.on) .we-grid,
+  #webexpCards:not(.on) .we-navbtn { pointer-events: none; }
   /* soft green ambient + cursor-tracked light */
   .we-amb {
     position: absolute; inset: 0; pointer-events: none; opacity: 0;
@@ -929,7 +934,7 @@
            auto-fit already shrinks them to ~90vw either way. -->
       <div id="sec2buttons" class="sec2-text absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col gap-6 md:flex-row md:gap-12 opacity-0" style="will-change: opacity, transform;">
           <!-- LEFT button: CINEMATIC ADS -->
-          <a href="cinematic_ads_page.html" class="nbtn left" aria-label="Cinematic ads">
+          <a href="/cinematic-ads" class="nbtn left" aria-label="Cinematic ads">
           <span class="nbtn-flash"></span>
           <span class="nbtn-flow"></span>
           <span class="nbtn-bolt t"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8"/></svg></span>
@@ -948,7 +953,7 @@
         </a>
 
         <!-- RIGHT button: WEB EXPERIENCES -->
-        <a href="web_experiences_page.html" class="nbtn" aria-label="Web experiences">
+        <a href="/web-experiences" class="nbtn" aria-label="Web experiences">
           <span class="nbtn-flash"></span>
           <span class="nbtn-flow"></span>
           <span class="nbtn-bolt t"><svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M0,9 L17,4 L29,11 L51,3 L68,10 L91,3 L109,12 L133,4 L151,10 L175,3 L200,8"/></svg></span>
