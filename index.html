@@ -13,6 +13,7 @@
 
 <script type="module" src="site-data.js"></script>
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="frame-scrub.js"></script>
 <script>
   // Returning to this page within the same tab (back from a sub-page):
   // kill the loader before first paint so it never flashes.
@@ -814,8 +815,14 @@
 
   <!-- ================= SECTION 1: HERO ================= -->
   <section id="top" class="relative h-screen h-[100dvh] w-full overflow-hidden">
+    <!-- desktop scrub path: a canvas + WEBP frame sequence (see frame-scrub.js).
+         The <video> below stays as the mobile autoplay path and the fallback if
+         the sequence can't load. The canvas paints over it once ready. -->
     <video id="heroVideo" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
       src="lion_hero_scrub.mp4"></video>
+    <canvas id="heroCanvas" aria-hidden="true"
+      class="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      style="opacity:0; transition:opacity .4s ease;"></canvas>
     <div class="dot-grid pointer-events-none absolute inset-0 z-[5]"></div>
     <!-- watermark -->
     <div class="pointer-events-none absolute inset-0 z-[6] flex items-center justify-center" style="transform: translateY(50px);">
@@ -850,6 +857,9 @@
    <div class="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden">
     <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="none"
       data-src="lion_page2_new_hd.mp4"></video>
+    <canvas id="sec2Canvas2" aria-hidden="true"
+      class="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      style="opacity:0; transition:opacity .4s ease;"></canvas>
     <!-- MOBILE scrub fix: mobile decoders refuse to render frames for a
          video whose currentTime is parked by rapid programmatic seeks while
          display:none/opacity tricks or stacked clips compete for the
@@ -2141,10 +2151,17 @@
       render();
     }, 80);
 
-    // dismissal: hero ready to scrub (enough data + metadata) — video only
+    // dismissal: hero ready to scrub. On desktop the frame sequence is the
+    // scrub surface — 15% of it (early frames load first) plus the video's
+    // metadata is enough. Mobile still waits on the video like before.
     function heroReady() {
       if (!hero || done) return;
       try {
+        if (window.__frameScrubHero && heroMobile !== true) {
+          if (hero.readyState >= 2 && hero.duration > 0 &&
+              window.__frameScrubHero() >= 0.15) dismiss();
+          return;
+        }
         if (hero.readyState >= 2 && hero.duration > 0) {
           var end = hero.buffered.length ? hero.buffered.end(hero.buffered.length - 1) : 0;
           if (end / hero.duration > 0.25 || hero.readyState >= 4) dismiss();
@@ -2168,9 +2185,12 @@
   // whole pipe to itself while the loader is on screen. Two 15 MB+ films
   // fetching at once made the hero's buffered fraction crawl, which kept the
   // loader up (and left the scrub starved) on a cold cache.
+  // With the desktop canvas/sequence path the <video> elements are only the
+  // mobile path — no src assignment needed when FrameScrub owns the section.
   (function () {
     var v = document.getElementById("sec2video");
     if (!v || !v.dataset.src || v.getAttribute("src")) return;
+    if (window.__frameScrubSec2) return;             // canvas path owns section 2
     var started = false;
     function start() {
       if (started) return;
@@ -2221,14 +2241,21 @@
   // Mobile (no hover/mouse): the film plays through on its own. It restarts
   // every time the hero section is RE-ENTERED (scrolled back into view), but
   // never restarts while the user stays within the section — so finishing the
-  // film doesn't loop over their head. Desktop keeps the mouse-scrub.
+  // film doesn't loop over their head.
+  // DESKTOP: the mouse-scrub now drives a WEBP frame sequence on a canvas
+  // (frames/hero/, 24 fps) instead of seeking the <video>. Frame-exact,
+  // decoder-independent, no coalesced-seek stalls. The <video> stays as the
+  // mobile playback path; on desktop it is paused and the canvas covers it.
   var hero = document.getElementById("heroVideo");
+  var heroCanvas = document.getElementById("heroCanvas");
   var target = 0, smooth = 0, seeking = false, lastX = null, dur = 0;
   var heroActive = true;    // true only while the hero section is on screen
   var SENS = 0.8;    // scrub sensitivity
   var EASE = 0.06;   // lower = smoother / softer follow
   // mobile = no fine pointer (touch) — coarse pointers get autoplay, not scrub
   var heroMobile = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+  // desktop canvas path (null until the sequence's first frame is drawn)
+  var heroSeq = null, heroSeqReady = false;
   // iOS Safari needs a different render-refresh strategy in the sec2 scrub
   // (seeks succeed but a paused element can stop pushing frames to screen).
   var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
@@ -2250,6 +2277,27 @@
   });
   hero.addEventListener("seeked", function () { seeking = false; });
 
+  // mount the desktop frame-sequence scrub (skipped on touch devices — they
+  // use the video's native playback and the sequence would be dead weight)
+  if (!heroMobile && window.FrameScrub && heroCanvas) {
+    heroSeq = FrameScrub({
+      canvas: heroCanvas,
+      name: "hero", frames: 240, fps: 24,
+      width: 1280, height: 720,
+      onprogress: function (r) {
+        // expose the sequence's load fraction to the loader gate
+        window.__frameScrubHero = function () { return r; };
+        // treat 60% of the sequence as fully usable (first frames load first)
+        if (!heroSeqReady && r >= 0.6) { heroSeqReady = true; }
+      }
+    });
+    heroSeq.ready.then(function () {
+      heroSeqReady = true;
+      heroCanvas.style.opacity = "1";
+      if (heroActive) { hero.pause(); }
+    });
+  }
+
   if (heroMobile) {
     // MOBILE: play through each time the section is brought into view;
     // no restart while it stays on screen (played-out film stays put).
@@ -2269,7 +2317,7 @@
     }, { threshold: [0, 0.5, 1] });
     heroMobileIO.observe(document.getElementById("top"));
   } else {
-  // scrub only responds while hero is visible; leaving it lets the video play to the end
+  // scrub only responds while hero is visible; leaving it lets the film play out
   var heroIO = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
       var vis = en.intersectionRatio > 0.5;
@@ -2277,27 +2325,33 @@
       heroActive = vis;
       if (heroActive) {
         hero.pause();
-        smooth = target = hero.currentTime; // resume scrub from current frame
+        smooth = target = heroSeqReady ? smooth : hero.currentTime; // resume scrub from current frame
         lastX = null;
       } else {
-        hero.play().catch(function () {}); // play through to the end
+        // off-screen: the video may play through (legacy path); the canvas
+        // just keeps showing its last frame until the hero is visible again
+        if (!heroSeqReady) hero.play().catch(function () {});
       }
     });
   }, { threshold: [0, 0.5, 1] });
   heroIO.observe(document.getElementById("top"));
 
   window.addEventListener("mousemove", function (e) {
-    if (!dur || !heroActive) return;   // ignore mouse when not scrubbing
+    if (!dur && !heroSeqReady) return;   // ignore mouse until a path is ready
+    if (!heroActive) return;
     // absolute mapping: cursor X across the viewport maps directly to the timeline
     // left edge = start (0), right edge = end (dur)
-    target = Math.max(0, Math.min(dur, (e.clientX / window.innerWidth) * dur));
+    var total = heroSeqReady ? heroSeq.duration : dur;
+    target = Math.max(0, Math.min(total, (e.clientX / window.innerWidth) * total));
   });
   }
   // eased follow loop: displayed time glides toward target instead of snapping
   function scrubFrame() {
-    if (dur && heroActive && !heroMobile) {   // mobile plays natively — no scrub loop
+    if (heroActive && !heroMobile) {   // mobile plays natively — no scrub loop
       smooth += (target - smooth) * EASE;
-      if (!seeking && Math.abs(smooth - hero.currentTime) > 0.008) {
+      if (heroSeqReady) {
+        heroSeq.goTo(smooth);          // canvas: frame-exact paint, no seeking
+      } else if (dur && !seeking && Math.abs(smooth - hero.currentTime) > 0.008) {
         seeking = true;
         try { hero.currentTime = Math.max(0, Math.min(dur, smooth)); } catch (e) { seeking = false; }
       }
@@ -2359,14 +2413,38 @@
   sec2vid.addEventListener("canplay", primeSec2);
   sec2vid.addEventListener("seeked", function () { v2seeking = false; });
 
+  // ===== DESKTOP/ALL: WEBP frame sequence on canvas ==========================
+  // The iOS blob-canvas below proved the robust approach; the desktop now uses
+  // the same idea but cleaner — a pre-rendered WEBP frame sequence (frames/
+  // page2/, 24 fps) painted onto a canvas. No decoder, no coalesced seeks, no
+  // iOS compositor quirks: identical behaviour on every platform. The <video>
+  // stays underneath as fallback until the sequence's first frame draws.
+  var v2seq = null, v2seqReady = false;
+  var sec2Canvas = document.getElementById("sec2Canvas2");
+  if (window.FrameScrub && sec2Canvas) {
+    v2seq = FrameScrub({
+      canvas: sec2Canvas,
+      name: "page2", frames: 240, fps: 24,
+      width: 1920, height: 1006,
+      onprogress: function (r) {
+        if (!v2seqReady && r >= 0.5) v2seqReady = true;   // scrub-capable
+      }
+    });
+    v2seq.ready.then(function () {
+      v2seqReady = true;
+      sec2Canvas.style.opacity = "1";
+      sec2vid.pause();                                    // canvas owns the section now
+    });
+    // duration is known immediately from the sequence
+    v2dur = v2seq.duration;
+    v2start = Math.min(0.5, v2dur);
+    v2smooth = v2start;
+    window.__frameScrubSec2 = true;
+  }
   // ===== iOS SAFARI: canvas/blob scrub fallback ==============================
-  // iOS won't render frames for a paused element driven purely by seeks —
-  // currentTime advances, no errors, but the compositor keeps the last frame
-  // (the play()/pause() kick alone didn't fully fix it on-device). So on iOS
-  // we take the bulletproof route: fetch the MP4 as a Blob, draw each frame
-  // into a <canvas> that replaces the <video>, and scrub the canvas. Canvas
-  // drawImage from a blob: video renders reliably on iOS (it owns a real
-  // playing decoder while we nudge currentTime between draws).
+  // Legacy path for iOS if the sequence somehow fails: fetch the MP4 as a
+  // Blob, draw each frame into a <canvas> that replaces the <video>, and
+  // scrub the canvas. Kept as belt-and-suspenders under the sequence.
   function startSec2Blob() {
     if (v2blobStarted) return;
     v2blobStarted = true;
@@ -2422,7 +2500,8 @@
       }, { once: true });
     }).catch(function () { /* network hiccup: keep the native path */ });
   }
-  if (isIOS) startSec2Blob();
+  // iOS only needs the legacy blob path when the sequence didn't take over
+  if (isIOS && !v2seqReady) startSec2Blob();
   // smoothstep easing — soft acceleration/deceleration for a cinematic feel
   function ss(a, b, x) { var t = (x - a) / (b - a); t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
   // apply opacity + vertical drift + blur to a text layer
@@ -2444,40 +2523,38 @@
     var p = Math.min(1, praw / HOLD_END);          // animation progress finishes before release
     // scroll-scrub: pin progress maps to the video timeline (full video: 0.5s -> end)
     // softer follow (0.08) = slower, silkier cinematic glide.
-    // MOBILE NOTE: the v2seeking flag relied on a `seeked` event firing for every
-    // programmatic seek. Mobile Chrome/Android coalesce superseded seeks and may
-    // never fire `seeked`, leaving the flag stuck true → the scrub dies after its
-    // first seek (exactly "plays on desktop, frozen on phones"). The flag now
-    // self-clears: a seek that hasn't completed within 250ms is treated as done,
-    // and the guard only blocks a seek when one is genuinely still in flight.
+    // NOTE: the old stalled-seek watchdog (mobile Chrome coalescing seeks) only
+    // matters on the legacy video path; the canvas sequence never stalls.
     if (v2dur && !webexpActive) {
       var v2target = v2start + p * (v2dur - v2start);
       v2smooth += (v2target - v2smooth) * 0.08;
-      if (v2seeking && performance.now() - v2seekAt > 250) v2seeking = false;   // stalled seek watchdog
-      if (!v2seeking && Math.abs(v2smooth - sec2vid.currentTime) > 0.008) {
-        v2seeking = true; v2seekAt = performance.now();
-        try { sec2vid.currentTime = Math.max(0, Math.min(v2dur, v2smooth)); } catch (e) { v2seeking = false; }
-      }
-      // iOS SAFARI: a paused <video> whose currentTime is driven purely by
-      // seeks stops refreshing its on-screen texture — seeks "succeed"
-      // (currentTime updates, no error) but the element keeps showing a
-      // stale/blank frame. Kicking play() for one tick whenever time hasn't
-      // moved for a while forces VideoToolbox to push a fresh frame into
-      // the compositor. Desktop never hits this: its currentTime always
-      // tracks the scrub. isIOS is set just below the hero-scrub block.
-      // (The canvas/blob swap above makes this redundant but harmless —
-      // canvas covers the video element while v2blobSwap is true.)
-      if (isIOS && !v2blobSwap && !v2seeking && sec2vid.paused) {
-        if (v2iosStall === undefined) v2iosStall = 0;
-        v2iosStall = (Math.abs(sec2vid.currentTime - v2iosLastT) < 0.001) ? v2iosStall + 1 : 0;
-        v2iosLastT = sec2vid.currentTime;
-        if (v2iosStall > 10) {           // ~10 frames with no time movement
-          v2iosStall = 0;
-          try {
-            var v2pr = sec2vid.play();
-            if (v2pr && v2pr.then) v2pr.then(function () { sec2vid.pause(); }).catch(function () {});
-            else sec2vid.pause();
-          } catch (e) {}
+      if (v2seqReady) {
+        v2seq.goTo(v2smooth);            // canvas: frame-exact paint, no seeking
+      } else {
+        if (v2seeking && performance.now() - v2seekAt > 250) v2seeking = false;   // stalled seek watchdog
+        if (!v2seeking && Math.abs(v2smooth - sec2vid.currentTime) > 0.008) {
+          v2seeking = true; v2seekAt = performance.now();
+          try { sec2vid.currentTime = Math.max(0, Math.min(v2dur, v2smooth)); } catch (e) { v2seeking = false; }
+        }
+        // iOS SAFARI: a paused <video> whose currentTime is driven purely by
+        // seeks stops refreshing its on-screen texture — seeks "succeed"
+        // (currentTime updates, no error) but the element keeps showing a
+        // stale/blank frame. Kicking play() for one tick whenever time hasn't
+        // moved for a while forces VideoToolbox to push a fresh frame into
+        // the compositor. (The sequence path above makes this unreachable in
+        // practice; kept for the legacy fallback.)
+        if (isIOS && !v2blobSwap && !v2seeking && sec2vid.paused) {
+          if (v2iosStall === undefined) v2iosStall = 0;
+          v2iosStall = (Math.abs(sec2vid.currentTime - v2iosLastT) < 0.001) ? v2iosStall + 1 : 0;
+          v2iosLastT = sec2vid.currentTime;
+          if (v2iosStall > 10) {           // ~10 frames with no time movement
+            v2iosStall = 0;
+            try {
+              var v2pr = sec2vid.play();
+              if (v2pr && v2pr.then) v2pr.then(function () { sec2vid.pause(); }).catch(function () {});
+              else sec2vid.pause();
+            } catch (e) {}
+          }
         }
       }
     }
@@ -2736,14 +2813,17 @@
     if (sec2el && !sec2el.dataset.baseH) sec2el.dataset.baseH = sec2el.style.height || SEC2_BASE_H;
     if (sec2el) sec2el.style.height = "calc(" + sec2el.dataset.baseH + " + " + WEBEXP_EXTRA_VH + "vh)";
     // Phase 1: soft camera push-in on lion's frozen last frame
-    sec2vid.style.transition = "transform " + WEBEXP_ZOOM_MS + "ms " + WEBEXP_EASE;
-    sec2vid.style.transformOrigin = "center center";
+    // (on the sequence path the canvas owns the picture — zoom it too)
+    var zoomEl = v2seqReady ? sec2Canvas : sec2vid;
+    zoomEl.style.transition = "transform " + WEBEXP_ZOOM_MS + "ms " + WEBEXP_EASE;
+    zoomEl.style.transformOrigin = "center center";
     // force the transition to run from scale(1)
-    sec2vid.style.transform = "scale(1)";
-    void sec2vid.offsetWidth;                  // reflow so the next change animates
-    sec2vid.style.transform = "scale(" + WEBEXP_ZOOM + ")";
+    zoomEl.style.transform = "scale(1)";
+    void zoomEl.offsetWidth;                   // reflow so the next change animates
+    zoomEl.style.transform = "scale(" + WEBEXP_ZOOM + ")";
     // keep the lion frame parked on its final frame during the push-in (its scrub is off now)
-    try { sec2vid.currentTime = v2dur || v2start; } catch (e) {}
+    if (v2seqReady) v2seq.goTo(v2dur || v2start);
+    else { try { sec2vid.currentTime = v2dur || v2start; } catch (e) {} }
     // Phase 2: reveal the web clip (already matched); its timeline is owned by scroll
     setTimeout(function () {
       webexpVideo.style.opacity = "1";
@@ -2764,8 +2844,9 @@
     var vh = window.innerHeight, total0 = sec2.offsetHeight - vh;
     window.scrollTo(0, Math.min(window.scrollY, sec2.offsetTop + total0));
     // ease the camera back out to lion's normal framing
-    sec2vid.style.transition = "transform " + WEBEXP_ZOOM_MS + "ms " + WEBEXP_EASE;
-    sec2vid.style.transform = "scale(1)";
+    var zoomEl = v2seqReady ? sec2Canvas : sec2vid;
+    zoomEl.style.transition = "transform " + WEBEXP_ZOOM_MS + "ms " + WEBEXP_EASE;
+    zoomEl.style.transform = "scale(1)";
     webexpBack.style.opacity = "0";
     webexpBack.style.pointerEvents = "none";
   }
