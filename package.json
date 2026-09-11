@@ -1,0 +1,12 @@
+{
+  "name": "portfolio",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Static portfolio site (SynapseX). Tailwind is compiled to tailwind.css at the repo root; no framework build.",
+  "scripts": {
+    "build:css": "tailwindcss -i src/tailwind.input.css -o tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}
