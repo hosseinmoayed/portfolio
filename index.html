@@ -889,8 +889,8 @@
   <!-- ================= SECTION 2: CINEMATIC TEXT ================= -->
   <section id="sec2" class="relative w-full" style="height:560vh;">
    <div class="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden">
-    <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="auto"
-      src="lion_page2_new_hd.mp4"></video>
+    <video id="sec2video" class="absolute inset-0 h-full w-full object-cover" muted playsinline preload="none"
+      data-src="lion_page2_new_hd.mp4"></video>
     <!-- MOBILE scrub fix: mobile decoders refuse to render frames for a
          video whose currentTime is parked by rapid programmatic seeks while
          display:none/opacity tricks or stacked clips compete for the
@@ -2188,10 +2188,14 @@
       try {
         if (hero.readyState >= 2 && hero.duration > 0) {
           var end = hero.buffered.length ? hero.buffered.end(hero.buffered.length - 1) : 0;
-          if (end / hero.duration > 0.25 || hero.readyState >= 4) dismiss();
+          // The scrub maps cursor X across the whole timeline, so a partially
+          // buffered film means right-edge scrubs land on un-fetched frames.
+          if (end / hero.duration > 0.6) dismiss();
         }
       } catch (e) {}
     }
+    // hard cap: never hold the loader past this, however slow the network is
+    setTimeout(dismiss, 8000);
     if (hero) {
       hero.addEventListener("loadeddata", heroReady);
       hero.addEventListener("progress", heroReady);
@@ -2202,6 +2206,36 @@
     } else {
       dismiss();                                         // no hero film — nothing to wait for
     }
+  })();
+
+  // ---------- Section-2 film: deferred load ----------
+  // sec2video carries preload="none" and a data-src, because two 15 MB+ films
+  // downloading at once on a cold cache starved the hero (the loader sat on a
+  // half-buffered hero while both competed for the pipe). Start it only once
+  // the hero film is essentially complete, with a time cap so a slow network
+  // can't leave section 2 blank.
+  (function () {
+    var v = document.getElementById("sec2video");
+    if (!v || !v.dataset.src || v.getAttribute("src")) return;
+    var started = false;
+    function start() {
+      if (started) return;
+      started = true;
+      v.setAttribute("src", v.dataset.src);
+      v.load();
+    }
+    var heroV = document.getElementById("heroVideo");
+    if (!heroV) { start(); return; }
+    var iv = setInterval(function () {
+      try {
+        if (heroV.readyState >= 4 ||
+            (heroV.duration > 0 && heroV.buffered.length &&
+             heroV.buffered.end(heroV.buffered.length - 1) / heroV.duration > 0.9)) {
+          clearInterval(iv); start();
+        }
+      } catch (e) {}
+    }, 400);
+    setTimeout(function () { clearInterval(iv); start(); }, 12000);
   })();
 
   // ---------- Navbar menu toggle ----------
@@ -2234,7 +2268,7 @@
   // never restarts while the user stays within the section — so finishing the
   // film doesn't loop over their head. Desktop keeps the mouse-scrub.
   var hero = document.getElementById("heroVideo");
-  var target = 0, smooth = 0, seeking = false, lastX = null, dur = 0;
+  var target = 0, smooth = 0, seeking = false, lastX = null, dur = 0, seekAt = 0;
   var heroActive = true;    // true only while the hero section is on screen
   var SENS = 0.8;    // scrub sensitivity
   var EASE = 0.06;   // lower = smoother / softer follow
@@ -2308,8 +2342,9 @@
   function scrubFrame() {
     if (dur && heroActive && !heroMobile) {   // mobile plays natively — no scrub loop
       smooth += (target - smooth) * EASE;
+      if (seeking && performance.now() - seekAt > 250) seeking = false;
       if (!seeking && Math.abs(smooth - hero.currentTime) > 0.008) {
-        seeking = true;
+        seeking = true; seekAt = performance.now();
         try { hero.currentTime = Math.max(0, Math.min(dur, smooth)); } catch (e) { seeking = false; }
       }
     }
