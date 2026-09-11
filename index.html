@@ -2174,7 +2174,13 @@
       hero.addEventListener("canplay", heroReady);
       hero.addEventListener("error", dismiss);           // broken film — release the screen
       measure(); heroReady();                            // catch an already-buffered hero
-      setTimeout(heroReady, 400);
+      // Poll: on the desktop sequence path the dismissal condition (15% of
+      // frames loaded) only becomes true AFTER these video events have fired,
+      // so the events alone never re-check it. A short interval closes that
+      // gap; the loader is dismissed exactly once regardless.
+      var readyIv = setInterval(heroReady, 300);
+      // and stop polling once the loader is gone
+      (function stopWhenDone() { if (done) { clearInterval(readyIv); return; } setTimeout(stopWhenDone, 500); })();
     } else {
       dismiss();                                         // no hero film — nothing to wait for
     }
