@@ -624,6 +624,18 @@
     var stage = sitesBuilt ? scroll.querySelector(".site-stage") : null;   // reuse on rebuild
     if (!stage) { stage = document.createElement("div"); stage.className = "site-stage"; }
     stage.innerHTML = "";
+    function fitFrame(vid) {                      // shape the frame so the clip fills its screen uncropped
+      if (!vid || !vid.videoWidth || !vid.videoHeight) return;
+      var fr = vid.closest(".nframe");
+      if (!fr) return;
+      var r = vid.videoWidth / vid.videoHeight;
+      if (r < 1) r = 1; else if (r > 2.4) r = 2.4;
+      // .nframe-screen sits 14px inside the frame on every side, so sizing the
+      // frame to r would still crop — solve for the frame height that makes the
+      // SCREEN's ratio equal r.
+      var w = fr.offsetWidth, inset = 28;
+      fr.style.aspectRatio = w ? w / ((w - inset) / r + inset) : r;
+    }
     list.forEach(function (s, i) {
       var n = ("0" + (i + 1)).slice(-2);
       var sec = document.createElement("section");
@@ -643,11 +655,34 @@
           '</div>' +
         '</div>';
       stage.appendChild(sec);
+      var sv = sec.querySelector("video");
+      if (sv) {
+        sv.addEventListener("loadedmetadata", function () { fitFrame(sv); }, { once: true });
+        fitFrame(sv);
+      }
     });
+    // frame width is responsive while the screen inset is fixed px, so refit on resize
+    if (!stage.dataset.fitWired) {
+      stage.dataset.fitWired = "1";
+      var fitTimer;
+      window.addEventListener("resize", function () {
+        clearTimeout(fitTimer);
+        fitTimer = setTimeout(function () {
+          [].slice.call(stage.querySelectorAll("video")).forEach(fitFrame);
+        }, 150);
+      });
+    }
     // capture before sitesBuilt flips — the scroll-listener block below must
     // bind on the first build only
     var firstBuild = !sitesBuilt;
-    if (firstBuild) scroll.appendChild(stage);
+    if (firstBuild) {
+      scroll.appendChild(stage);
+      // the frame is a fixed-ratio box with a fixed 14px bezel, so any width
+      // change alters the screen's ratio — re-fit (mobile rotation, resize)
+      window.addEventListener("resize", function () {
+        [].slice.call(stage.querySelectorAll(".nframe video")).forEach(fitFrame);
+      });
+    }
     sitesBuilt = true;
     var sections = [].slice.call(stage.querySelectorAll(".site"));
     var current = -1;
@@ -838,7 +873,10 @@
         clearTimeout(timer);
         zStage.removeEventListener("transitionend", finish);
         frame.classList.remove("zoomed");
-        frame.removeAttribute("style");              // resting state — identical to what's on screen
+        // removeAttribute wipes the inline aspect-ratio fitFrame set — keep it
+        var ar = frame.style.aspectRatio;
+        frame.removeAttribute("style");
+        if (ar) frame.style.aspectRatio = ar;
         moveFrame(frame, slot);
         slot.style.width = ""; slot.style.height = "";
         zStage.removeAttribute("style");
