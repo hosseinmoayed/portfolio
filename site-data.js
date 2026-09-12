@@ -5,9 +5,15 @@
      <script type="module" src="site-data.js"></script>
 
    Exposes:
-     window.SITE_DATA.ready   → Promise<{content, templates, teasers, tags, source}>
+     window.SITE_DATA.ready   → Promise<{content, templates, teasers, tags}>
      window.SITE_DATA.source  → "pending" | "firestore" | "fallback"
      window.SITE_DATA.defaults → the embedded defaults (used by the admin Seed button)
+
+   Content is fetched from /api/data — a same-origin function that reads
+   Firestore server-side. The Firebase SDK is deliberately NOT loaded in the
+   browser: gstatic.com and firestore.googleapis.com are unreachable on some
+   networks (notably plain Iranian IPs), which used to leave those visitors
+   stuck on these embedded defaults forever.
 
    Contract: `ready` ALWAYS resolves (never rejects), within
    DATA_TIMEOUT_MS at the latest. On an empty collection the
@@ -92,63 +98,35 @@ const TAGS_DEFAULT = ["Landing Page", "Creative Studio", "Commerce", "Portfolio"
 
 const DATA_TIMEOUT_MS = 2000;
 
-async function loadFromFirestore() {
-  // Dynamic imports inside try/catch: if gstatic is unreachable the whole
-  // module still loads and only this function fails → fallback path.
-  const { FIREBASE_CONFIG } = await import("./firebase-config.js");
-  if (!FIREBASE_CONFIG.projectId || FIREBASE_CONFIG.projectId.startsWith("PASTE_")) {
-    throw new Error("firebase-config.js not filled in yet");
-  }
-  const V = (await import("./firebase-config.js")).FIREBASE_SDK_VERSION || "10.12.2";
+// No orderBy in the query (Firestore silently drops docs missing the field) —
+// fetch everything, filter, sort client-side.
+const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
 
-  const [{ initializeApp }, fs] = await Promise.all([
-    import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
-    import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
-  ]);
+function normalize(raw) {
+  const d = raw || {};
+  return {
+    content: { ...SITE_CONTENT_DEFAULTS, ...(d.content || {}) },
 
-  const app = initializeApp(FIREBASE_CONFIG);
-  const db = fs.getFirestore(app);
+    templates: (d.templates || [])
+      .filter(t => t.published !== false)
+      .sort(byOrder)
+      .map(t => ({
+        tag: t.tag || "", name: t.name || "",
+        src: t.src || "", desc: t.desc || "",
+        link: t.link || "/",
+        page: t.page || ""          // "web" | "cinematic" | "" (= both pages)
+      })),
 
-  const [contentSnap, templatesSnap, teasersSnap, tagsSnap] = await Promise.all([
-    fs.getDoc(fs.doc(db, "siteContent", "main")),
-    fs.getDocs(fs.collection(db, "templates")),
-    fs.getDocs(fs.collection(db, "teasers")),
-    fs.getDocs(fs.collection(db, "tags"))
-  ]);
+    teasers: (d.teasers || [])
+      .filter(t => t.published !== false)
+      .sort(byOrder)
+      .map(t => ({
+        h: t.title || "", p: t.desc || "",
+        src: t.mediaUrl || "", type: t.type || "video"
+      })),
 
-  // No orderBy (Firestore silently drops docs missing the field) —
-  // fetch everything, filter, sort client-side.
-  const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
-
-  const content = { ...SITE_CONTENT_DEFAULTS };
-  if (contentSnap.exists()) Object.assign(content, contentSnap.data());
-
-  const templates = templatesSnap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(d => d.published !== false)
-    .sort(byOrder)
-    .map(d => ({
-      tag: d.tag || "", name: d.name || "",
-      src: d.src || "", desc: d.desc || "",
-      link: d.link || "/",
-      page: d.page || ""          // "web" | "cinematic" | "" (= both pages)
-    }));
-
-  const teasers = teasersSnap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(d => d.published !== false)
-    .sort(byOrder)
-    .map(d => ({
-      h: d.title || "", p: d.desc || "",
-      src: d.mediaUrl || "", type: d.type || "video"
-    }));
-
-  const tags = tagsSnap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort(byOrder)
-    .map(d => d.name || "");
-
-  return { content, templates, teasers, tags };
+    tags: (d.tags || []).sort(byOrder).map(t => t.name || "")
+  };
 }
 
 function withDefaults(d) {
@@ -162,9 +140,17 @@ function withDefaults(d) {
 
 const defaults = withDefaults(null);
 
+async function loadFromApi() {
+  const r = await fetch("/api/data", { headers: { accept: "application/json" } });
+  if (!r.ok) throw new Error("api " + r.status);
+  const raw = await r.json();
+  if (raw && raw.error) throw new Error(raw.error);
+  return normalize(raw);
+}
+
 async function resolve() {
   try {
-    const d = await loadFromFirestore();
+    const d = await loadFromApi();
     window.SITE_DATA.source = "firestore";
     return withDefaults(d);
   } catch (err) {
@@ -176,17 +162,17 @@ async function resolve() {
 
 window.SITE_DATA = { ready: null, live: null, source: "pending", defaults };
 
-/* The timeout only races the FIRST paint: if Firestore is slow (a cold SDK
-   import can easily outlast it) `ready` hands out the embedded defaults so the
-   page never blocks. `live` keeps waiting and resolves with the real Firestore
-   data whenever it lands, so consumers can re-render from it. Both always
-   resolve and never reject. */
+/* The timeout only races the FIRST paint: if the API is slow (a cold
+   serverless start can outlast it) `ready` hands out the embedded defaults so
+   the page never blocks. `live` keeps waiting and resolves with the real data
+   whenever it lands, so consumers can re-render from it. Both always resolve
+   and never reject. */
 const live = resolve();
 const ready = Promise.race([
   live,
   new Promise(res => setTimeout(() => {
-    // never clobber a real Firestore result — the loser of this race still
-    // runs its callback, so guard the write
+    // never clobber a real result — the loser of this race still runs its
+    // callback, so guard the write
     if (window.SITE_DATA.source !== "firestore") window.SITE_DATA.source = "fallback";
     res(defaults);
   }, DATA_TIMEOUT_MS))

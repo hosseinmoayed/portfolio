@@ -17,3 +17,5 @@ __pycache__/
 
 .vercel
 .env*
+service-account*.json
+*firebase-adminsdk*.json

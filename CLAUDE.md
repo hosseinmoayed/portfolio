@@ -38,7 +38,8 @@ Then open http://localhost:5599/ (main), /web-experiences, /cinematic-ads, or /a
 
 ## CMS Architecture
 
-- **Fallback-first contract**: `window.SITE_DATA.ready` (in site-data.js) ALWAYS resolves within 2s. Firestore data wins; empty collection/timeout/offline → embedded defaults. Pages also guard `window.SITE_DATA &&` so a missing module never breaks them.
+- **Fallback-first contract**: `window.SITE_DATA.ready` (in site-data.js) ALWAYS resolves within 2s. Live data wins; empty collection/timeout/offline → embedded defaults. Pages also guard `window.SITE_DATA &&` so a missing module never breaks them.
+- **Data path**: the browser does NOT load the Firebase SDK. `site-data.js` fetches same-origin `/api/data` ([api/data.mjs](api/data.mjs) on Vercel, mirrored in `serve.py` locally), which reads Firestore server-side with `FIREBASE_SERVICE_ACCOUNT` (RS256 JWT → OAuth token). Why: `gstatic.com` / `firestore.googleapis.com` are unreachable from Iranian IPs, and the public web API key is referrer-restricted so it 403s from a server — so without this proxy those visitors were stuck on the embedded defaults forever. Admin stays on the SDK and needs a VPN.
 - **Collections** (Firestore): `siteContent/main` (flat text keys), `templates` (showcase cards → SITES), `teasers` (WE cards → WE_DATA), `tags`. All sorted client-side by `order`, filtered by `published !== false`.
 - **Text wiring**: public pages use `data-key` attributes (`hero_name1`, `sec2_text1`, `contact_github_label`, …). `applySiteContent()` writes Firestore values into `data-text`/textContent **before** the entrance scramble runs (`startEntrance()` is gated on `SITE_DATA.ready` with a 3.2s safety timer).
 - **Card builders are idempotent**: sub-page `buildSites(list)` reuses the existing `.site-stage`, binds scroll/zoom listeners once (`sitesBuilt`/`zoomWired` flags, `sitesUpdate` indirection). synapsex `buildWePages()` guards with `weBuilt`.
@@ -60,7 +61,7 @@ Then open http://localhost:5599/ (main), /web-experiences, /cinematic-ads, or /a
 | Adjust hero entrance timing | `startEntrance()` / safety timer in synapsex.html inline script |
 | Video encode for scrubbing | `ffmpeg -i in.mp4 -an -c:v libx264 -preset slow -crf 15 -g 1 -keyint_min 1 -sc_threshold 0 -pix_fmt yuv420p -movflags +faststart out.mp4` |
 | Update security rules | Edit [firestore.rules](firestore.rules), paste into Firebase Console → Rules → Publish |
-| Deployment | Pure static — push to GitHub, import on Vercel/Netlify (no env vars), then add the production domain in Firebase → Authentication → Settings → Authorized domains |
+| Deployment | Push to GitHub → Vercel. Set `FIREBASE_SERVICE_ACCOUNT` (Firebase Console → Project settings → Service accounts → Generate new private key; paste the JSON, raw or base64) in Vercel → Settings → Environment Variables. Then add the production domain in Firebase → Authentication → Settings → Authorized domains |
 
 ## No Build/Lint/Test
 
