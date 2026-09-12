@@ -310,7 +310,7 @@ function renderTemplates() {
       ${mediaThumb(t.src, (t.src || "").match(/\.(mp4|webm|mov)(\?|$)/i))}
       <div class="grow">
         <div class="r-title">${escapeHtml(t.name)} <span class="badge ${t.published !== false ? "on" : "off"}">${t.published !== false ? "live" : "hidden"}</span></div>
-        <div class="r-sub">${escapeHtml(t.tag)} · ${t.page === "web" ? "Web Experiences" : t.page === "cinematic" ? "Cinematic Ads" : "Both pages"} · order ${Number(t.order ?? 0)} · ${escapeHtml(t.src)}</div>
+        <div class="r-sub">${escapeHtml(t.tag)} · order ${Number(t.order ?? 0)} · ${escapeHtml(t.src)}</div>
       </div>
       <button class="btn btn-sm" data-edit="${t.id}">Edit</button>
       <button class="icon-btn danger" data-del="${t.id}" data-name="${escapeHtml(t.name)}" title="Delete">✕</button>
@@ -395,13 +395,9 @@ function mediaBlockHtml(kind, item) {
 
 function templateBasicsHtml(item) {
   const names = tagsCache.map((t) => t.name);
-  // a card may still carry a tag that was removed from the Tags section —
-  // keep it selectable so editing never silently reassigns the card
   const extra = item.tag && !names.includes(item.tag) ? [item.tag] : [];
   const tagOptions = extra.concat(names).map((n) =>
     `<option value="${escapeHtml(n)}" ${item.tag === n ? "selected" : ""}>${escapeHtml(n)}</option>`).join("");
-  const page = item.page || "";
-  const showView = page !== "cinematic";
   return `
     <div class="fgroup">
       <h4>Basics</h4>
@@ -412,17 +408,6 @@ function templateBasicsHtml(item) {
         </div></div>
         <div class="frow" style="margin:0;"><label>Name</label><div><input type="text" id="mi_name" value="${escapeHtml(item.name || "")}"></div></div>
       </div>
-      <div class="frow" style="margin:14px 0 0;"><label>Show on page</label><div>
-        <select id="mi_page">
-          <option value="web" ${page === "web" ? "selected" : ""}>Web Experiences</option>
-          <option value="cinematic" ${page === "cinematic" ? "selected" : ""}>Cinematic Ads</option>
-          <option value="" ${page === "" ? "selected" : ""}>Both pages</option>
-        </select>
-      </div></div>
-      <div class="frow" id="mi_viewRow" style="margin:14px 0 0; ${showView ? "" : "display:none;"}"><label>View project link</label><div>
-        <input type="text" id="mi_view_link" value="${escapeHtml(item.link || "index.html")}">
-        <div class="fhelp">Target of the &ldquo;View project &rarr;&rdquo; link on Web Experiences.</div>
-      </div></div>
       <div class="frow" style="margin:14px 0 0;"><label>Description</label><div><textarea id="mi_desc" style="min-height:56px;">${escapeHtml(item.desc || "")}</textarea></div></div>
       <div class="f2" style="margin-top:14px;">
         <div class="frow" style="margin:0;"><label>Order</label><div><input type="number" id="mi_order" value="${Number(item.order ?? nextOrder("templates"))}"></div></div>
@@ -512,14 +497,6 @@ function openItemModal(kind, item = null) {
     }
   });
 
-  const pageSel = modal.querySelector("#mi_page");
-  const viewRow = modal.querySelector("#mi_viewRow");
-  if (pageSel && viewRow) {
-    pageSel.addEventListener("change", () => {
-      viewRow.style.display = pageSel.value === "cinematic" ? "none" : "";
-    });
-  }
-
   modal.querySelector("#mi_cancel").addEventListener("click", closeModal);
   modal.querySelector("#mi_save").addEventListener("click", () => saveItem(kind, editing ? item.id : null));
 }
@@ -547,8 +524,7 @@ async function saveItem(kind, id) {
       }
     : {
         tag: g("#mi_tag"), name: g("#mi_name"), desc: g("#mi_desc"),
-        src: g("#mi_src"), link: g("#mi_view_link") || "index.html",
-        page: g("#mi_page") || "",
+        src: g("#mi_src"),
         order: Number(g("#mi_order") || 0), published: modal.querySelector("#mi_pub").checked,
         updated_at: serverTimestamp()
       };
