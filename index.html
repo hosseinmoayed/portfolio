@@ -7,7 +7,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Anton+SC&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Anton+SC&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 <link rel="stylesheet" href="tailwind.css" />
 
@@ -1010,6 +1010,688 @@
    <div id="sec2-end" aria-hidden="true" style="position:absolute; left:0; bottom:100vh; bottom:100dvh; width:1px; height:1px; pointer-events:none;"></div>
   </section>
 
+  <!-- ============ SECTION 2.5: SERVICES (from Google Stitch "UI Design Replication" /
+       "Dynamic Fluid Title Intro") ============
+     A "My Services" screen imported 1:1 from the Stitch design: 2×2 glass service
+     cards on the left, the chrome/neon MY SERVICES title block gliding into the
+     right column with fluid staggered typography inertia. The intro plays once
+     when the section scrolls into view (geometry-test reveal, same pattern as
+     #contact — IntersectionObserver misfires here). All CSS is scoped under
+     #services and every animation is gated on the .in class; the page ships a
+     compiled tailwind.css without the design's utilities, so the section carries
+     its own plain CSS (like the contact section does). -->
+  <style>
+    /* ===== SERVICES section shell ===== */
+    /* Same size system as the other sections: one full screen on desktop
+       (content recentres inside it). min-height + overflow auto-feel: if the
+       TAGLINE DOWN knob is pushed far, the section grows instead of clipping. */
+    #services {
+      position: relative;
+      z-index: 1;
+      background: #000;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 56px 24px;
+      color: #fff;
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    @media (min-width: 1024px) {
+      #services { min-height: 100vh; min-height: 100dvh; padding: max(20px, 4.5vh) 24px; }
+    }
+    /* Short laptop viewports (≤ 700px tall): compress the cards and the
+       type so the default layout still fits one screen. */
+    @media (min-width: 1024px) and (max-height: 700px) {
+      #services { padding: 16px 24px; }
+      #services .svc-card { min-height: 186px; padding: 15px; }
+      #services .svc-iconzone { height: 64px; margin-bottom: 4px; }
+      #services .svc-h1 { font-size: 52px; margin-bottom: 10px; }
+      #services .svc-desc { font-size: 15px; margin-bottom: 14px; }
+    }
+    #services ::selection { background: #10b981; color: #000; }
+    .svc-main {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+    .svc-grid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
+    /* GRID DOWN knob: nudge the whole cards+title grid lower inside the
+       section — edit --svc-grid-y (negative = up). 1:1, no cap. */
+    #services { --svc-grid-y: 65px; }
+    .svc-grid { transform: translateY(var(--svc-grid-y)); }
+    .svc-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-items: stretch; }
+    /* MOBILE: title/description block first, cards below it (desktop keeps
+       cards-left / title-right). Grid order only — nothing else changes. */
+    @media (max-width: 1023px) {
+      .svc-hero { order: -1; }
+      /* everything hugs the top (no vertical centering, no grid nudge) */
+      #services { justify-content: flex-start; padding-top: 28px; --svc-grid-y: 0px; }
+    }
+    @media (min-width: 1024px) {
+      .svc-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 32px; }
+      .svc-cards { grid-column: span 8; }
+      .svc-hero { grid-column: span 4; }
+    }
+
+    /* ===== glass service cards ===== */
+    .svc-card {
+      position: relative;
+      background: rgba(7, 19, 12, 0.8);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
+      overflow: hidden;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+      transition: border-color .3s ease, box-shadow .3s ease;
+    }
+    .svc-card:hover { border-color: rgba(16, 185, 129, 0.5); }
+    .card-reflection {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(125deg, rgba(255,255,255,.04) 0%, transparent 45%, rgba(52,211,153,.03) 70%, transparent 100%);
+    }
+    .svc-iconzone {
+      position: relative;
+      width: 100%; height: 80px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .svc-iconzone::after {           /* decorative icon aura */
+      content: ''; position: absolute; inset: 15%; border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,.45) 0%, transparent 70%);
+      filter: blur(16px); z-index: 0; pointer-events: none;
+    }
+    .svc-iconframe { position: relative; width: 112px; height: 96px; display: flex; align-items: center; justify-content: center; transition: transform .3s ease; }
+    .svc-card:hover .svc-iconframe { transform: scale(1.05); }
+    .svc-bodyzone { display: flex; flex-direction: column; justify-content: flex-end; }
+    .svc-h { font-size: 18px; font-weight: 700; color: #fff; margin: 0 0 4px; letter-spacing: -.025em; transition: color .2s ease; }
+    .svc-card:hover .svc-h { color: #6ee7b7; }
+    .svc-p {
+      font-size: 12px; line-height: 1.625; font-weight: 400; color: #9ca3af;
+      margin: 0 0 8px; overflow: hidden; display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    .svc-more {
+      display: inline-flex; align-items: center; color: #34d399; text-decoration: none;
+      font-size: 12px; font-weight: 500; transition: transform .2s ease, color .2s ease;
+    }
+    .svc-more:hover { color: #6ee7b7; }
+    .svc-card:hover .svc-more { transform: translateX(4px); }
+    .svc-more svg { width: 16px; height: 16px; }
+    .svc-spark {
+      position: absolute; top: -4px; right: 12px; width: 6px; height: 6px;
+      border-radius: 50%; background: #a7f3d0; filter: blur(.5px);
+      box-shadow: 0 0 6px #34d399; pointer-events: none;
+    }
+    /* card 1 — glass Telegram orb */
+    .svc-orb-bg    { position: absolute; width: 96px; height: 96px; border-radius: 50%; background: rgba(52,211,153,.25); filter: blur(24px); z-index: -1; pointer-events: none; }
+    .svc-orb-inner { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: rgba(110,231,183,.2); filter: blur(12px); pointer-events: none; }
+    .svc-orb {
+      position: relative; width: 80px; height: 80px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      border: 1px solid rgba(110,231,183,.4);
+      background: radial-gradient(circle at 35% 25%, rgba(20,110,80,.45) 0%, rgba(4,38,28,.9) 55%, rgba(1,16,12,.98) 100%);
+      box-shadow: 0 0 24px rgba(16,185,129,.35), inset 0 -8px 18px rgba(4,120,87,.45), inset 0 2px 8px rgba(255,255,255,.6);
+    }
+    .svc-orb-steam { position: absolute; bottom: -8px; width: 64px; height: 28px; border-radius: 50%; background: rgba(52,211,153,.3); filter: blur(4px); pointer-events: none; }
+    .svc-orb-shine { position: absolute; top: 4px; left: 10px; width: 48px; height: 24px; border-radius: 100%; background: linear-gradient(to bottom, rgba(255,255,255,.8), rgba(220,252,231,.3), transparent); transform: rotate(-26deg); filter: blur(.3px); pointer-events: none; }
+    .svc-orb-dot { position: absolute; top: 8px; left: 24px; width: 8px; height: 4px; border-radius: 50%; background: rgba(255,255,255,.9); filter: blur(.4px); pointer-events: none; }
+    .svc-orb svg { position: relative; z-index: 10; width: 40px; height: 40px; transform: translate(-2px, 2px); filter: drop-shadow(0 2px 8px rgba(0,0,0,.8)) drop-shadow(0 0 8px rgba(52,211,153,.7)); }
+    /* cards 2/3 — mini browser-window mock */
+    .svc-win-bg   { position: absolute; width: 96px; height: 80px; border-radius: 12px; background: rgba(52,211,153,.2); filter: blur(24px); z-index: -1; pointer-events: none; }
+    .svc-win-back { position: absolute; top: 8px; width: 84px; height: 60px; border-radius: 8px; border: 1px solid rgba(16,185,129,.2); background: rgba(2,44,34,.4); transform: translate(-6px,-4px); opacity: .6; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); box-shadow: 0 4px 6px -1px rgba(0,0,0,.4); }
+    .svc-win {
+      position: relative; width: 88px; height: 64px; border-radius: 12px;
+      border: 1px solid rgba(52,211,153,.4); display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,255,255,.25);
+      background: linear-gradient(155deg, rgba(8,48,36,.88) 0%, rgba(2,20,15,.96) 100%);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    }
+    .svc-win-bar { height: 18px; flex-shrink: 0; border-bottom: 1px solid rgba(52,211,153,.25); padding: 0 8px; display: flex; align-items: center; justify-content: space-between; background: rgba(2,44,34,.6); }
+    .svc-win-dots { display: flex; gap: 4px; align-items: center; }
+    .svc-win-dots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+    .svc-win-dots i:nth-child(1) { background: rgba(110,231,183,.9); box-shadow: 0 0 4px rgba(52,211,153,.8); }
+    .svc-win-dots i:nth-child(2) { background: rgba(52,211,153,.5); }
+    .svc-win-dots i:nth-child(3) { background: rgba(16,185,129,.4); }
+    .svc-win-pill { width: 32px; height: 4px; border-radius: 9999px; background: rgba(16,185,129,.2); }
+    .svc-win-body { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; }
+    .svc-win-sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top right, transparent, rgba(255,255,255,.05) 50%, rgba(52,211,153,.1)); }
+    .svc-win-code { position: relative; z-index: 10; font-family: 'Space Mono', ui-monospace, monospace; font-size: 16px; font-weight: 800; color: #6ee7b7; letter-spacing: .05em; filter: drop-shadow(0 0 8px rgba(52,211,153,.8)); }
+    .svc-win-body.img { padding: 8px; gap: 8px; justify-content: flex-start; }
+    .svc-img-tile { position: relative; width: 24px; height: 24px; border-radius: 4px; background: rgba(16,185,129,.2); border: 1px solid rgba(52,211,153,.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 8px rgba(16,185,129,.25); }
+    .svc-img-tile svg { width: 14px; height: 14px; color: #6ee7b7; }
+    .svc-img-lines { position: relative; flex: 1; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+    .svc-img-lines i { display: block; height: 6px; border-radius: 9999px; }
+    .svc-img-lines i:first-child { width: 100%; background: rgba(110,231,183,.7); box-shadow: 0 0 4px rgba(52,211,153,.5); }
+    .svc-img-lines i:last-child  { width: 75%; background: rgba(52,211,153,.4); }
+    /* card 4 — framed video tile with corner ticks + play glyph */
+    .svc-cam-bg   { position: absolute; width: 80px; height: 80px; border-radius: 16px; background: rgba(52,211,153,.25); filter: blur(24px); z-index: -1; pointer-events: none; }
+    .svc-cam-back { position: absolute; top: 8px; width: 64px; height: 64px; border-radius: 12px; border: 1px solid rgba(16,185,129,.2); background: rgba(2,44,34,.4); transform: translate(6px,-4px); opacity: .5; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+    .svc-cam {
+      position: relative; width: 72px; height: 72px; border-radius: 16px;
+      border: 1px solid rgba(52,211,153,.4); display: flex; align-items: center; justify-content: center; overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,255,255,.25);
+      background: linear-gradient(155deg, rgba(8,48,36,.9) 0%, rgba(2,20,15,.98) 100%);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    }
+    .svc-cam-sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top right, transparent, rgba(255,255,255,.05) 50%, rgba(52,211,153,.1)); }
+    .svc-corner { position: absolute; width: 12px; height: 12px; pointer-events: none; border: 0 solid rgba(110,231,183,.9); filter: drop-shadow(0 0 4px rgba(52,211,153,.8)); }
+    .svc-corner.tl { top: 8px;  left: 8px;   border-top-width: 1.5px; border-left-width: 1.5px; border-top-left-radius: 1px; }
+    .svc-corner.tr { top: 8px;  right: 8px;  border-top-width: 1.5px; border-right-width: 1.5px; border-top-right-radius: 1px; }
+    .svc-corner.bl { bottom: 8px; left: 8px;   border-bottom-width: 1.5px; border-left-width: 1.5px; border-bottom-left-radius: 1px; }
+    .svc-corner.br { bottom: 8px; right: 8px;  border-bottom-width: 1.5px; border-right-width: 1.5px; border-bottom-right-radius: 1px; }
+    .svc-play-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+    .svc-play-bg { position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(52,211,153,.25); filter: blur(12px); pointer-events: none; }
+    .svc-play { position: relative; z-index: 10; width: 28px; height: 28px; color: #6ee7b7; margin-left: 2px; filter: drop-shadow(0 0 8px rgba(52,211,153,.9)); }
+
+    /* ===== hero title block ===== */
+    .svc-hero { display: flex; flex-direction: column; align-items: flex-start; position: relative; z-index: 20; text-align: left; }
+    @media (min-width: 1024px) { .svc-hero { padding-left: 24px; } }
+    .svc-badge { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; opacity: .95; }
+    .svc-rule { width: 40px; height: 1.5px; background: rgba(52,211,153,.6); box-shadow: 0 0 8px rgba(52,211,153,.5); }
+    .svc-kicker { font-size: 12px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: #34d399; filter: drop-shadow(0 0 6px rgba(52,211,153,.6)); }
+    @media (min-width: 640px) { .svc-kicker { font-size: 14px; } }
+    .svc-h1 {
+      position: relative; display: flex; flex-wrap: wrap; align-items: baseline;
+      column-gap: 8px; padding-right: 8px; margin: 0 0 14px;
+      font-size: 48px; font-weight: 800; letter-spacing: -.025em; line-height: 1; text-transform: uppercase;
+    }
+    @media (min-width: 640px)  { .svc-h1 { column-gap: 12px; } }
+    @media (min-width: 1024px) { .svc-h1 { font-size: 60px; } }
+    @media (min-width: 1280px) { .svc-h1 { font-size: 72px; } }
+    /* Clean metallic chrome "MY" */
+    .chrome-text-my {
+      position: relative; display: inline-block;
+      background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 22%, #cbd5e1 45%, #64748b 50%, #334155 52%, #94a3b8 78%, #e2e8f0 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+    }
+    /* Clean, radiant emerald neon chrome gradient on SERVICES */
+    .services-text-neon {
+      position: relative; display: inline-block;
+      background: linear-gradient(rgb(236, 253, 245) 0%, rgb(167, 243, 208) 22%, rgb(110, 231, 183) 45%, rgb(4, 120, 87) 50%, rgb(6, 78, 59) 52%, rgb(16, 185, 129) 78%, rgb(52, 211, 153) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      filter: drop-shadow(rgba(0, 0, 0, 0.8) 0px 2px 4px) drop-shadow(rgba(16, 185, 129, 0.22) 0px 0px 5px) drop-shadow(rgba(5, 150, 105, 0.14) 0px 0px 10px);
+    }
+    .svc-services { position: relative; display: inline-block; }
+    /* Soft organic ambient halo behind SERVICES text */
+    .services-ambient-aura {
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 110%; height: 120%;
+      background: radial-gradient(60% 50%, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.05) 50%, transparent 75%);
+      filter: blur(16px); pointer-events: none; z-index: -1; border-radius: 9999px;
+    }
+    .svc-desc { max-width: 448px; text-align: left; font-size: 16px; color: #d1d5db; font-weight: 400; line-height: 1.625; margin: 0 0 20px; text-wrap: balance; }
+    @media (min-width: 640px) { .svc-desc { font-size: 18px; } }
+    .svc-tag { display: flex; align-items: center; gap: 12px; opacity: .95; }
+    .svc-tag .svc-rule { background: rgba(52,211,153,.5); box-shadow: 0 0 8px rgba(52,211,153,.4); }
+    .svc-tag .svc-kicker { font-weight: 600; letter-spacing: .25em; filter: drop-shadow(0 0 6px rgba(52,211,153,.4)); }
+
+    /* ===== footer tagline ===== */
+    /* TAGLINE DOWN knob: edit --svc-foot-gap below (negative = up).
+       1:1 — every 10px of value moves the tagline 10px. On desktop the
+       section grows past one screen if you push it very far; on mobile
+       it's always taller than the screen anyway. */
+    #services { --svc-foot-gap: 120px; }
+    .svc-foot { margin-top: var(--svc-foot-gap); display: flex; align-items: center; justify-content: center; gap: 12px; flex-shrink: 0; }
+    .svc-foot .f-rule { width: 40px; height: 1px; background: rgba(16,185,129,.4); }
+    .svc-foot .f-text { font-size: 11px; font-weight: 600; letter-spacing: .25em; text-transform: uppercase; color: #34d399; }
+    @media (min-width: 640px) {
+      .svc-foot .f-rule { width: 64px; }
+      .svc-foot .f-text { font-size: 12px; }
+    }
+
+    /* ======================================================================= */
+    /* Organic Fluid Typography Transition (Center -> Right) — ported from the */
+    /* Stitch screen verbatim; every rule is gated on #services.in so the       */
+    /* sequence starts when the section scrolls into view, not on page load.    */
+    /* ======================================================================= */
+    @keyframes heroBaseTrack {
+      0%   { transform: translate3d(-100%, 0, 0); }
+      50%  { transform: translate3d(-100%, 0, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+    @keyframes fluidFlowItem {
+      0%   { opacity: 0; transform: translate3d(-18px, 6px, 0) scale(0.97); filter: blur(12px); }
+      30%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+      50%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+      65%  { opacity: 0.96; filter: blur(0.8px); }
+      82%  { opacity: 0.99; filter: blur(0.2px); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+    }
+    @keyframes fluidFlowHeadingMy {
+      0%   { opacity: 0; transform: translate3d(-24px, 8px, 0) scale(0.96); filter: blur(14px); }
+      30%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+      50%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+      66%  { transform: translate3d(-10px, 0, 0) scale(0.985); filter: blur(1.2px); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+    }
+    @keyframes fluidFlowHeadingServices {
+      0%   { opacity: 0; transform: translate3d(-20px, 10px, 0) scale(0.95); filter: blur(16px); }
+      32%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+      50%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+      68%  { transform: translate3d(-14px, 0, 0) scale(0.988); filter: blur(1.5px); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+    }
+    @keyframes fluidFlowDesc {
+      0%   { opacity: 0; transform: translate3d(-16px, 12px, 0); filter: blur(10px); }
+      34%  { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+      50%  { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+      70%  { transform: translate3d(-18px, 1px, 0); filter: blur(1px); opacity: 0.9; }
+      100% { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+    }
+    @keyframes fluidFlowTag {
+      0%   { opacity: 0; transform: translate3d(-14px, 10px, 0); filter: blur(8px); }
+      36%  { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+      50%  { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+      72%  { transform: translate3d(-20px, 0, 0); filter: blur(0.8px); opacity: 0.88; }
+      100% { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+    }
+    @keyframes cardCalmEntrance {
+      0%   { opacity: 0; transform: translate3d(-20px, 12px, 0) scale(0.97); filter: blur(8px); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0px); }
+    }
+    @keyframes footerCalmReveal {
+      0%   { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* pre-reveal resting state: hero's children hidden, hero parked left on
+       desktop (heroBaseTrack animates transform only, so the hero element
+       itself must stay opaque; its children carry the opacity fade) */
+    #services .animate-flow-badge,
+    #services .animate-flow-my,
+    #services .animate-flow-services,
+    #services .animate-flow-desc,
+    #services .animate-flow-tag,
+    #services .animate-card,
+    #services .animate-footer-calm { opacity: 0; }
+    @media (min-width: 1024px) {
+      #services:not(.in) .svc-hero { transform: translate3d(-100%, 0, 0); }
+    }
+
+    /* the sequence, once revealed. `both` fill-mode: the 0% keyframe also covers
+       the stagger delay, so cards/hero stay hidden (not flashing at their rest
+       state) until each delayed animation actually starts. */
+    #services.in .svc-hero { animation: heroBaseTrack 3.8s cubic-bezier(0.2, 0.85, 0.25, 1) both; will-change: transform; }
+    #services.in .animate-flow-badge    { animation: fluidFlowItem 3.8s cubic-bezier(0.2, 0.9, 0.25, 1) 0.02s both; will-change: transform, opacity, filter; }
+    #services.in .animate-flow-my       { animation: fluidFlowHeadingMy 3.8s cubic-bezier(0.2, 0.9, 0.25, 1) 0.08s both; will-change: transform, opacity, filter; }
+    #services.in .animate-flow-services { animation: fluidFlowHeadingServices 3.8s cubic-bezier(0.2, 0.9, 0.25, 1) 0.14s both; will-change: transform, opacity, filter; }
+    #services.in .animate-flow-desc     { animation: fluidFlowDesc 3.8s cubic-bezier(0.2, 0.9, 0.25, 1) 0.22s both; will-change: transform, opacity, filter; }
+    #services.in .animate-flow-tag      { animation: fluidFlowTag 3.8s cubic-bezier(0.2, 0.9, 0.25, 1) 0.30s both; will-change: transform, opacity, filter; }
+    #services.in .animate-card          { animation: cardCalmEntrance 1.0s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity, filter; }
+    #services.in .card-delay-1 { animation-delay: 3.6s; }
+    #services.in .card-delay-2 { animation-delay: 3.75s; }
+    #services.in .card-delay-3 { animation-delay: 3.9s; }
+    #services.in .card-delay-4 { animation-delay: 4.05s; }
+    #services.in .animate-footer-calm   { animation: footerCalmReveal 1.0s cubic-bezier(0.16, 1, 0.3, 1) 4.2s both; }
+
+    /* Fallback for reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      #services .svc-hero,
+      #services .animate-flow-badge,
+      #services .animate-flow-my,
+      #services .animate-flow-services,
+      #services .animate-flow-desc,
+      #services .animate-flow-tag,
+      #services .animate-card,
+      #services .animate-footer-calm {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+      }
+    }
+
+    /* Responsive adaptation for smaller screens (no center→right glide) */
+    @media (max-width: 1023px) {
+      #services.in .svc-hero { animation: none; transform: none; }
+      @keyframes mobileItemFadeIn {
+        0%   { opacity: 0; transform: translateY(12px); filter: blur(10px); }
+        100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+      }
+      #services.in .animate-flow-badge    { animation: mobileItemFadeIn 0.8s ease 0.1s forwards; }
+      #services.in .animate-flow-my       { animation: mobileItemFadeIn 0.8s ease 0.2s forwards; }
+      #services.in .animate-flow-services { animation: mobileItemFadeIn 0.8s ease 0.3s forwards; }
+      #services.in .animate-flow-desc     { animation: mobileItemFadeIn 0.8s ease 0.4s forwards; }
+      #services.in .animate-flow-tag      { animation: mobileItemFadeIn 0.8s ease 0.5s forwards; }
+      #services.in .card-delay-1 { animation-delay: 0.7s; }
+      #services.in .card-delay-2 { animation-delay: 0.85s; }
+      #services.in .card-delay-3 { animation-delay: 1.0s; }
+      #services.in .card-delay-4 { animation-delay: 1.15s; }
+      #services.in .animate-footer-calm { animation-delay: 1.3s; }
+    }
+  </style>
+  <section id="services">
+    <div class="svc-main">
+      <div class="svc-grid">
+        <div class="svc-cards">
+          <!-- Service Card 1: Telegram Bot -->
+          <article class="svc-card animate-card card-delay-1">
+            <div class="card-reflection"></div>
+            <div class="svc-iconzone">
+              <div class="svc-iconframe">
+                <div class="svc-orb-bg"></div>
+                <div class="svc-orb-inner"></div>
+                <div class="svc-orb">
+                  <div class="svc-orb-steam"></div>
+                  <div class="svc-orb-shine"></div>
+                  <div class="svc-orb-dot"></div>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21.5 3.5L2.8 10.7C1.5 11.2 1.5 12.0 2.6 12.3L7.4 13.8L18.5 6.8C19.0 6.5 19.5 6.7 19.1 7.1L10.1 15.2H10.1L9.8 19.5C10.2 19.5 10.4 19.3 10.6 19.1L12.7 17.1L17.1 20.3C17.9 20.7 18.5 20.3 18.7 19.3L21.6 5.6C21.9 4.3 21.1 3.7 21.5 3.5Z" fill="url(#tg_grad)"/>
+                    <defs>
+                      <linearGradient id="tg_grad" gradientUnits="userSpaceOnUse" x1="2" x2="21.6" y1="3.5" y2="20.3">
+                        <stop stop-color="#a7f3d0"/>
+                        <stop offset="0.5" stop-color="#34d399"/>
+                        <stop offset="1" stop-color="#059669"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <div class="svc-spark"></div>
+              </div>
+            </div>
+            <div class="svc-bodyzone">
+              <h2 class="svc-h">Telegram Bot</h2>
+              <p class="svc-p">Custom Telegram bots for automation, business and personal use. Fast and reliable.</p>
+              <a class="svc-more" href="https://t.me/hosseinammyd" target="_blank" rel="noopener" aria-label="Learn more about Telegram Bot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </article>
+          <!-- Service Card 2: Full Website Development -->
+          <article class="svc-card animate-card card-delay-2">
+            <div class="card-reflection"></div>
+            <div class="svc-iconzone">
+              <div class="svc-iconframe">
+                <div class="svc-win-bg"></div>
+                <div class="svc-win-back"></div>
+                <div class="svc-win">
+                  <div class="svc-win-bar">
+                    <div class="svc-win-dots"><i></i><i></i><i></i></div>
+                    <div class="svc-win-pill"></div>
+                  </div>
+                  <div class="svc-win-body">
+                    <div class="svc-win-sheen"></div>
+                    <span class="svc-win-code">&lt;/&gt;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="svc-bodyzone">
+              <h2 class="svc-h">Full Website Development</h2>
+              <p class="svc-p">From concept to deployment, modern and responsive websites tailored to your needs.</p>
+              <a class="svc-more" href="#contact" aria-label="Learn more about Full Website Development">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </article>
+          <!-- Service Card 3: Website Templates -->
+          <article class="svc-card animate-card card-delay-3">
+            <div class="card-reflection"></div>
+            <div class="svc-iconzone">
+              <div class="svc-iconframe">
+                <div class="svc-win-bg"></div>
+                <div class="svc-win-back" style="transform: translate(8px,-4px); opacity:.5;"></div>
+                <div class="svc-win">
+                  <div class="svc-win-bar">
+                    <div class="svc-win-dots"><i></i><i></i><i></i></div>
+                    <div class="svc-win-pill"></div>
+                  </div>
+                  <div class="svc-win-body img">
+                    <div class="svc-img-tile">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                    </div>
+                    <div class="svc-img-lines"><i></i><i></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="svc-bodyzone">
+              <h2 class="svc-h">Website Templates</h2>
+              <p class="svc-p">Clean, modern and customizable templates for business, portfolio and landing pages.</p>
+              <a class="svc-more" href="/web-experiences" aria-label="Learn more about Website Templates">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </article>
+          <!-- Service Card 4: Ad Teaser / Video -->
+          <article class="svc-card animate-card card-delay-4">
+            <div class="card-reflection"></div>
+            <div class="svc-iconzone">
+              <div class="svc-iconframe">
+                <div class="svc-cam-bg"></div>
+                <div class="svc-cam-back"></div>
+                <div class="svc-cam">
+                  <div class="svc-cam-sheen"></div>
+                  <div class="svc-corner tl"></div>
+                  <div class="svc-corner tr"></div>
+                  <div class="svc-corner bl"></div>
+                  <div class="svc-corner br"></div>
+                  <div class="svc-play-wrap">
+                    <div class="svc-play-bg"></div>
+                    <svg class="svc-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.5-6.86a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14z"/></svg>
+                  </div>
+                </div>
+                <div class="svc-spark" style="right: 8px;"></div>
+              </div>
+            </div>
+            <div class="svc-bodyzone">
+              <h2 class="svc-h">Ad Teaser / Video</h2>
+              <p class="svc-p">Cinematic and eye-catching video teasers for your brand, product or campaign.</p>
+              <a class="svc-more" href="/cinematic-ads" aria-label="Learn more about Ad Teaser and Video services">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </article>
+        </div>
+        <!-- Hero Title & Description Block (fluid typographic glide) -->
+        <div class="svc-hero" id="servicesHero">
+          <div class="svc-badge animate-flow-badge">
+            <span class="svc-rule"></span>
+            <span class="svc-kicker">What I Do</span>
+          </div>
+          <h1 class="svc-h1">
+            <span class="chrome-text-my animate-flow-my">MY</span>
+            <span class="svc-services animate-flow-services">
+              <span class="services-ambient-aura"></span>
+              <span class="services-text-neon">SERVICES</span>
+            </span>
+          </h1>
+          <p class="svc-desc animate-flow-desc">
+            I turn ideas into digital products, modern websites and engaging content. Here's what I can do for you.
+          </p>
+          <div class="svc-tag animate-flow-tag">
+            <span class="svc-rule"></span>
+            <span class="svc-kicker">Available for freelance</span>
+          </div>
+        </div>
+      </div>
+      <footer class="svc-foot animate-footer-calm">
+        <span class="f-rule"></span>
+        <span class="f-text">Let's Build Something Great</span>
+        <span class="f-rule"></span>
+      </footer>
+    </div>
+  </section>
+  <script>
+    // SERVICES reveal + magnetic snap — the same system #contact uses: a direct
+    // geometry test on scroll (IntersectionObserver misfires on this page's
+    // sticky tracks), and a magnet that seats the section flush to the viewport
+    // once the viewer has scrolled ~60% into it, so the screen lands exactly on
+    // the section like the other full-screen sections do.
+    (function () {
+      var sec = document.getElementById("services");
+      if (!sec) return;
+
+      // — reveal: .in drives the intro sequence. It is REMOVED whenever the
+      //   section is fully off-screen and re-added on the next entry, so the
+      //   animations replay every time the user leaves and comes back.
+      //   Driven by scroll/wheel/resize events (geometry test per call, cheap)
+      //   rather than a rAF loop — rAF freezes on background tabs. —
+      var reveal = function () {
+        var r = sec.getBoundingClientRect();
+        var vh = window.innerHeight;
+        if (r.bottom <= 0 || r.top >= vh) { sec.classList.remove("in"); return; }
+        if (!sec.classList.contains("in") && r.top < vh * 0.75) sec.classList.add("in");
+      };
+      reveal();
+      window.addEventListener("scroll", reveal, { passive: true });
+      window.addEventListener("wheel", reveal, { passive: true });
+      window.addEventListener("touchmove", reveal, { passive: true });
+      window.addEventListener("keydown", reveal);
+      window.addEventListener("resize", reveal);
+
+      // — magnetic snap lives in the shared magnet engine (see MAGNETIC SCROLL
+      //   SNAP below), which seats every full-screen section from EITHER
+      //   direction. This block only owns the intro reveal.
+    })();
+  </script>
+  <script>
+    // ================= MAGNETIC SCROLL SNAP (shared engine) =================
+    // Every full-screen section of this page gets a magnet: once the section
+    // owns >= 40% of the viewport, one smooth glide seats it exactly on the
+    // screen. Direction-agnostic by design — it fires both when you scroll
+    // DOWN into a section and when you come back UP into it (the previous
+    // per-section magnets only armed on the down-side, so returning from
+    // #contact into #services never snapped).
+    //
+    // #sec2 is deliberately NOT a magnet target: its 560vh track is the
+    // scroll-scrub film and snapping would fight the scrub. Its sticky panel
+    // already owns the whole screen while you're inside it.
+    (function () {
+      /* ===== TUNE — MAGNETIC SNAP LANDING OFFSETS =====
+         px past the section's top where the auto-scroll seats it.
+         0 = flush with the viewport top; positive = land LOWER, negative = HIGHER.
+         #contact uses its own mobile value (that section is taller than the screen). */
+      var SECTIONS = [
+        { id: "top",      offset: 0, offsetMobile: null, upOnly: true },
+        { id: "services", offset: 0, offsetMobile: null, upOnly: false },
+        { id: "contact",  offset: 0, offsetMobile: 150,  upOnly: false }
+      ];
+      var THRESHOLD = 0.4;       // fraction of the viewport the section must own
+      var REARM = 0.08;          // below this coverage the magnet re-arms
+      var BUSY_MS = 1400;        // glide + settle; also blocks adjacent re-fire
+
+      var secs = [];
+      SECTIONS.forEach(function (cfg) {
+        var el = document.getElementById(cfg.id);
+        if (!el) return;
+        secs.push({ cfg: cfg, el: el, magnetized: false });
+      });
+      if (!secs.length) return;
+
+      var busy = false;
+      var lastY = window.scrollY;
+
+      var landingY = function (s) {
+        var mobile = window.matchMedia("(max-width: 820px)").matches &&
+                     s.cfg.offsetMobile !== null;
+        return s.el.offsetTop + (mobile ? s.cfg.offsetMobile : s.cfg.offset);
+      };
+
+      var seat = function (s) {
+        var target = landingY(s);
+        if (Math.abs(window.scrollY - target) <= 4) { s.magnetized = true; return; }  // already seated
+        busy = true;
+        var y0 = window.scrollY;
+        var seated = false;
+        if (window.lenis) {
+          // lock:true freezes wheel/touch input for the glide's duration and
+          // Lenis releases it automatically at the end — WITHOUT this (or
+          // with lenis.stop(), which is worse: scrollTo no-ops while stopped)
+          // the still-spinning wheel deltas override the programmatic scroll
+          // mid-glide, and the up-direction snap visibly never lands.
+          window.lenis.scrollTo(target, { duration: 1.2, lock: true });
+        }
+        else if (typeof scrollToY === "function") scrollToY(target);
+        else window.scrollTo({ top: target, behavior: "smooth" });
+        // Poll the approach: the moment the page is ON target the seat is
+        // complete and nothing more happens (so a later deliberate scroll
+        // away is never rubber-banded back). At the end of the busy window:
+        //  • never seated and NOTHING moved (hidden/throttled tab where the
+        //    rAF-driven glide is dead): force an instant seat;
+        //  • never seated but moved (the glide was cut short or overshot —
+        //    e.g. the next section's glide handed over mid-flight): release
+        //    the magnet so the next scroll event seats it properly. This is
+        //    the "services → contact lands in the wrong place" case.
+        var poll = setInterval(function () {
+          if (Math.abs(window.scrollY - target) <= 4) { seated = true; clearInterval(poll); }
+        }, 50);
+        setTimeout(function () {
+          clearInterval(poll);
+          busy = false;
+          if (seated || Math.abs(window.scrollY - target) <= 4) return;
+          if (Math.abs(window.scrollY - y0) < 4) {
+            if (window.lenis) window.lenis.scrollTo(target, { immediate: true, force: true });
+            else window.scrollTo(0, target);
+          }
+          s.magnetized = false;   // one-shot retry on the next event
+        }, 2000);
+      };
+
+      var check = function () {
+        var y = window.scrollY;
+        var goingUp = y < lastY - 1;
+        lastY = y;                     // tracked even while busy: the glide itself moves the scroll
+        if (busy) return;
+
+        var vh = window.innerHeight;
+        if (!vh) return;
+
+        var cands = [];
+        secs.forEach(function (s) {
+          var r = s.el.getBoundingClientRect();
+          s.cover = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+          // arm/disarm, direction-agnostic
+          if (s.cover < vh * REARM) s.magnetized = false;
+          // The #top hero owns the page load, so its magnet only ever pulls
+          // when the user is actually scrolling back up — otherwise the first
+          // downward scroll of every visit would be yanked back to 0.
+          if (s.cfg.upOnly && !goingUp) s.magnetized = true;
+          if (s.cover >= vh * THRESHOLD && !s.magnetized) cands.push(s);
+        });
+        if (!cands.length) return;
+        // Two adjacent sections can both cross the threshold mid-scroll. The
+        // right target is the one the viewer is ENTERING (its edge is the one
+        // being crossed), not the one being left — so pick the lowermost
+        // candidate when scrolling down, the uppermost when scrolling up.
+        cands.sort(function (a, b) {
+          return goingUp
+            ? a.el.offsetTop - b.el.offsetTop
+            : b.el.offsetTop - a.el.offsetTop;
+        });
+        var best = cands[0];
+        best.magnetized = true;
+        seat(best);
+      };
+
+      window.addEventListener("scroll", check, { passive: true });
+      window.addEventListener("wheel", check, { passive: true });
+      window.addEventListener("touchmove", check, { passive: true });
+      window.addEventListener("keydown", check);   // PgDn / End / arrow keys
+      window.addEventListener("resize", check);
+    })();
+  </script>
+
   <!-- ================= SECTION 3: CONTACT (v2 — glass cards) =================
      A complete standalone contact screen built around the Glass Shine
      Cards (kept 1:1: glass blur, sweep shine, gradient icons, sans stack).
@@ -1037,8 +1719,8 @@
         background-color: #000;        /* contact section's plain black (no dot grid, no watermark) */
         z-index: 0;
         /* ===== TUNE — SECTION ===== */
-        --nb-green: #2ce06d;           /* the project neon */
-        --nb-deep: #123d24;            /* gradient tail of the orbs */
+        --nb-green: #34d399;           /* the project neon */
+        --nb-deep: #064e3b;            /* gradient tail of the orbs */
         --title-gap: 56px;             /* space under the title block */
         --cards-y: 0px;                /* nudge the card row up/down */
         /* CONTACT TITLES knob: the editable value lives at the END of
@@ -1068,19 +1750,50 @@
       #contact.in .gsc-heading .eyebrow { opacity: .85; filter: blur(0); }
       #contact .gsc-heading h2 {
         margin: 14px 0 0;
+        font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;  /* same face as the MY SERVICES title */
         font-weight: 800;
-        font-size: clamp(44px, 7vw, 92px);
-        letter-spacing: -0.03em;
-        line-height: .95;
+        text-transform: uppercase;                /* like MY SERVICES */
+        font-size: 48px;                          /* same size scale as .svc-h1 */
+        letter-spacing: -0.025em;
+        line-height: 1;
         color: #fff;
       }
-      /* the word "TOUCH" carries the orbs' gradient, like a lit neon sign */
-      #contact .gsc-heading h2 .lit {
-        background-image: linear-gradient(to bottom, var(--nb-green) 0%, var(--nb-deep) 130%);
+      @media (min-width: 1024px) { #contact .gsc-heading h2 { font-size: 60px; } }
+      @media (min-width: 1280px) { #contact .gsc-heading h2 { font-size: 72px; } }
+      /* GET IN TOUCH uses the same title CSS as MY SERVICES — background-clip
+         text gradients: "GET IN" gets the metallic chrome (like MY), "TOUCH"
+         the emerald neon (like SERVICES), each with the same drop-shadow stack.
+         The word-level entrance (.w rise) stays on top of this unchanged. */
+      #contact .gsc-heading h2 .chrome-text-my {
+        background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 22%, #cbd5e1 45%, #64748b 50%, #334155 52%, #94a3b8 78%, #e2e8f0 100%);
         -webkit-background-clip: text;
         background-clip: text;
-        color: #0000;
-        filter: drop-shadow(0 0 18px rgba(44,224,109,.45));
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+      }
+      #contact .gsc-heading h2 .services-text-neon {
+        position: relative;
+        display: inline-block;
+      }
+      #contact .gsc-heading h2 .services-text-neon .txt {
+        background: linear-gradient(rgb(236, 253, 245) 0%, rgb(167, 243, 208) 22%, rgb(110, 231, 183) 45%, rgb(4, 120, 87) 50%, rgb(6, 78, 59) 52%, rgb(16, 185, 129) 78%, rgb(52, 211, 153) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        filter: drop-shadow(rgba(0, 0, 0, 0.8) 0px 2px 4px) drop-shadow(rgba(16, 185, 129, 0.22) 0px 0px 5px) drop-shadow(rgba(5, 150, 105, 0.14) 0px 0px 10px);
+      }
+      /* soft organic halo behind TOUCH (the SERVICES aura) */
+      #contact .gsc-heading h2 .services-text-neon .ambient-aura {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 110%; height: 120%;
+        background: radial-gradient(60% 50%, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.05) 50%, transparent 75%);
+        filter: blur(16px);
+        pointer-events: none;
+        z-index: -1;
+        border-radius: 9999px;
       }
       /* headline rises word by word once the section enters */
       #contact .gsc-heading h2 .w {
@@ -1153,10 +1866,10 @@
       #contact.in .gsc-slot.settled { transition: opacity .8s ease, transform .45s cubic-bezier(.34,1.4,.64,1); }
       #contact .gsc-card { transition: box-shadow .45s ease, border-color .45s ease; }
       #contact .gsc-slot:hover .gsc-card {
-        border-color: rgba(44,224,109,.55);
+        border-color: rgba(52,211,153,.55);
         box-shadow:
           inset 2px 1px 6px #ffffff45,
-          0 0 22px rgba(44,224,109,.18),
+          0 0 22px rgba(52,211,153,.18),
           0 18px 38px rgba(0,0,0,.55);
       }
       /* hover glow halo behind the card */
@@ -1164,7 +1877,7 @@
         content: "";
         position: absolute; inset: -14px;
         border-radius: 24px;
-        background: radial-gradient(closest-side, rgba(44,224,109,.16), rgba(44,224,109,0));
+        background: radial-gradient(closest-side, rgba(52,211,153,.16), rgba(52,211,153,0));
         opacity: 0;
         transition: opacity .5s ease;
         pointer-events: none;
@@ -1243,8 +1956,8 @@
       }
       /* hover: the icon lights up in neon green */
       #contact .gsc-slot:hover .gsc-card.icon-top > i.bi {
-        background-image: linear-gradient(90deg, #123d24, #2ce06d);
-        filter: drop-shadow(0 0 14px rgba(44,224,109,.5));
+        background-image: linear-gradient(90deg, #064e3b, #34d399);
+        filter: drop-shadow(0 0 14px rgba(52,211,153,.5));
       }
       /* the address line on the card, revealed on hover */
       #contact .gsc-addr {
@@ -1253,7 +1966,7 @@
         font-size: 10.5px;
         font-weight: 600;
         letter-spacing: .04em;
-        color: #123d24;
+        color: #064e3b;
         opacity: 0;
         transform: translateY(6px);
         transition: opacity .4s ease .05s, transform .4s ease .05s;
@@ -1289,7 +2002,7 @@
         border-radius: 50%;
         background: var(--nb-green);
         margin-right: 8px;
-        box-shadow: 0 0 8px rgba(44,224,109,.9);
+        box-shadow: 0 0 8px rgba(52,211,153,.9);
         animation: gsc-pulse 2.2s ease-in-out infinite;
       }
       @keyframes gsc-pulse {
@@ -1407,15 +2120,15 @@
         #contact .gsc-slot.just-snapped .gsc-addr { opacity: 0; transform: translateY(6px); }
         #contact .gsc-slot.just-snapped .gsc-halo { opacity: 0; }
         #contact .gsc-slot.active .gsc-card {
-          border-color: rgba(44,224,109,.55);
+          border-color: rgba(52,211,153,.55);
           box-shadow:
             inset 2px 1px 6px #ffffff45,
-            0 0 22px rgba(44,224,109,.18),
+            0 0 22px rgba(52,211,153,.18),
             0 18px 38px rgba(0,0,0,.55);
         }
         #contact .gsc-slot.active .gsc-card.icon-top > i.bi {
-          background-image: linear-gradient(90deg, #123d24, #2ce06d);
-          filter: drop-shadow(0 0 14px rgba(44,224,109,.5));
+          background-image: linear-gradient(90deg, #064e3b, #34d399);
+          filter: drop-shadow(0 0 14px rgba(52,211,153,.5));
         }
         #contact .gsc-slot.active .gsc-addr { opacity: 1; transform: none; }
         #contact .gsc-slot.active .gsc-halo { opacity: 1; }
@@ -1445,7 +2158,7 @@
           display: grid; place-items: center;
           transition: background .3s ease, border-color .3s ease, transform .3s ease;
         }
-        #contact .gsc-nav button:hover { background: rgba(44,224,109,.18); border-color: rgba(44,224,109,.5); }
+        #contact .gsc-nav button:hover { background: rgba(52,211,153,.18); border-color: rgba(52,211,153,.5); }
         #contact .gsc-nav button:active { transform: scale(.92); }
         #contact .gsc-dots { display: flex; gap: 8px; }
         #contact .gsc-dots span {
@@ -1457,7 +2170,7 @@
         #contact .gsc-dots span.on {
           background: var(--nb-green);
           transform: scale(1.25);
-          box-shadow: 0 0 8px rgba(44,224,109,.8);
+          box-shadow: 0 0 8px rgba(52,211,153,.8);
         }
       }
       /* desktop: the nav strip is hidden (media query below re-shows it) */
@@ -1507,8 +2220,8 @@
       <div class="gsc-heading">
         <span class="eyebrow">Contact</span>
         <h2>
-          <span class="w" data-key="contact_title1">GET&nbsp;IN</span>
-          <span class="w lit" data-key="contact_title2">TOUCH</span>
+          <span class="w"><span class="chrome-text-my" data-key="contact_title1">GET&nbsp;IN</span></span>
+          <span class="w"><span class="services-text-neon"><span class="ambient-aura"></span><span class="txt" data-key="contact_title2">TOUCH</span></span></span>
         </h2>
         <p class="sub" data-key="contact_subtitle">Have an idea in mind? Pick a channel — I reply fast.</p>
       </div>
@@ -1663,68 +2376,42 @@
     var sec = document.getElementById("contact");
     if (!sec) return;
 
-    // — (1) reveal —
+    // — (1) reveal — .in drives the entrance transitions; it is REMOVED
+    // whenever the section is fully off-screen and re-added on the next
+    // entry, so the animations replay every time the user leaves and comes
+    // back (`.settled` is dropped too, so the slow entrance — not the fast
+    // hover transition — plays again). —
     var reveal = function () {
-      if (sec.classList.contains("in")) return true;
       var r = sec.getBoundingClientRect();
-      if (r.top < window.innerHeight * 0.75) {
+      var vh = window.innerHeight;
+      if (r.bottom <= 0 || r.top >= vh) {
+        if (!sec.classList.contains("in")) return;
+        sec.classList.remove("in");
+        sec.querySelectorAll(".gsc-slot").forEach(function (s) { s.classList.remove("settled"); });
+        return;
+      }
+      if (!sec.classList.contains("in") && r.top < vh * 0.75) {
         sec.classList.add("in");
         // the slow per-card entrance runs ~1.35s delay + 1.5s motion; after it
         // settles, hand the slots over to the fast hover transitions
         setTimeout(function () {
+          if (!sec.classList.contains("in")) return;   // left again mid-entrance
           sec.querySelectorAll(".gsc-slot").forEach(function (s) { s.classList.add("settled"); });
         }, 3100);
-        return true;
       }
-      return false;
     };
-    if (!reveal()) {
-      var watch = function () { if (!reveal()) requestAnimationFrame(watch); };
-      requestAnimationFrame(watch);
-    }
+    // event-driven (geometry test is cheap); a bare rAF loop freezes on
+    // background/throttled tabs and the reveal would never replay.
+    reveal();
+    window.addEventListener("scroll", reveal, { passive: true });
+    window.addEventListener("wheel", reveal, { passive: true });
+    window.addEventListener("touchmove", reveal, { passive: true });
+    window.addEventListener("keydown", reveal);
+    window.addEventListener("resize", reveal);
 
-    // — (1b) MAGNETIC SNAP — when the user has scrolled ~60% into the contact
-    // screen (i.e. it fills ≥40% of the viewport), finish the journey for them:
-    // one smooth glide seats the section flush to the viewport. Fires once per
-    // approach; scrolling back up past the threshold re-arms it.
-    var magnetized = false;
-    var magnetBusy = false;
-    /* ===== TUNE — MAGNETIC SNAP LANDING OFFSET =====================
-       How far past the section's top the auto-scroll seats the contact
-       section. 0 = flush with the viewport top; positive = land LOWER
-       (further into the section); negative = land HIGHER.
-       Mobile uses its own value (contact is taller than the screen). */
-    var SNAP_OFFSET = 0;             // desktop (px past section top)
-    var SNAP_OFFSET_MOBILE = 150;      // mobile  (edit me)
-    var snapOffset = function () {
-      return window.matchMedia("(max-width: 820px)").matches
-        ? SNAP_OFFSET_MOBILE : SNAP_OFFSET;
-    };
-    var snapToContact = function () {
-      if (magnetBusy) return;
-      magnetBusy = true;
-      // global smooth-scroll helper (defined further down) or native fallback
-      var target = sec.offsetTop + snapOffset();
-      if (typeof scrollToY === "function") scrollToY(target);
-      else window.scrollTo({ top: target, behavior: "smooth" });
-      setTimeout(function () { magnetBusy = false; }, 1400);  // glide + settle
-    };
-    var magnetCheck = function () {
-      var r = sec.getBoundingClientRect();
-      // ~60% of the way in: at least 40% of the screen is the contact section
-      var entered = window.innerHeight - r.top;
-      if (entered >= window.innerHeight * 0.4 && r.bottom > window.innerHeight * 0.5) {
-        if (!magnetized) { magnetized = true; snapToContact(); }
-      } else if (r.top >= window.innerHeight) {
-        magnetized = false;   // fully left the screen — re-arm for the next approach
-      }
-    };
-    // scroll is the primary driver; wheel/touchmove cover Lenis-driven setups
-    // where synthetic scrolls bypass the window scroll event
-    window.addEventListener("scroll", magnetCheck, { passive: true });
-    window.addEventListener("wheel", magnetCheck, { passive: true });
-    window.addEventListener("touchmove", magnetCheck, { passive: true });
-    window.addEventListener("keydown", magnetCheck);   // PgDn / End / arrow keys
+    // — (1b) MAGNETIC SNAP lives in the shared magnet engine (see
+    //   MAGNETIC SCROLL SNAP above): #contact seats at landing offset 0 on
+    //   desktop, 150px on mobile (its section is taller than the screen).
 
     // — (3) local time —
     var tzEl = document.getElementById("gscTime");
@@ -1872,7 +2559,7 @@
     var F_COUNT      = 100;          // specks alive at once
     var F_SIZE       = [0.6, 1.8];  // speck radius, px
     var F_SPEED      = [8, 30];     // wander speed, px/s
-    var F_COLOR      = "44,224,109";
+    var F_COLOR      = "52,211,153";
     var F_ALPHA      = 0.55;        // peak opacity (twinkle scales below this)
     // ==================================
 
