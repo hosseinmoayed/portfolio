@@ -62,30 +62,30 @@ const SITE_CONTENT_DEFAULTS = {
   cv_url: "https://apps.apple.com"
 };
 
-/* Showcase cards → the SITES arrays in web-experiences.html / cinematic-ads.html.
-   `page` splits them: "web" → web-experiences, "cinematic" → cinematic-ads,
-   "" / missing → both (back-compat with seeded docs). */
+/* Showcase cards → the SITES array in web-experiences.html */
 const TEMPLATES_DEFAULT = [
-  { tag: "Landing Page",    name: "NOVA",  src: "web_expreience_scrub.mp4", link: "/", page: "web",
+  { tag: "Landing Page",    name: "NOVA",  src: "web_expreience_scrub.mp4", link: "/",
     desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
-  { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", link: "/", page: "cinematic",
+  { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", link: "/",
     desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
-  { tag: "Commerce",        name: "FLUX",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", link: "/", page: "cinematic",
+  { tag: "Commerce",        name: "FLUX",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", link: "/",
     desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
-  { tag: "Portfolio",       name: "HALO",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", link: "/", page: "web",
+  { tag: "Portfolio",       name: "HALO",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", link: "/",
     desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
 ];
 
-/* WE cards → the WE_DATA array in index.html (sec2 "generated" cards) */
+/* Showcase cards → the SITES array in cinematic-ads.html. Same shape as the
+   templates, minus `link` — that page has no "View project" link (clicking a
+   frame zooms it in place instead). */
 const TEASERS_DEFAULT = [
-  { h: "Realtime UI",     p: "Fluid interfaces that respond in milliseconds.",            src: "web_expreience_scrub.mp4" },
-  { h: "Cinematic Web",   p: "Scroll-driven stories with video-grade motion.",           src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
-  { h: "Immersive 3D",    p: "Depth, light and shaders, straight in the browser.",       src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4" },
-  { h: "Design Systems",  p: "Scalable component architecture, end to end.",             src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4" },
-  { h: "Storefronts",     p: "Conversion-first commerce, fast by default.",              src: "web_expreience_scrub.mp4" },
-  { h: "Live Dashboards", p: "Realtime data, visualised the moment it lands.",           src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4" },
-  { h: "Generative UX",   p: "Interfaces that adapt to each visitor.",                   src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4" },
-  { h: "Brand Sites",     p: "Identity-driven pages with a signature feel.",             src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4" }
+  { tag: "Landing Page",    name: "NOVA",  src: "web_expreience_scrub.mp4",
+    desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
+  { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4",
+    desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
+  { tag: "Commerce",        name: "FLUX",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4",
+    desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
+  { tag: "Portfolio",       name: "HALO",  src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4",
+    desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
 ];
 
 /* Optional link overrides for the "View project" buttons and CV download.
@@ -113,16 +113,17 @@ function normalize(raw) {
       .map(t => ({
         tag: t.tag || "", name: t.name || "",
         src: t.src || "", desc: t.desc || "",
-        link: t.link || "/",
-        page: t.page || ""          // "web" | "cinematic" | "" (= both pages)
+        link: t.link || "/"
       })),
 
+    // Legacy teaser docs (title/mediaUrl) are mapped onto the new shape so
+    // previously-seeded collections still render until they're recreated.
     teasers: (d.teasers || [])
       .filter(t => t.published !== false)
       .sort(byOrder)
       .map(t => ({
-        h: t.title || "", p: t.desc || "",
-        src: t.mediaUrl || "", type: t.type || "video"
+        tag: t.tag || "", name: t.name || t.title || "",
+        src: t.src || t.mediaUrl || "", desc: t.desc || ""
       })),
 
     tags: (d.tags || []).sort(byOrder).map(t => t.name || "")

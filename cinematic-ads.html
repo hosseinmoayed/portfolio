@@ -651,7 +651,6 @@
             '<span class="site-kicker">' + n + ' &mdash; ' + s.tag + '</span>' +
             '<h2 class="site-title">' + s.name + '</h2>' +
             '<p class="site-desc">' + s.desc + '</p>' +
-            '<a class="site-link" href="' + s.link + '">View project &#8594;</a>' +
           '</div>' +
         '</div>';
       stage.appendChild(sec);
@@ -886,11 +885,11 @@
       timer = setTimeout(finish, CLOSE_MS + 80);     // fallback if transitionend never lands
     }
 
+    // no "View project" link on this page — clicking the frame itself zooms it
     stage.addEventListener("click", function (e) {
-      var link = e.target.closest(".site-link");
-      if (!link) return;
-      e.preventDefault();
-      openZoom(link.closest(".site").querySelector(".nframe"));
+      var fr = e.target.closest(".nframe");
+      if (!fr) return;
+      openZoom(fr);
     });
     if (!zoomWired) {
       closeBtn.addEventListener("click", closeZoom);
@@ -907,17 +906,15 @@
     }
   }
 
-  /* SITES data: Firestore (via site-data.js) wins, local array is the fallback. */
+  /* SITES data: Firestore teasers (via site-data.js) win, local array is the fallback. */
   var SITES = [
-    { tag: "Landing Page", name: "NOVA",  src: "web_expreience_scrub.mp4", desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action.", link: "index.html" },
-    { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll.", link: "index.html" },
-    { tag: "Commerce", name: "FLUX", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium.", link: "index.html" },
-    { tag: "Portfolio", name: "HALO", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure.", link: "index.html" }
+    { tag: "Landing Page", name: "NOVA",  src: "web_expreience_scrub.mp4", desc: "A cinematic product launch — scroll-scrubbed hero film, neon UI, and one decisive call to action." },
+    { tag: "Creative Studio", name: "AXIOM", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095750_32a52ce0-2005-45c9-9093-41f03fde9530.mp4", desc: "A studio's living showreel: motion-first layouts where every section performs as you scroll." },
+    { tag: "Commerce", name: "FLUX", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_095810_ecea3dd2-fc5e-4e41-8696-4219290b6589.mp4", desc: "Storefront design tuned for conversion — fast, tactile, and unmistakably premium." },
+    { tag: "Portfolio", name: "HALO", src: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_080203_fd7f4f85-3a86-4837-8192-85e7bfe68e75.mp4", desc: "A portfolio that frames the work like film — depth, light and restraint in equal measure." }
   ];
-  // page split: "cinematic" → here, "web" → the web page, "" → both
   function pick(d) {
-    var all = (d && d.templates && d.templates.length) ? d.templates : SITES;
-    return all.filter(function (t) { return (t.page || "") !== "web"; });
+    return (d && d.teasers && d.teasers.length) ? d.teasers : SITES;
   }
   // site-data.js is a module, so it has NOT run yet while this classic script
   // parses — reading window.SITE_DATA here always found undefined and the page

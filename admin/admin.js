@@ -310,7 +310,7 @@ function renderTemplates() {
       ${mediaThumb(t.src, (t.src || "").match(/\.(mp4|webm|mov)(\?|$)/i))}
       <div class="grow">
         <div class="r-title">${escapeHtml(t.name)} <span class="badge ${t.published !== false ? "on" : "off"}">${t.published !== false ? "live" : "hidden"}</span></div>
-        <div class="r-sub">${escapeHtml(t.tag)} · ${t.page === "web" ? "Web Experiences" : t.page === "cinematic" ? "Cinematic Ads" : "Both pages"} · order ${Number(t.order ?? 0)} · ${escapeHtml(t.src)}</div>
+        <div class="r-sub">${escapeHtml(t.tag)} · order ${Number(t.order ?? 0)} · ${escapeHtml(t.src)}</div>
       </div>
       <button class="btn btn-sm" data-edit="${t.id}">Edit</button>
       <button class="icon-btn danger" data-del="${t.id}" data-name="${escapeHtml(t.name)}" title="Delete">✕</button>
@@ -328,13 +328,13 @@ function renderTeasers() {
   }
   list.innerHTML = teasersCache.map((t) => `
     <div class="row">
-      ${mediaThumb(t.mediaUrl, (t.mediaUrl || "").match(/\.(mp4|webm|mov)(\?|$)/i))}
+      ${mediaThumb(t.src || t.mediaUrl, ((t.src || t.mediaUrl || "").match(/\.(mp4|webm|mov)(\?|$)/i)))}
       <div class="grow">
-        <div class="r-title">${escapeHtml(t.title)} <span class="badge ${t.published !== false ? "on" : "off"}">${t.published !== false ? "live" : "hidden"}</span></div>
-        <div class="r-sub">order ${Number(t.order ?? 0)} · ${escapeHtml(t.mediaUrl)}</div>
+        <div class="r-title">${escapeHtml(t.name || t.title)} <span class="badge ${t.published !== false ? "on" : "off"}">${t.published !== false ? "live" : "hidden"}</span></div>
+        <div class="r-sub">${escapeHtml(t.tag || "")} · order ${Number(t.order ?? 0)} · ${escapeHtml(t.src || t.mediaUrl)}</div>
       </div>
       <button class="btn btn-sm" data-edit="${t.id}">Edit</button>
-      <button class="icon-btn danger" data-del="${t.id}" data-name="${escapeHtml(t.title)}" title="Delete">✕</button>
+      <button class="icon-btn danger" data-del="${t.id}" data-name="${escapeHtml(t.name || t.title)}" title="Delete">✕</button>
     </div>`).join("");
 }
 
@@ -366,10 +366,8 @@ $("#teaserList").addEventListener("click", (e) => listAction("teasers", e));
 const modal = $("#itemModal");
 const backdrop = $("#modalBackdrop");
 
-function mediaBlockHtml(kind, item) {
-  const isTeaser = kind === "teasers";
-  const srcField = isTeaser ? "mediaUrl" : "src";
-  const src = item[srcField] || "";
+function mediaBlockHtml(item) {
+  const src = item.src || item.mediaUrl || "";
   return `
     <div class="fgroup">
       <h4>Media</h4>
@@ -381,7 +379,7 @@ function mediaBlockHtml(kind, item) {
             </label>
           </div>
           <div>
-            <input type="text" id="mi_${srcField}" placeholder="…or paste a media URL" value="${escapeHtml(src)}">
+            <input type="text" id="mi_src" placeholder="…or paste a media URL" value="${escapeHtml(src)}">
           </div>
         </div>
         <div class="upload-progress" id="mi_prog"><div class="bar"><div class="fill"></div></div><div class="pct">0%</div></div>
@@ -393,15 +391,17 @@ function mediaBlockHtml(kind, item) {
     </div>`;
 }
 
-function templateBasicsHtml(item) {
+/* Template and teaser cards share one form shape (Tag / Name / Description /
+   Order / Visible + media). The only difference: templates get a "View
+   project" link, teasers (Cinematic Ads) do not. */
+function cardBasicsHtml(kind, item) {
+  const isTeaser = kind === "teasers";
   const names = tagsCache.map((t) => t.name);
   // a card may still carry a tag that was removed from the Tags section —
   // keep it selectable so editing never silently reassigns the card
   const extra = item.tag && !names.includes(item.tag) ? [item.tag] : [];
   const tagOptions = extra.concat(names).map((n) =>
     `<option value="${escapeHtml(n)}" ${item.tag === n ? "selected" : ""}>${escapeHtml(n)}</option>`).join("");
-  const page = item.page || "";
-  const showView = page !== "cinematic";
   return `
     <div class="fgroup">
       <h4>Basics</h4>
@@ -410,43 +410,16 @@ function templateBasicsHtml(item) {
           <select id="mi_tag">${tagOptions || '<option value="">— no tags yet —</option>'}</select>
           <div class="fhelp">Create tags in the Tags section.</div>
         </div></div>
-        <div class="frow" style="margin:0;"><label>Name</label><div><input type="text" id="mi_name" value="${escapeHtml(item.name || "")}"></div></div>
+        <div class="frow" style="margin:0;"><label>Name</label><div><input type="text" id="mi_name" value="${escapeHtml(item.name || item.title || "")}"></div></div>
       </div>
-      <div class="frow" style="margin:14px 0 0;"><label>Show on page</label><div>
-        <select id="mi_page">
-          <option value="web" ${page === "web" ? "selected" : ""}>Web Experiences</option>
-          <option value="cinematic" ${page === "cinematic" ? "selected" : ""}>Cinematic Ads</option>
-          <option value="" ${page === "" ? "selected" : ""}>Both pages</option>
-        </select>
-      </div></div>
-      <div class="frow" id="mi_viewRow" style="margin:14px 0 0; ${showView ? "" : "display:none;"}"><label>View project link</label><div>
+      ${isTeaser ? "" : `
+      <div class="frow" style="margin:14px 0 0;"><label>View project link</label><div>
         <input type="text" id="mi_view_link" value="${escapeHtml(item.link || "index.html")}">
         <div class="fhelp">Target of the &ldquo;View project &rarr;&rdquo; link on Web Experiences.</div>
-      </div></div>
+      </div></div>`}
       <div class="frow" style="margin:14px 0 0;"><label>Description</label><div><textarea id="mi_desc" style="min-height:56px;">${escapeHtml(item.desc || "")}</textarea></div></div>
       <div class="f2" style="margin-top:14px;">
-        <div class="frow" style="margin:0;"><label>Order</label><div><input type="number" id="mi_order" value="${Number(item.order ?? nextOrder("templates"))}"></div></div>
-        <div class="frow" style="margin:0;"><label>Visible</label><div><label class="check"><input type="checkbox" id="mi_pub" ${item.published !== false ? "checked" : ""}> shown on site</label></div></div>
-      </div>
-    </div>`;
-}
-
-function teaserBasicsHtml(item) {
-  return `
-    <div class="fgroup">
-      <h4>Basics</h4>
-      <div class="f2">
-        <div class="frow" style="margin:0;"><label>Title</label><div><input type="text" id="mi_title" value="${escapeHtml(item.title || "")}"></div></div>
-        <div class="frow" style="margin:0;"><label>Type</label><div>
-          <select id="mi_type">
-            <option value="video" ${item.type !== "image" ? "selected" : ""}>Video</option>
-            <option value="image" ${item.type === "image" ? "selected" : ""}>Image</option>
-          </select>
-        </div></div>
-      </div>
-      <div class="frow" style="margin:14px 0 0;"><label>Description</label><div><textarea id="mi_desc" style="min-height:56px;">${escapeHtml(item.desc || "")}</textarea></div></div>
-      <div class="f2" style="margin-top:14px;">
-        <div class="frow" style="margin:0;"><label>Order</label><div><input type="number" id="mi_order" value="${Number(item.order ?? nextOrder("teasers"))}"></div></div>
+        <div class="frow" style="margin:0;"><label>Order</label><div><input type="number" id="mi_order" value="${Number(item.order ?? nextOrder(kind))}"></div></div>
         <div class="frow" style="margin:0;"><label>Visible</label><div><label class="check"><input type="checkbox" id="mi_pub" ${item.published !== false ? "checked" : ""}> shown on site</label></div></div>
       </div>
     </div>`;
@@ -461,9 +434,9 @@ function openItemModal(kind, item = null) {
   modal.innerHTML = `
     <h3>${editing ? "Edit" : "New"} ${isTeaser ? "teaser" : "template"}</h3>
 
-    ${isTeaser ? teaserBasicsHtml(item) : templateBasicsHtml(item)}
+    ${cardBasicsHtml(kind, item)}
 
-    ${mediaBlockHtml(kind, item)}
+    ${mediaBlockHtml(item)}
 
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
       <button class="btn" id="mi_cancel">Cancel</button>
@@ -474,7 +447,7 @@ function openItemModal(kind, item = null) {
 
   /* preview + upload wiring */
   const fileInput = modal.querySelector("#mi_file");
-  const urlInput = modal.querySelector(isTeaser ? "#mi_mediaUrl" : "#mi_src");
+  const urlInput = modal.querySelector("#mi_src");
   const prev = modal.querySelector("#mi_prev");
   const prevv = modal.querySelector("#mi_prevv");
   const previ = modal.querySelector("#mi_previ");
@@ -488,7 +461,7 @@ function openItemModal(kind, item = null) {
     prevv.src = isVid ? src : "";
     previ.src = isVid ? "" : src;
   }
-  refreshPreview(item.mediaUrl || item.src || "");
+  refreshPreview(item.src || item.mediaUrl || "");
 
   urlInput.addEventListener("input", () => refreshPreview(urlInput.value.trim()));
 
@@ -512,14 +485,6 @@ function openItemModal(kind, item = null) {
     }
   });
 
-  const pageSel = modal.querySelector("#mi_page");
-  const viewRow = modal.querySelector("#mi_viewRow");
-  if (pageSel && viewRow) {
-    pageSel.addEventListener("change", () => {
-      viewRow.style.display = pageSel.value === "cinematic" ? "none" : "";
-    });
-  }
-
   modal.querySelector("#mi_cancel").addEventListener("click", closeModal);
   modal.querySelector("#mi_save").addEventListener("click", () => saveItem(kind, editing ? item.id : null));
 }
@@ -538,24 +503,17 @@ function nextOrder(kind) {
 async function saveItem(kind, id) {
   const isTeaser = kind === "teasers";
   const g = (sel) => modal.querySelector(sel)?.value.trim() ?? "";
-  const data = isTeaser
-    ? {
-        title: g("#mi_title"), desc: g("#mi_desc"),
-        mediaUrl: g("#mi_mediaUrl"), type: g("#mi_type") || "video",
-        order: Number(g("#mi_order") || 0), published: modal.querySelector("#mi_pub").checked,
-        updated_at: serverTimestamp()
-      }
-    : {
-        tag: g("#mi_tag"), name: g("#mi_name"), desc: g("#mi_desc"),
-        src: g("#mi_src"), link: g("#mi_view_link") || "index.html",
-        page: g("#mi_page") || "",
-        order: Number(g("#mi_order") || 0), published: modal.querySelector("#mi_pub").checked,
-        updated_at: serverTimestamp()
-      };
+  // Teasers share the template card shape minus `link` (Cinematic Ads has no
+  // View-project link). Saving a legacy teaser doc upgrades it to the new fields.
+  const data = {
+    tag: g("#mi_tag"), name: g("#mi_name"), desc: g("#mi_desc"),
+    src: g("#mi_src"),
+    order: Number(g("#mi_order") || 0), published: modal.querySelector("#mi_pub").checked,
+    updated_at: serverTimestamp()
+  };
+  if (!isTeaser) data.link = g("#mi_view_link") || "index.html";
 
-  const missing = isTeaser
-    ? (!data.title && "title") || (!data.mediaUrl && "media")
-    : (!data.name && "name") || (!data.src && "media");
+  const missing = (!data.name && "name") || (!data.src && "media");
   if (missing) { toast("Fill in the " + missing + " first.", "err"); return; }
 
   const btn = modal.querySelector("#mi_save");
@@ -593,10 +551,7 @@ async function seedFirestore() {
     defaults.templates.forEach((t, i) =>
       batch.set(doc(collection(db, "templates")), { ...t, order: i, published: true, updated_at: serverTimestamp() }));
     defaults.teasers.forEach((t, i) =>
-      batch.set(doc(collection(db, "teasers")), {
-        title: t.h, desc: t.p, mediaUrl: t.src, type: t.type || "video",
-        order: i, published: true, updated_at: serverTimestamp()
-      }));
+      batch.set(doc(collection(db, "teasers")), { ...t, order: i, published: true, updated_at: serverTimestamp() }));
     defaults.tags.forEach((name, i) =>
       batch.set(doc(collection(db, "tags")), { name, order: i, updated_at: serverTimestamp() }));
     await batch.commit();

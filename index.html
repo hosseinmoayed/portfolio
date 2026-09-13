@@ -2797,18 +2797,7 @@
     [].slice.call(webexpCards.querySelectorAll(".we-card")).forEach(injectZap);
     wePages = [].slice.call(weStage.querySelectorAll(".we-grid"));
   }
-  buildWePages();                               // build from the local defaults first
-  if (window.SITE_DATA) window.SITE_DATA.ready.then(function (d) {
-    // swap in Firestore teasers if they arrived and the card grid hasn't been animated yet
-    if (d && d.teasers && d.teasers.length) {
-      var different = JSON.stringify(d.teasers) !== JSON.stringify(WE_DATA.map(function (t) {
-        return { h: t.h, p: t.p, src: t.src };
-      }));
-      if (different && !weBuilt) {              // weBuilt flips when the grid animates on entry
-        buildWePages(d.teasers);
-      }
-    }
-  });
+  buildWePages();                               // built-in cards — the teasers collection feeds cinematic-ads.html, not this page
   var wePages = weStage ? [].slice.call(weStage.querySelectorAll(".we-grid")) : [];
   function clearWeTimers() { weTimers.forEach(clearTimeout); weTimers = []; }
   function buildCardsIn(grid) {
