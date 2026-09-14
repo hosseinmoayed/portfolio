@@ -1084,6 +1084,10 @@
       .svc-hero { order: -1; }
       /* everything hugs the top (no vertical centering, no grid nudge) */
       #services { justify-content: flex-start; padding-top: 28px; --svc-grid-y: 0px; }
+      /* pull the cards right under the intro line: kill the grid row gap
+         and shrink the description's bottom margin (was 20px) */
+      #services .svc-grid { gap: 0; }
+      #services .svc-desc { margin-bottom: 10px; }
     }
     @media (min-width: 1024px) {
       .svc-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 32px; }
