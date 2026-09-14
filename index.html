@@ -2371,12 +2371,13 @@
   })();
 
   // ---------- Mobile navbar auto-hide inside SERVICES ----------
-  // Only on phones (<=767px): while the services section holds the screen,
-  // the navbar fades out shortly after the finger leaves the screen and
-  // reappears on real input (touch/wheel/keydown). Reappearing is wired to
-  // INPUT events on purpose, not scroll: the magnetic-snap glide and Lenis
-  // momentum fire scroll events too, and re-showing on those made the navbar
-  // flash back up right after fading — that was the reported glitch.
+  // Only on phones (<=767px): the navbar stays visible while the page is
+  // actually scrolling — including the magnetic-snap glide, which keeps
+  // firing scroll frames and holds it up — and fades out 120ms after
+  // everything settles. To kill the old flash-back, scroll events that
+  // arrive AFTER the fade but barely move the page (the snap's final
+  // force-seat, Lenis settle jitter) are ignored while hidden; the navbar
+  // only returns when the page really moves again.
   // Outside the section the hidden state is dropped from the scroll handler
   // (section changes can happen programmatically, without input).
   (function () {
@@ -2385,6 +2386,7 @@
     var sec = document.getElementById("services");
     if (!sec) return;
     var idleTimer = null;
+    var hiddenAtY = -1;        // scrollY when the fade started (-1 = visible)
 
     // the section owns the viewport once it covers the screen midpoint
     function inServices() {
@@ -2393,26 +2395,32 @@
       return r.top <= probe && r.bottom > probe;
     }
 
-    function onScroll() {
-      if (!mq.matches || !inServices()) root.classList.remove("nav-svc-idle");
+    function hide() {
+      hiddenAtY = window.scrollY;
+      root.classList.add("nav-svc-idle");
     }
 
-    function onInput() {
-      if (!mq.matches) return;
-      root.classList.remove("nav-svc-idle");        // user input => navbar visible
+    function onScroll() {
+      var y = window.scrollY;
+      if (!mq.matches || !inServices()) {           // outside the case => visible
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        hiddenAtY = -1;
+        root.classList.remove("nav-svc-idle");
+        return;
+      }
+      if (hiddenAtY >= 0 && Math.abs(y - hiddenAtY) <= 6) return;  // noise after fade
+      root.classList.remove("nav-svc-idle");        // scrolling => navbar visible
+      hiddenAtY = -1;
       if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(function () {          // stopped => fade it out
+      idleTimer = setTimeout(function () {          // settled => fade it out
         idleTimer = null;
-        if (mq.matches && inServices()) root.classList.add("nav-svc-idle");
+        if (mq.matches && inServices()) hide();
       }, 120);
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("touchmove", onInput, { passive: true });
-    window.addEventListener("wheel", onInput, { passive: true });
-    window.addEventListener("keydown", onInput);
     mq.addEventListener("change", function () {     // rotate/desktop switch
-      if (!mq.matches) root.classList.remove("nav-svc-idle");
+      if (!mq.matches) { hiddenAtY = -1; root.classList.remove("nav-svc-idle"); }
       else onScroll();
     });
     onScroll();
