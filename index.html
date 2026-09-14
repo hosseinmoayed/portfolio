@@ -162,8 +162,12 @@
     #menuPill { display: none; }
     /* Inside SERVICES (mobile only): the navbar fades out while the viewer
        is stationary and reappears on scroll — JS toggles html.nav-svc-idle
-       (see the mobile navbar auto-hide script). */
-    html.nav-svc-idle .entrance-nav { opacity: 0 !important; pointer-events: none; }
+       (see the mobile navbar auto-hide script). The fade itself is sped up
+       to .18s (the global .entrance-nav transition is .35s). */
+    html.nav-svc-idle .entrance-nav {
+      opacity: 0 !important; pointer-events: none;
+      transition: opacity .18s ease !important;
+    }
     /* The services intro line keeps only its first clause on phones */
     .svc-desc-more { display: none; }
     /* The "Available for freelance" tag under it is mobile-hidden too */
@@ -2396,7 +2400,7 @@
       idleTimer = setTimeout(function () {         // stopped => fade it out
         idleTimer = null;
         if (mq.matches && inServices()) root.classList.add("nav-svc-idle");
-      }, 350);
+      }, 120);
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
