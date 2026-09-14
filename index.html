@@ -160,6 +160,12 @@
   /* Hamburger is hidden on mobile — the bottom tabs replace it */
   @media (max-width: 767px) {
     #menuPill { display: none; }
+    /* Telegram card fix: the blurred steam child inside the orb's circular
+       overflow-clip is composited wrongly on phone browsers — it clips the
+       orb/icon along the bottom. The steam is the ONLY thing relying on that
+       clip, so on phones: release the clip and drop the steam. */
+    #services .svc-orb { overflow: visible; }   /* beats the section's .svc-orb rule */
+    #services .svc-orb-steam { display: none; }
     /* Inside SERVICES (mobile only): the navbar fades out while the viewer
        is stationary and reappears on scroll — JS toggles html.nav-svc-idle
        (see the mobile navbar auto-hide script). The fade itself is sped up
