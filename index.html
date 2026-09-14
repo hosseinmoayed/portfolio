@@ -166,6 +166,8 @@
     html.nav-svc-idle .entrance-nav { opacity: 0 !important; pointer-events: none; }
     /* The services intro line keeps only its first clause on phones */
     .svc-desc-more { display: none; }
+    /* The "Available for freelance" tag under it is mobile-hidden too */
+    .svc-mobile-hide { display: none !important; }
   }
   .m-tabs a {
     flex: 1;
@@ -1525,7 +1527,7 @@
           <p class="svc-desc animate-flow-desc">
             I turn ideas into digital products<span class="svc-desc-more">, modern websites and engaging content. Here's what I can do for you.</span>
           </p>
-          <div class="svc-tag animate-flow-tag">
+          <div class="svc-tag animate-flow-tag svc-mobile-hide">
             <span class="svc-rule"></span>
             <span class="svc-kicker">Available for freelance</span>
           </div>
@@ -1590,7 +1592,7 @@
          #contact uses its own mobile value (that section is taller than the screen). */
       var SECTIONS = [
         { id: "top",      offset: 0, offsetMobile: null, upOnly: true },
-        { id: "services", offset: 0, offsetMobile: null, upOnly: false },
+        { id: "services", offset: 0, offsetMobile: 20,   upOnly: false },
         { id: "contact",  offset: 0, offsetMobile: 150,  upOnly: false }
       ];
       var THRESHOLD = 0.4;       // fraction of the viewport the section must own
