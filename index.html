@@ -1379,17 +1379,6 @@
 
     /* Responsive adaptation for smaller screens (no center→right glide) */
     @media (max-width: 1023px) {
-      /* Real phones (unlike desktop and DevTools emulation) clip the card's
-         backdrop-filter GPU layer — it chopped the bottom off the Telegram
-         orb. On phones the glass cards use a plain semi-opaque background
-         (0.8 blur over near-black looks the same) and release the animation
-         layer hint after the entrance so nothing stays composited-clipped. */
-      .svc-card {
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-        background: rgba(7, 19, 12, 0.94);
-      }
-      #services.in .animate-card { will-change: auto; }
       #services.in .svc-hero { animation: none; transform: none; }
       @keyframes mobileItemFadeIn {
         0%   { opacity: 0; transform: translateY(12px); filter: blur(10px); }
