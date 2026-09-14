@@ -2372,9 +2372,13 @@
 
   // ---------- Mobile navbar auto-hide inside SERVICES ----------
   // Only on phones (<=767px): while the services section holds the screen,
-  // the top navbar fades out after scrolling stops and reappears for ~1s on
-  // every scroll movement. Outside the section (or on desktop) it behaves
-  // exactly as before; html.nav-off over #contact still wins, as intended.
+  // the navbar fades out shortly after the finger leaves the screen and
+  // reappears on real input (touch/wheel/keydown). Reappearing is wired to
+  // INPUT events on purpose, not scroll: the magnetic-snap glide and Lenis
+  // momentum fire scroll events too, and re-showing on those made the navbar
+  // flash back up right after fading — that was the reported glitch.
+  // Outside the section the hidden state is dropped from the scroll handler
+  // (section changes can happen programmatically, without input).
   (function () {
     var mq = window.matchMedia("(max-width: 767px)");
     var root = document.documentElement;
@@ -2390,21 +2394,24 @@
     }
 
     function onScroll() {
-      if (!mq.matches || !inServices()) {          // not the mobile/services case
-        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
-        root.classList.remove("nav-svc-idle");
-        return;
-      }
-      root.classList.remove("nav-svc-idle");       // scrolling => navbar visible
+      if (!mq.matches || !inServices()) root.classList.remove("nav-svc-idle");
+    }
+
+    function onInput() {
+      if (!mq.matches) return;
+      root.classList.remove("nav-svc-idle");        // user input => navbar visible
       if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(function () {         // stopped => fade it out
+      idleTimer = setTimeout(function () {          // stopped => fade it out
         idleTimer = null;
         if (mq.matches && inServices()) root.classList.add("nav-svc-idle");
       }, 120);
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    mq.addEventListener("change", function () {    // rotate/desktop switch
+    window.addEventListener("touchmove", onInput, { passive: true });
+    window.addEventListener("wheel", onInput, { passive: true });
+    window.addEventListener("keydown", onInput);
+    mq.addEventListener("change", function () {     // rotate/desktop switch
       if (!mq.matches) root.classList.remove("nav-svc-idle");
       else onScroll();
     });
