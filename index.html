@@ -160,6 +160,12 @@
   /* Hamburger is hidden on mobile — the bottom tabs replace it */
   @media (max-width: 767px) {
     #menuPill { display: none; }
+    /* Inside SERVICES (mobile only): the navbar fades out while the viewer
+       is stationary and reappears on scroll — JS toggles html.nav-svc-idle
+       (see the mobile navbar auto-hide script). */
+    html.nav-svc-idle .entrance-nav { opacity: 0 !important; pointer-events: none; }
+    /* The services intro line keeps only its first clause on phones */
+    .svc-desc-more { display: none; }
   }
   .m-tabs a {
     flex: 1;
@@ -1517,7 +1523,7 @@
             </span>
           </h1>
           <p class="svc-desc animate-flow-desc">
-            I turn ideas into digital products, modern websites and engaging content. Here's what I can do for you.
+            I turn ideas into digital products<span class="svc-desc-more">, modern websites and engaging content. Here's what I can do for you.</span>
           </p>
           <div class="svc-tag animate-flow-tag">
             <span class="svc-rule"></span>
@@ -2352,6 +2358,47 @@
     window.addEventListener("scroll", updateActive, { passive: true });
     window.addEventListener("resize", updateActive);
     updateActive();
+  })();
+
+  // ---------- Mobile navbar auto-hide inside SERVICES ----------
+  // Only on phones (<=767px): while the services section holds the screen,
+  // the top navbar fades out after scrolling stops and reappears for ~1s on
+  // every scroll movement. Outside the section (or on desktop) it behaves
+  // exactly as before; html.nav-off over #contact still wins, as intended.
+  (function () {
+    var mq = window.matchMedia("(max-width: 767px)");
+    var root = document.documentElement;
+    var sec = document.getElementById("services");
+    if (!sec) return;
+    var idleTimer = null;
+
+    // the section owns the viewport once it covers the screen midpoint
+    function inServices() {
+      var r = sec.getBoundingClientRect();
+      var probe = window.innerHeight * 0.5;
+      return r.top <= probe && r.bottom > probe;
+    }
+
+    function onScroll() {
+      if (!mq.matches || !inServices()) {          // not the mobile/services case
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        root.classList.remove("nav-svc-idle");
+        return;
+      }
+      root.classList.remove("nav-svc-idle");       // scrolling => navbar visible
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () {         // stopped => fade it out
+        idleTimer = null;
+        if (mq.matches && inServices()) root.classList.add("nav-svc-idle");
+      }, 900);
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    mq.addEventListener("change", function () {    // rotate/desktop switch
+      if (!mq.matches) root.classList.remove("nav-svc-idle");
+      else onScroll();
+    });
+    onScroll();
   })();
 
   // ---------- SynapseX logo (4-fold rotational symmetry) ----------
